@@ -1,0 +1,22 @@
+name: rehberlik_app
+description: "Rehberlik ve psikolojik danışmanlık iş takip uygulaması."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.11.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Flutter SDK'sı ile gelir; sistem metinlerinin Türkçe olması için gereklidir.
+  flutter_localizations:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
