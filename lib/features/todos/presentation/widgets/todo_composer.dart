@@ -1,19 +1,20 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_theme.dart';
-import '../../../../shared/di/app_scope.dart';
+import '../todos_provider.dart';
 
 /// Yeni görev ekleme alanı.
-class TodoComposer extends StatefulWidget {
+class TodoComposer extends ConsumerStatefulWidget {
   const TodoComposer({super.key});
 
   @override
-  State<TodoComposer> createState() => _TodoComposerState();
+  ConsumerState<TodoComposer> createState() => _TodoComposerState();
 }
 
-class _TodoComposerState extends State<TodoComposer> {
+class _TodoComposerState extends ConsumerState<TodoComposer> {
   final TextEditingController _textController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
 
@@ -26,12 +27,9 @@ class _TodoComposerState extends State<TodoComposer> {
 
   Future<void> _submit() async {
     final title = _textController.text.trim();
-    if (title.isEmpty) {
-      return;
-    }
-    // Alan, ekleme tamamlanana kadar temizlenmez; odak korunur.
+    if (title.isEmpty) return;
     _textController.clear();
-    await AppScope.of(context).todos.addTodo(title);
+    await ref.read(todosProvider.notifier).addTodo(title);
   }
 
   @override
@@ -58,7 +56,6 @@ class _TodoComposerState extends State<TodoComposer> {
           label: const Text('Ekle'),
         );
 
-        // Dar içerik alanında alan ve buton alt alta dizilir.
         if (constraints.maxWidth < 520) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

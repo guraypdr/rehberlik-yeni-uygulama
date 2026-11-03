@@ -65,8 +65,6 @@ class _TodoRowState extends State<TodoRow> {
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
-              // Düğme her zaman görünür ama sakin kalır; satırın üzerine
-              // gelindiğinde silme rengine döner.
               IconButton(
                 key: Key('todo_delete_${widget.todo.id}'),
                 onPressed: widget.onDelete,
@@ -91,6 +89,9 @@ class _Checkbox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    final onPrimary = Theme.of(context).colorScheme.onPrimary;
+
     return Semantics(
       checked: value,
       child: InkWell(
@@ -105,19 +106,15 @@ class _Checkbox extends StatelessWidget {
               width: 19,
               height: 19,
               decoration: BoxDecoration(
-                color: value ? AppColors.primary : AppColors.transparent,
+                color: value ? primary : AppColors.transparent,
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
-                  color: value ? AppColors.primary : AppColors.borderStrong,
+                  color: value ? primary : AppColors.borderStrong,
                   width: 1.5,
                 ),
               ),
               child: value
-                  ? const Icon(
-                      Icons.check_rounded,
-                      size: 14,
-                      color: AppColors.onPrimary,
-                    )
+                  ? Icon(Icons.check_rounded, size: 14, color: onPrimary)
                   : null,
             ),
           ),

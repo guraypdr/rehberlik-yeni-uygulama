@@ -1,21 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../core/theme/app_theme.dart';
-import '../shared/layout/app_shell.dart';
+import '../core/providers/theme_provider.dart';
+import 'app_router.dart';
 
 /// Uygulamanın kök widget'ı.
-class RehberlikApp extends StatelessWidget {
+class RehberlikApp extends ConsumerWidget {
   const RehberlikApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(routerProvider);
+    final themeData = ref.watch(themeProvider).lightTheme;
+
+    return MaterialApp.router(
       title: 'Rehberlik',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      // İleride koyu tema eklendiğinde yalnızca bu satır güncellenecek;
-      // renkler merkezî olarak tanımlandığı için widget'lar değişmez.
+      theme: themeData,
       themeMode: ThemeMode.light,
       locale: const Locale('tr'),
       supportedLocales: const [Locale('tr')],
@@ -24,7 +26,7 @@ class RehberlikApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: const AppShell(),
+      routerConfig: router,
     );
   }
 }

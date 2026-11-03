@@ -28,14 +28,15 @@ class _SidebarItemState extends State<SidebarItem> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final selected = widget.selected;
     final backgroundColor = selected
-        ? AppColors.primarySoft
+        ? colorScheme.primaryContainer
         : _hovered
         ? AppColors.hover
         : AppColors.transparent;
     final foregroundColor = selected
-        ? AppColors.primaryHover
+        ? colorScheme.primary
         : AppColors.textSecondary;
 
     final content = AnimatedContainer(

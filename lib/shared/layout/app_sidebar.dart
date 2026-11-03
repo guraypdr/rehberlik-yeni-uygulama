@@ -15,11 +15,13 @@ class AppSidebar extends StatelessWidget {
     required this.selectedId,
     required this.onSelected,
     required this.collapsed,
+    this.schoolName = 'Rehberlik',
   });
 
   final List<AppDestination> destinations;
   final String selectedId;
   final ValueChanged<String> onSelected;
+  final String schoolName;
 
   /// Dar pencerede menü yalnızca ikon olarak gösterilir.
   final bool collapsed;
@@ -34,7 +36,7 @@ class AppSidebar extends StatelessWidget {
     return Container(
       key: const Key('sidebar'),
       width: width,
-      color: AppColors.sidebarBackground,
+      color: AppColors.sidebarBg,
       child: Padding(
         padding: EdgeInsets.fromLTRB(
           AppSpacing.md,
@@ -45,7 +47,7 @@ class AppSidebar extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _Brand(collapsed: collapsed),
+            _Brand(collapsed: collapsed, schoolName: schoolName),
             SizedBox(height: collapsed ? AppSpacing.xl : AppSpacing.xxl),
             Expanded(
               child: ListView(
@@ -73,23 +75,25 @@ class AppSidebar extends StatelessWidget {
 }
 
 class _Brand extends StatelessWidget {
-  const _Brand({required this.collapsed});
+  const _Brand({required this.collapsed, required this.schoolName});
 
   final bool collapsed;
+  final String schoolName;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final mark = Container(
       width: 38,
       height: 38,
       decoration: BoxDecoration(
-        color: AppColors.primary,
+        color: colorScheme.primary,
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
-      child: const Icon(
+      child: Icon(
         Icons.psychology_alt_outlined,
-        color: AppColors.onPrimary,
+        color: colorScheme.onPrimary,
         size: 21,
       ),
     );
@@ -106,7 +110,7 @@ class _Brand extends StatelessWidget {
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Text(
-              'Rehberlik',
+              schoolName,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.titleMedium,

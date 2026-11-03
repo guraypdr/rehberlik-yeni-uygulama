@@ -1,66 +1,49 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../shared/di/app_scope.dart';
 import '../../../shared/widgets/page_header.dart';
 import '../domain/todo_item.dart';
-import 'todo_controller.dart';
+import 'todos_provider.dart';
 import 'widgets/todo_composer.dart';
 import 'widgets/todo_row.dart';
 
 /// Yapılacaklar Listesi.
-///
-/// Aşama 1'de görevler bellekte tutulur. Veri kaynağı
-/// [TodoController] üzerinden değiştirilebilir olacaktır.
-class TodosPage extends StatelessWidget {
+class TodosPage extends ConsumerWidget {
   const TodosPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final controller = AppScope.of(context).todos;
-    return ListenableBuilder(
-      listenable: controller,
-      builder: (context, _) {
-        return Column(
-          // Alt bileşenler (özellikle ekleme alanı) içerik genişliğine göre
-          // dizilsin diye tüm satırlar tam genişlikte açılır.
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            PageHeader(title: 'Yapılacaklar', subtitle: controller.summary),
-            const TodoComposer(),
-            const SizedBox(height: AppSpacing.xl),
-            Expanded(child: _TodoList(controller: controller)),
-          ],
-        );
-      },
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncState = ref.watch(todosProvider);
+
+    return asyncState.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Hata: $e')),
+      data: (state) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          PageHeader(title: 'Yapılacaklar', subtitle: state.summary),
+          const TodoComposer(),
+          const SizedBox(height: AppSpacing.xl),
+          Expanded(child: _TodoList(state: state)),
+        ],
+      ),
     );
   }
 }
 
-class _TodoList extends StatelessWidget {
-  const _TodoList({required this.controller});
+class _TodoList extends ConsumerWidget {
+  const _TodoList({required this.state});
 
-  final TodoController controller;
+  final TodosState state;
 
   @override
-  Widget build(BuildContext context) {
-    if (controller.isLoading) {
-      return const Center(
-        child: SizedBox(
-          width: 22,
-          height: 22,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      );
-    }
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (state.isEmpty) return const _EmptyState();
 
-    final items = controller.items;
-    if (items.isEmpty) {
-      return const _EmptyState();
-    }
-
-    final pending = items.where((item) => !item.isCompleted).toList();
-    final completed = items.where((item) => item.isCompleted).toList();
+    final pending = state.items.where((i) => !i.isCompleted).toList();
+    final completed = state.items.where((i) => i.isCompleted).toList();
+    final notifier = ref.read(todosProvider.notifier);
 
     return ListView(
       key: const Key('todo_list'),
@@ -70,7 +53,7 @@ class _TodoList extends StatelessWidget {
           _TodoGroup(
             title: 'Açık görevler',
             items: pending,
-            controller: controller,
+            notifier: notifier,
           ),
         if (pending.isNotEmpty && completed.isNotEmpty)
           const SizedBox(height: AppSpacing.xl),
@@ -78,25 +61,23 @@ class _TodoList extends StatelessWidget {
           _TodoGroup(
             title: 'Tamamlananlar',
             items: completed,
-            controller: controller,
+            notifier: notifier,
           ),
       ],
     );
   }
 }
 
-/// Başlıklı, tek yüzeyli görev grubu. Her görev kendi kutusunda değil, aynı
-/// yüzeyde satır olarak gösterilir; arayüz kalabalıklaşmaz.
 class _TodoGroup extends StatelessWidget {
   const _TodoGroup({
     required this.title,
     required this.items,
-    required this.controller,
+    required this.notifier,
   });
 
   final String title;
   final List<TodoItem> items;
-  final TodoController controller;
+  final TodosNotifier notifier;
 
   @override
   Widget build(BuildContext context) {
@@ -119,18 +100,18 @@ class _TodoGroup extends StatelessWidget {
           ),
           child: Column(
             children: [
-              for (var index = 0; index < items.length; index++) ...[
-                if (index > 0)
+              for (var i = 0; i < items.length; i++) ...[
+                if (i > 0)
                   const Divider(
                     height: 1,
                     indent: AppSpacing.lg,
                     endIndent: AppSpacing.lg,
                   ),
                 TodoRow(
-                  key: ValueKey<String>(items[index].id),
-                  todo: items[index],
-                  onToggle: () => controller.toggleTodo(items[index]),
-                  onDelete: () => controller.removeTodo(items[index].id),
+                  key: ValueKey<int>(items[i].id),
+                  todo: items[i],
+                  onToggle: () => notifier.toggleTodo(items[i]),
+                  onDelete: () => notifier.removeTodo(items[i].id),
                 ),
               ],
             ],

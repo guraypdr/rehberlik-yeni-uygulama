@@ -41,12 +41,12 @@ class _EmptyStart extends StatelessWidget {
                 width: 52,
                 height: 52,
                 decoration: BoxDecoration(
-                  color: AppColors.primarySoft,
+                  color: Theme.of(context).colorScheme.primaryContainer,
                   borderRadius: BorderRadius.circular(AppRadius.lg),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.dashboard_outlined,
-                  color: AppColors.primary,
+                  color: Theme.of(context).colorScheme.primary,
                   size: 24,
                 ),
               ),

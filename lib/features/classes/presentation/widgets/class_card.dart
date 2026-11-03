@@ -1,0 +1,80 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../core/theme/app_theme.dart';
+import '../../domain/school_class.dart';
+import '../classes_provider.dart';
+
+/// Tek bir şubenin kartı.
+class ClassCard extends ConsumerWidget {
+  const ClassCard({super.key, required this.schoolClass});
+
+  final SchoolClass schoolClass;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final notifier = ref.read(classesProvider.notifier);
+
+    return Card(
+      elevation: 0,
+      color: AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        side: const BorderSide(color: AppColors.border),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Row(
+          children: [
+            // Düzey rozeti
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: AppSpacing.xs,
+              ),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primaryContainer,
+                borderRadius: const BorderRadius.all(
+                  Radius.circular(AppRadius.sm),
+                ),
+              ),
+              child: Text(
+                schoolClass.gradeLevelLabel,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    schoolClass.displayName,
+                    style: theme.textTheme.titleSmall,
+                  ),
+                  if (schoolClass.fieldName != null)
+                    Text(
+                      schoolClass.fieldName!,
+                      style: theme.textTheme.bodySmall,
+                    ),
+                ],
+              ),
+            ),
+            IconButton(
+              key: Key('class_delete_${schoolClass.id}'),
+              onPressed: () => notifier.deleteClass(schoolClass.id),
+              visualDensity: VisualDensity.compact,
+              tooltip: 'Şubeyi sil',
+              icon: const Icon(Icons.delete_outline_rounded, size: 19),
+              color: AppColors.danger,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
