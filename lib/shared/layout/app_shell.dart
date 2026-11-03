@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/providers/session_provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../navigation/app_navigation.dart';
 import 'app_sidebar.dart';
@@ -22,9 +21,6 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   @override
   Widget build(BuildContext context) {
-    final session = ref.watch(sessionProvider).valueOrNull;
-    final schoolName = session?.schoolProfile?.name ?? 'Rehberlik';
-
     return LayoutBuilder(
       builder: (context, constraints) {
         final collapsed = constraints.maxWidth < 1000;
@@ -39,7 +35,6 @@ class _AppShellState extends ConsumerState<AppShell> {
                   selectedId: _selectedId,
                   collapsed: collapsed,
                   onSelected: _selectDestination,
-                  schoolName: schoolName,
                 ),
                 const VerticalDivider(width: 1, color: AppColors.border),
                 Expanded(
