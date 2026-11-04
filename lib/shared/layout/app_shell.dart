@@ -9,18 +9,13 @@ import 'app_top_bar.dart';
 ///
 /// Üstte [AppTopBar] (yatay navigasyon), altında seçili sayfa içeriği.
 /// Sayfalar [IndexedStack] içinde tutulur — değiştirince state kaybolmaz.
-class AppShell extends ConsumerStatefulWidget {
+class AppShell extends ConsumerWidget {
   const AppShell({super.key});
 
   @override
-  ConsumerState<AppShell> createState() => _AppShellState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedId = ref.watch(navigationProvider);
 
-class _AppShellState extends ConsumerState<AppShell> {
-  String _selectedId = initialDestinationId;
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -29,21 +24,17 @@ class _AppShellState extends ConsumerState<AppShell> {
             // ── Üst navigasyon çubuğu ──────────────────────────────────
             AppTopBar(
               destinations: appDestinations,
-              selectedId: _selectedId,
-              onSelected: _select,
+              selectedId: selectedId,
+              onSelected: (id) =>
+                  ref.read(navigationProvider.notifier).select(id),
             ),
 
             // ── Sayfa içeriği ──────────────────────────────────────────
-            Expanded(child: _ContentArea(selectedId: _selectedId)),
+            Expanded(child: _ContentArea(selectedId: selectedId)),
           ],
         ),
       ),
     );
-  }
-
-  void _select(String id) {
-    if (_selectedId == id) return;
-    setState(() => _selectedId = id);
   }
 }
 

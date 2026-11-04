@@ -9,10 +9,10 @@ import '../../core/providers/session_provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../navigation/app_navigation.dart';
 
-/// Referans görüntüsündeki üst yatay navigasyon çubuğu.
+/// Üst yatay navigasyon çubuğu.
 ///
 /// Yapı:
-///   [Logo + Okul Adı]  [Nav linkleri...]  [Dosya | Ayarlar]
+///   [Logo + ProRehber]  ── (Ortalanmış Nav linkleri) ──  [Dosya | Aksiyonlar]
 ///
 /// Dar ekranlarda nav linkleri yerine hamburger menü açılır.
 class AppTopBar extends ConsumerStatefulWidget {
@@ -38,7 +38,6 @@ class _AppTopBarState extends ConsumerState<AppTopBar> {
   @override
   Widget build(BuildContext context) {
     final session   = ref.watch(sessionProvider).valueOrNull;
-    final profile   = session?.schoolProfile;
     final filePath  = session?.filePath;
     final fileName  = filePath != null ? p.basenameWithoutExtension(filePath) : null;
 
@@ -61,25 +60,29 @@ class _AppTopBarState extends ConsumerState<AppTopBar> {
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
         child: LayoutBuilder(
           builder: (context, constraints) {
-            // 800px altında nav linkleri sığmaz → hamburger göster
-            final compact = constraints.maxWidth < 800;
+            // 820px altında nav linkleri sığmaz → hamburger göster
+            final compact = constraints.maxWidth < 820;
 
             return Row(
               children: [
-                // ── Logo + Okul adı ─────────────────────────────────────
-                _Brand(schoolName: profile?.name ?? 'Rehberlik'),
+                // ── Sol: Logo + ProRehber ───────────────────────────────
+                const _Brand(),
 
-                // ── Nav linkleri (geniş ekran) ───────────────────────────
-                if (!compact) ...[
-                  const SizedBox(width: AppSpacing.xl),
+                // ── Orta: Ortalanmış Nav linkleri ───────────────────────
+                if (!compact)
                   Expanded(
-                    child: _NavLinks(
-                      destinations: widget.destinations,
-                      selectedId: widget.selectedId,
-                      onSelected: widget.onSelected,
+                    child: Center(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: _NavLinks(
+                          destinations: widget.destinations,
+                          selectedId: widget.selectedId,
+                          onSelected: widget.onSelected,
+                        ),
+                      ),
                     ),
-                  ),
-                ] else
+                  )
+                else
                   const Spacer(),
 
                 // ── Sağ aksiyonlar ───────────────────────────────────────
@@ -100,12 +103,11 @@ class _AppTopBarState extends ConsumerState<AppTopBar> {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// Logo + Okul adı
+// Logo + ProRehber Markası
 // ────────────────────────────────────────────────────────────────────────────
 
 class _Brand extends StatelessWidget {
-  const _Brand({required this.schoolName});
-  final String schoolName;
+  const _Brand();
 
   @override
   Widget build(BuildContext context) {
@@ -123,17 +125,18 @@ class _Brand extends StatelessWidget {
             color: cs.primary,
             borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
           ),
-          child: Icon(Icons.psychology_alt_outlined,
-              color: cs.onPrimary, size: 18),
+          child: Icon(
+            Icons.psychology_alt_outlined,
+            color: cs.onPrimary,
+            size: 18,
+          ),
         ),
         const SizedBox(width: AppSpacing.sm),
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 180),
-          child: Text(
-            schoolName,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: t.titleMedium,
+        Text(
+          'ProRehber',
+          style: t.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.2,
           ),
         ),
       ],
@@ -160,6 +163,7 @@ class _NavLinks extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         for (final dest in destinations)
           _NavItem(
@@ -206,6 +210,7 @@ class _NavItemState extends State<_NavItem> {
         onExit:  (_) => setState(() => _hov = false),
         child: GestureDetector(
           onTap: widget.onTap,
+          behavior: HitTestBehavior.opaque,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 140),
             margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 9),
@@ -308,17 +313,17 @@ class _RightActions extends ConsumerWidget {
           onTap: () => _newFile(context, ref),
         ),
 
-        const SizedBox(width: AppSpacing.xs),
-        const _VerticalDivider(),
-        const SizedBox(width: AppSpacing.xs),
-
         // Hamburger (dar ekran)
-        if (compact)
+        if (compact) ...[
+          const SizedBox(width: AppSpacing.xs),
+          const _VerticalDivider(),
+          const SizedBox(width: AppSpacing.xs),
           _HamburgerBtn(
             destinations: destinations,
             selectedId: selectedId,
             onSelected: onSelected,
           ),
+        ],
       ],
     );
   }
@@ -391,6 +396,7 @@ class _BarIconBtnState extends State<_BarIconBtn> {
         onExit:  (_) => setState(() => _hov = false),
         child: GestureDetector(
           onTap: widget.onTap,
+          behavior: HitTestBehavior.opaque,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 120),
             width: 36,

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/classes/presentation/classes_page.dart';
 import '../../features/home/presentation/home_page.dart';
 import '../../features/settings/presentation/settings_page.dart';
+import '../../features/students/presentation/students_page.dart';
 import '../../features/teachers/presentation/teachers_page.dart';
 import '../../features/todos/presentation/todos_page.dart';
 
-/// Sol menüdeki bir modülü tanımlar.
+/// Üst/sol menüdeki bir modülü tanımlar.
 class AppDestination {
   const AppDestination({
     required this.id,
@@ -24,6 +26,22 @@ class AppDestination {
 /// Uygulama açılışında seçili modül.
 const String initialDestinationId = 'home';
 
+/// Aktif sekme durumu.
+class NavigationNotifier extends Notifier<String> {
+  @override
+  String build() => initialDestinationId;
+
+  void select(String destinationId) {
+    if (state != destinationId) {
+      state = destinationId;
+    }
+  }
+}
+
+final navigationProvider = NotifierProvider<NavigationNotifier, String>(
+  NavigationNotifier.new,
+);
+
 /// Modül listesi ve sırası.
 const List<AppDestination> appDestinations = <AppDestination>[
   AppDestination(
@@ -31,6 +49,12 @@ const List<AppDestination> appDestinations = <AppDestination>[
     label: 'Ana Sayfa',
     icon: Icons.dashboard_outlined,
     builder: _buildHomePage,
+  ),
+  AppDestination(
+    id: 'students',
+    label: 'Öğrenciler',
+    icon: Icons.people_outline,
+    builder: _buildStudentsPage,
   ),
   AppDestination(
     id: 'classes',
@@ -59,6 +83,7 @@ const List<AppDestination> appDestinations = <AppDestination>[
 ];
 
 Widget _buildHomePage(BuildContext context) => const HomePage();
+Widget _buildStudentsPage(BuildContext context) => const StudentsPage();
 Widget _buildClassesPage(BuildContext context) => const ClassesPage();
 Widget _buildTeachersPage(BuildContext context) => const TeachersPage();
 Widget _buildTodosPage(BuildContext context) => const TodosPage();

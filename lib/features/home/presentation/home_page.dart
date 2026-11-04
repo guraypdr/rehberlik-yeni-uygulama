@@ -5,11 +5,13 @@ import '../../../core/providers/session_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../features/classes/presentation/classes_provider.dart';
 import '../../../features/setup/domain/school_profile.dart';
+import '../../../features/students/presentation/students_provider.dart';
 import '../../../features/teachers/presentation/teachers_provider.dart';
 import '../../../features/todos/domain/todo_item.dart';
 import '../../../features/todos/presentation/todos_provider.dart';
+import '../../../shared/navigation/app_navigation.dart';
 
-/// Ana Sayfa — PansiyonPro referans tasarımına uygun dashboard.
+/// Ana Sayfa — Referans tasarıma uygun dashboard.
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
@@ -19,6 +21,7 @@ class HomePage extends ConsumerWidget {
     final teachers = ref.watch(teachersProvider).valueOrNull ?? [];
     final classes =
         ref.watch(classesProvider).valueOrNull ?? const ClassesState();
+    final students = ref.watch(studentsProvider).valueOrNull ?? [];
     final profile = ref.watch(sessionProvider).valueOrNull?.schoolProfile;
 
     return LayoutBuilder(
@@ -36,9 +39,9 @@ class HomePage extends ConsumerWidget {
               // ── İstatistik satırı ───────────────────────────────────────
               _StatsRow(
                 wide: wide,
-                teacherCount: teachers.length,
+                studentCount: students.length,
                 classCount: classes.classes.length,
-                levelCount: classes.gradeLevels.length,
+                teacherCount: teachers.length,
                 pendingCount: todos.pendingCount,
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -152,49 +155,53 @@ class _DateChip extends StatelessWidget {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// İstatistik satırı — 4 kart
+// İstatistik satırı — 4 kart (tıklanabilir)
 // ────────────────────────────────────────────────────────────────────────────
 
-class _StatsRow extends StatelessWidget {
+class _StatsRow extends ConsumerWidget {
   const _StatsRow({
     required this.wide,
-    required this.teacherCount,
+    required this.studentCount,
     required this.classCount,
-    required this.levelCount,
+    required this.teacherCount,
     required this.pendingCount,
   });
 
   final bool wide;
-  final int teacherCount, classCount, levelCount, pendingCount;
+  final int studentCount, classCount, teacherCount, pendingCount;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
 
     final cards = [
       _StatCard(
-        value: '$teacherCount',
-        label: 'Öğretmen',
-        icon: Icons.person_outline_rounded,
+        value: '$studentCount',
+        label: 'Öğrenci',
+        icon: Icons.people_outline,
         color: cs.primary,
+        onTap: () => ref.read(navigationProvider.notifier).select('students'),
       ),
       _StatCard(
         value: '$classCount',
         label: 'Şube',
         icon: Icons.meeting_room_outlined,
         color: const Color(0xFF7C5CBF),
+        onTap: () => ref.read(navigationProvider.notifier).select('classes'),
       ),
       _StatCard(
-        value: '$levelCount',
-        label: 'Sınıf Düzeyi',
-        icon: Icons.layers_outlined,
+        value: '$teacherCount',
+        label: 'Öğretmen',
+        icon: Icons.person_outline_rounded,
         color: const Color(0xFF2A8A5E),
+        onTap: () => ref.read(navigationProvider.notifier).select('teachers'),
       ),
       _StatCard(
         value: '$pendingCount',
         label: 'Açık Görev',
         icon: Icons.checklist_rtl_outlined,
         color: const Color(0xFFD4841A),
+        onTap: () => ref.read(navigationProvider.notifier).select('todos'),
       ),
     ];
 
@@ -226,61 +233,70 @@ class _StatCard extends StatelessWidget {
     required this.label,
     required this.icon,
     required this.color,
+    this.onTap,
   });
 
   final String value, label;
   final IconData icon;
   final Color color;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: AppSpacing.md,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: const BorderRadius.all(Radius.circular(AppRadius.lg)),
-        border: Border.all(color: AppColors.border),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x07000000),
-            blurRadius: 6,
-            offset: Offset(0, 2),
+    return MouseRegion(
+      cursor: onTap != null ? SystemMouseCursors.click : SystemMouseCursors.basic,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md,
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.10),
-              borderRadius: const BorderRadius.all(
-                Radius.circular(AppRadius.md),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: const BorderRadius.all(Radius.circular(AppRadius.lg)),
+            border: Border.all(color: AppColors.border),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x07000000),
+                blurRadius: 6,
+                offset: Offset(0, 2),
               ),
-            ),
-            child: Icon(icon, color: color, size: 20),
+            ],
           ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  value,
-                  style: t.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.10),
+                  borderRadius: const BorderRadius.all(
+                    Radius.circular(AppRadius.md),
+                  ),
                 ),
-                Text(label, style: t.bodySmall),
-              ],
-            ),
+                child: Icon(icon, color: color, size: 20),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      value,
+                      style: t.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                    Text(label, style: t.bodySmall),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -317,7 +333,7 @@ class _WideBody extends StatelessWidget {
           flex: 6,
           child: Column(
             children: [
-              _QuickAccessCard(),
+              const _QuickAccessCard(),
               const SizedBox(height: AppSpacing.lg),
               _TodoSummaryCard(todos: todos),
             ],
@@ -339,7 +355,7 @@ class _NarrowBody extends StatelessWidget {
       children: [
         _HeroCard(profile: profile),
         const SizedBox(height: AppSpacing.lg),
-        _QuickAccessCard(),
+        const _QuickAccessCard(),
         const SizedBox(height: AppSpacing.lg),
         _SchoolInfoCard(profile: profile),
         const SizedBox(height: AppSpacing.lg),
@@ -350,7 +366,7 @@ class _NarrowBody extends StatelessWidget {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// Vurgu kartı (büyük renkli kart — referanstaki mavi kart)
+// Vurgu kartı
 // ────────────────────────────────────────────────────────────────────────────
 
 class _HeroCard extends StatelessWidget {
@@ -437,7 +453,7 @@ class _HeroCard extends StatelessWidget {
                   label: profile!.schoolType.label,
                 ),
               if (profile?.hasPrep == true)
-                _WhiteOutlinedBadge(
+                const _WhiteOutlinedBadge(
                   icon: Icons.auto_stories_outlined,
                   label: 'Hazırlık',
                 ),
@@ -517,15 +533,15 @@ class _WhiteOutlinedBadge extends StatelessWidget {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// Okul bilgisi kartı (referanstaki "Pansiyon Bilgisi" kartı)
+// Okul bilgisi kartı
 // ────────────────────────────────────────────────────────────────────────────
 
-class _SchoolInfoCard extends StatelessWidget {
+class _SchoolInfoCard extends ConsumerWidget {
   const _SchoolInfoCard({required this.profile});
   final SchoolProfile? profile;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final t = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
 
@@ -534,6 +550,7 @@ class _SchoolInfoCard extends StatelessWidget {
     return _DashCard(
       title: 'Okul Bilgisi',
       actionLabel: 'Ayarlar',
+      onAction: () => ref.read(navigationProvider.notifier).select('settings'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -621,30 +638,42 @@ class _InfoCell extends StatelessWidget {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// Hızlı erişim kartı
+// Hızlı erişim kartı (çalışır butonlar)
 // ────────────────────────────────────────────────────────────────────────────
 
-class _QuickAccessCard extends StatelessWidget {
+class _QuickAccessCard extends ConsumerWidget {
+  const _QuickAccessCard();
+
   @override
-  Widget build(BuildContext context) {
-    final items = [
+  Widget build(BuildContext context, WidgetRef ref) {
+    final items = const [
       _QItem(
-        Icons.person_outline_rounded,
-        'Öğretmenler',
-        'Öğretmen kayıtları',
-        const Color(0xFF3B7DD8),
+        icon: Icons.people_outline,
+        label: 'Öğrenciler',
+        sub: 'Öğrenci dosyaları ve görüşmeler',
+        color: Color(0xFF2563EB),
+        destinationId: 'students',
       ),
       _QItem(
-        Icons.meeting_room_outlined,
-        'Sınıflar',
-        'Şube yönetimi',
-        const Color(0xFF7C5CBF),
+        icon: Icons.meeting_room_outlined,
+        label: 'Sınıflar',
+        sub: 'Şube yönetimi',
+        color: Color(0xFF7C5CBF),
+        destinationId: 'classes',
       ),
       _QItem(
-        Icons.checklist_rtl_outlined,
-        'Yapılacaklar',
-        'Görev listesi',
-        const Color(0xFFD4841A),
+        icon: Icons.person_outline_rounded,
+        label: 'Öğretmenler',
+        sub: 'Öğretmen kayıtları',
+        color: Color(0xFF0D9488),
+        destinationId: 'teachers',
+      ),
+      _QItem(
+        icon: Icons.checklist_rtl_outlined,
+        label: 'Yapılacaklar',
+        sub: 'Görev listesi',
+        color: Color(0xFFD4841A),
+        destinationId: 'todos',
       ),
     ];
 
@@ -655,7 +684,12 @@ class _QuickAccessCard extends StatelessWidget {
         children: [
           for (var i = 0; i < items.length; i++) ...[
             if (i > 0) const Divider(height: 1, indent: 48, endIndent: 0),
-            _QRow(item: items[i]),
+            _QRow(
+              item: items[i],
+              onTap: () => ref
+                  .read(navigationProvider.notifier)
+                  .select(items[i].destinationId),
+            ),
           ],
         ],
       ),
@@ -664,15 +698,24 @@ class _QuickAccessCard extends StatelessWidget {
 }
 
 class _QItem {
-  const _QItem(this.icon, this.label, this.sub, this.color);
+  const _QItem({
+    required this.icon,
+    required this.label,
+    required this.sub,
+    required this.color,
+    required this.destinationId,
+  });
+
   final IconData icon;
   final String label, sub;
   final Color color;
+  final String destinationId;
 }
 
 class _QRow extends StatefulWidget {
-  const _QRow({required this.item});
+  const _QRow({required this.item, required this.onTap});
   final _QItem item;
+  final VoidCallback onTap;
 
   @override
   State<_QRow> createState() => _QRowState();
@@ -686,47 +729,59 @@ class _QRowState extends State<_QRow> {
     final t = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
 
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hov = true),
-      onExit: (_) => setState(() => _hov = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 120),
-        color: _hov ? AppColors.hover : Colors.transparent,
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.md,
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: widget.item.color.withValues(alpha: 0.10),
-                borderRadius: const BorderRadius.all(
-                  Radius.circular(AppRadius.sm),
+    return Semantics(
+      button: true,
+      label: widget.item.label,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _hov = true),
+        onExit: (_) => setState(() => _hov = false),
+        child: GestureDetector(
+          onTap: widget.onTap,
+          behavior: HitTestBehavior.opaque,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 120),
+            color: _hov ? AppColors.hover : Colors.transparent,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.md,
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: widget.item.color.withValues(alpha: 0.10),
+                    borderRadius: const BorderRadius.all(
+                      Radius.circular(AppRadius.sm),
+                    ),
+                  ),
+                  child: Icon(
+                    widget.item.icon,
+                    size: 16,
+                    color: widget.item.color,
+                  ),
                 ),
-              ),
-              child: Icon(widget.item.icon, size: 16, color: widget.item.color),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(widget.item.label, style: t.labelLarge),
+                      Text(widget.item.sub, style: t.bodySmall),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 18,
+                  color: _hov ? cs.primary : AppColors.textMuted,
+                ),
+              ],
             ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(widget.item.label, style: t.labelLarge),
-                  Text(widget.item.sub, style: t.bodySmall),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.chevron_right_rounded,
-              size: 18,
-              color: _hov ? cs.primary : AppColors.textMuted,
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -737,12 +792,12 @@ class _QRowState extends State<_QRow> {
 // Yapılacaklar özeti kartı
 // ────────────────────────────────────────────────────────────────────────────
 
-class _TodoSummaryCard extends StatelessWidget {
+class _TodoSummaryCard extends ConsumerWidget {
   const _TodoSummaryCard({required this.todos});
   final TodosState todos;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final t = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
     final total = todos.pendingCount + todos.completedCount;
@@ -752,6 +807,7 @@ class _TodoSummaryCard extends StatelessWidget {
     return _DashCard(
       title: 'Yapılacaklar',
       actionLabel: '${todos.pendingCount} açık',
+      onAction: () => ref.read(navigationProvider.notifier).select('todos'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -788,7 +844,7 @@ class _TodoSummaryCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
               child: Row(
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.check_circle_outline_rounded,
                     color: AppColors.success,
                     size: 18,
@@ -846,7 +902,7 @@ class _TodoLine extends StatelessWidget {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// Ortak kart çerçevesi (referanstaki beyaz kartlar)
+// Ortak kart çerçevesi
 // ────────────────────────────────────────────────────────────────────────────
 
 class _DashCard extends StatelessWidget {
@@ -854,12 +910,14 @@ class _DashCard extends StatelessWidget {
     required this.title,
     required this.child,
     this.actionLabel,
+    this.onAction,
     this.trailingIcon,
   });
 
   final String title;
   final Widget child;
   final String? actionLabel;
+  final VoidCallback? onAction;
   final IconData? trailingIcon;
 
   @override
@@ -897,20 +955,28 @@ class _DashCard extends StatelessWidget {
                 Text(title, style: t.titleSmall),
                 const Spacer(),
                 if (actionLabel != null)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.sm,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: cs.primaryContainer,
-                      borderRadius: const BorderRadius.all(
-                        Radius.circular(AppRadius.pill),
+                  MouseRegion(
+                    cursor: onAction != null
+                        ? SystemMouseCursors.click
+                        : SystemMouseCursors.basic,
+                    child: GestureDetector(
+                      onTap: onAction,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.sm,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: cs.primaryContainer,
+                          borderRadius: const BorderRadius.all(
+                            Radius.circular(AppRadius.pill),
+                          ),
+                        ),
+                        child: Text(
+                          actionLabel!,
+                          style: t.labelMedium?.copyWith(color: cs.primary),
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      actionLabel!,
-                      style: t.labelMedium?.copyWith(color: cs.primary),
                     ),
                   ),
                 if (trailingIcon != null)

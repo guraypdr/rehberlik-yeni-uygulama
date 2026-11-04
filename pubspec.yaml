@@ -4,7 +4,7 @@ publish_to: 'none'
 version: 0.2.0+1
 
 environment:
-  sdk: ^3.11.0
+  sdk: ^3.10.0
 
 dependencies:
   flutter:
@@ -28,7 +28,7 @@ dependencies:
   file_picker: ^8.3.7
 
   # Kalıcı basit ayarlar (tema rengi, son dosyalar listesi)
-  shared_preferences: ^2.5.6
+  shared_preferences: ^2.5.5
 
   # Routing
   go_router: ^14.8.1
