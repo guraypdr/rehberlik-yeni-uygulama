@@ -34,11 +34,19 @@ class SchoolProfile {
   /// Lise türünde hazırlık sınıfı var mı?
   final bool hasPrep;
 
-  /// Meslek lisesi alanları (örn. ["Bilişim", "Elektrik"]).
+  /// Okuldaki alanlar (örn. ["Sayısal", "Sözel"]).
   final List<String> fields;
 
   /// Veritabanının oluşturulma tarihi.
   final DateTime createdAt;
+
+  SchoolProfile copyWith({List<String>? fields}) => SchoolProfile(
+    name: name,
+    schoolType: schoolType,
+    hasPrep: hasPrep,
+    fields: fields ?? this.fields,
+    createdAt: createdAt,
+  );
 
   /// Bu okul türünde sınıf düzeyi etiketlerini döner (sıralı).
   List<String> get gradeLevelLabels {
@@ -61,13 +69,13 @@ class SchoolProfile {
   }
 
   Map<String, Object?> toMap() => {
-        'id': 1,
-        'name': name,
-        'school_type': schoolType.name,
-        'has_prep': hasPrep ? 1 : 0,
-        'fields': fields.isEmpty ? null : jsonEncode(fields),
-        'created_at': createdAt.toIso8601String(),
-      };
+    'id': 1,
+    'name': name,
+    'school_type': schoolType.name,
+    'has_prep': hasPrep ? 1 : 0,
+    'fields': fields.isEmpty ? null : jsonEncode(fields),
+    'created_at': createdAt.toIso8601String(),
+  };
 
   static SchoolProfile fromMap(Map<String, Object?> map) {
     final rawFields = map['fields'] as String?;

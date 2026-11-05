@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
@@ -14,7 +16,7 @@ class FieldChipEditor extends StatefulWidget {
   });
 
   final List<String> fields;
-  final ValueChanged<List<String>> onChanged;
+  final FutureOr<void> Function(List<String>) onChanged;
 
   @override
   State<FieldChipEditor> createState() => _FieldChipEditorState();
@@ -31,20 +33,22 @@ class _FieldChipEditorState extends State<FieldChipEditor> {
     super.dispose();
   }
 
-  void _add() {
+  Future<void> _add() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
-    if (widget.fields.contains(text)) {
+    if (widget.fields.any(
+      (field) => field.toLowerCase() == text.toLowerCase(),
+    )) {
       _controller.clear();
       return;
     }
-    widget.onChanged([...widget.fields, text]);
+    await widget.onChanged([...widget.fields, text]);
     _controller.clear();
     _focusNode.requestFocus();
   }
 
-  void _remove(String field) {
-    widget.onChanged(widget.fields.where((f) => f != field).toList());
+  Future<void> _remove(String field) async {
+    await widget.onChanged(widget.fields.where((f) => f != field).toList());
   }
 
   @override

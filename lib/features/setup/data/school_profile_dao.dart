@@ -52,4 +52,19 @@ class SchoolProfileDao {
     if (rows.isEmpty) return null;
     return SchoolProfile.fromMap(rows.first);
   }
+
+  /// Updates the field list without changing the rest of the school profile.
+  Future<void> updateFields(List<String> fields) async {
+    final profile = await fetchProfile();
+    if (profile == null) {
+      throw StateError('Okul profili bulunamadı.');
+    }
+
+    final updated = await _db.db.update('school_profile', {
+      'fields': profile.copyWith(fields: fields).toMap()['fields'],
+    }, where: 'id = 1');
+    if (updated != 1) {
+      throw StateError('Okul alanları kaydedilemedi.');
+    }
+  }
 }

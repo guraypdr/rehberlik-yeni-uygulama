@@ -2,19 +2,40 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../domain/grade_level.dart';
 import '../../domain/school_class.dart';
 import '../classes_provider.dart';
+import 'class_edit_dialog.dart';
 
 /// Tek bir şubenin kartı.
 class ClassCard extends ConsumerWidget {
-  const ClassCard({super.key, required this.schoolClass});
+  const ClassCard({
+    super.key,
+    required this.schoolClass,
+    required this.gradeLevels,
+    this.fields = const [],
+  });
 
   final SchoolClass schoolClass;
+  final List<GradeLevel> gradeLevels;
+  final List<String> fields;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final notifier = ref.read(classesProvider.notifier);
+
+    Future<void> editClass() async {
+      final updated = await showDialog<SchoolClass>(
+        context: context,
+        builder: (context) => ClassEditDialog(
+          schoolClass: schoolClass,
+          gradeLevels: gradeLevels,
+          fields: fields,
+        ),
+      );
+      if (updated != null) await notifier.updateClass(updated);
+    }
 
     return Card(
       elevation: 0,
@@ -56,13 +77,15 @@ class ClassCard extends ConsumerWidget {
                     schoolClass.displayName,
                     style: theme.textTheme.titleSmall,
                   ),
-                  if (schoolClass.fieldName != null)
-                    Text(
-                      schoolClass.fieldName!,
-                      style: theme.textTheme.bodySmall,
-                    ),
                 ],
               ),
+            ),
+            IconButton(
+              key: Key('class_edit_${schoolClass.id}'),
+              onPressed: editClass,
+              visualDensity: VisualDensity.compact,
+              tooltip: 'Sınıfı düzenle',
+              icon: const Icon(Icons.edit_outlined, size: 19),
             ),
             IconButton(
               key: Key('class_delete_${schoolClass.id}'),

@@ -71,6 +71,21 @@ class SessionNotifier extends AsyncNotifier<SessionState> {
     });
   }
 
+  /// Updates the active school's field list and publishes the new profile.
+  Future<void> updateSchoolFields(List<String> fields) async {
+    final current = state.valueOrNull;
+    final database = current?.database;
+    final profile = current?.schoolProfile;
+    if (database == null || profile == null) {
+      throw StateError('Açık bir okul profili bulunamadı.');
+    }
+
+    await SchoolProfileDao(database).updateFields(fields);
+    state = AsyncValue.data(
+      current!.copyWith(schoolProfile: profile.copyWith(fields: fields)),
+    );
+  }
+
   Future<SessionState> _openFile(String filePath) async {
     final db = await AppDatabase.open(filePath);
     final dao = SchoolProfileDao(db);

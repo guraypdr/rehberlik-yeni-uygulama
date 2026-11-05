@@ -6,10 +6,7 @@ import '../domain/grade_level.dart';
 import '../domain/school_class.dart';
 
 class ClassesState {
-  const ClassesState({
-    this.gradeLevels = const [],
-    this.classes = const [],
-  });
+  const ClassesState({this.gradeLevels = const [], this.classes = const []});
 
   final List<GradeLevel> gradeLevels;
   final List<SchoolClass> classes;
@@ -44,22 +41,45 @@ class ClassesNotifier extends AsyncNotifier<ClassesState> {
       teacherId: teacherId,
     );
     final current = state.valueOrNull ?? const ClassesState();
-    state = AsyncValue.data(ClassesState(
-      gradeLevels: current.gradeLevels,
-      classes: [...current.classes, created],
-    ));
+    state = AsyncValue.data(
+      ClassesState(
+        gradeLevels: current.gradeLevels,
+        classes: [...current.classes, created],
+      ),
+    );
   }
 
   Future<void> deleteClass(int id) async {
     if (_dao == null) return;
     await _dao!.delete(id);
     final current = state.valueOrNull ?? const ClassesState();
-    state = AsyncValue.data(ClassesState(
-      gradeLevels: current.gradeLevels,
-      classes: current.classes.where((c) => c.id != id).toList(),
-    ));
+    state = AsyncValue.data(
+      ClassesState(
+        gradeLevels: current.gradeLevels,
+        classes: current.classes.where((c) => c.id != id).toList(),
+      ),
+    );
+  }
+
+  Future<void> updateClass(SchoolClass updatedClass) async {
+    if (_dao == null) return;
+    await _dao!.update(updatedClass);
+    final current = state.valueOrNull ?? const ClassesState();
+    state = AsyncValue.data(
+      ClassesState(
+        gradeLevels: current.gradeLevels,
+        classes: [
+          for (final schoolClass in current.classes)
+            if (schoolClass.id == updatedClass.id)
+              updatedClass
+            else
+              schoolClass,
+        ],
+      ),
+    );
   }
 }
 
-final classesProvider =
-    AsyncNotifierProvider<ClassesNotifier, ClassesState>(ClassesNotifier.new);
+final classesProvider = AsyncNotifierProvider<ClassesNotifier, ClassesState>(
+  ClassesNotifier.new,
+);

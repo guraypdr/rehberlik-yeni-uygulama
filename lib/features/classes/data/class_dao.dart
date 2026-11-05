@@ -61,6 +61,7 @@ class ClassDao {
     await _db.db.update(
       'classes',
       {
+        'grade_level_id': cls.gradeLevelId,
         'branch': cls.branch,
         'field_name': cls.fieldName,
         'teacher_id': cls.teacherId,

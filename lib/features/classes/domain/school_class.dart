@@ -24,19 +24,23 @@ class SchoolClass {
   /// Sınıf öğretmeninin id'si (opsiyonel).
   final int? teacherId;
 
-  String get displayName => '$gradeLevelLabel / $branch';
+  String get displayName =>
+      '${gradeLevelLabel.replaceFirst(RegExp(r'\.\s*Sınıf$'), '')}/$branch';
 
   SchoolClass copyWith({
+    int? gradeLevelId,
+    String? gradeLevelLabel,
     String? branch,
     String? fieldName,
     int? teacherId,
     bool clearTeacher = false,
+    bool clearField = false,
   }) => SchoolClass(
     id: id,
-    gradeLevelId: gradeLevelId,
-    gradeLevelLabel: gradeLevelLabel,
+    gradeLevelId: gradeLevelId ?? this.gradeLevelId,
+    gradeLevelLabel: gradeLevelLabel ?? this.gradeLevelLabel,
     branch: branch ?? this.branch,
-    fieldName: fieldName ?? this.fieldName,
+    fieldName: clearField ? null : (fieldName ?? this.fieldName),
     teacherId: clearTeacher ? null : (teacherId ?? this.teacherId),
   );
 

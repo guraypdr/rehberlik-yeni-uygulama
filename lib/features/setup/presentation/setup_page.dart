@@ -31,7 +31,8 @@ class _SetupPageState extends ConsumerState<SetupPage> {
   int _step = 0; // 0 = form, 1 = önizleme
 
   bool get _showPrepSwitch => _schoolType == SchoolType.lise;
-  bool get _showFieldEditor => _schoolType == SchoolType.meslekLisesi;
+  bool get _showFieldEditor =>
+      _schoolType == SchoolType.lise || _schoolType == SchoolType.meslekLisesi;
 
   @override
   void dispose() {
@@ -134,17 +135,17 @@ class _SetupPageState extends ConsumerState<SetupPage> {
                 : const SizedBox.shrink(),
           ),
 
-          // Alan editörü (yalnızca Meslek Lisesi)
+          // Alan editörü (liseler)
           AnimatedSize(
             duration: const Duration(milliseconds: 200),
             child: _showFieldEditor
                 ? Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Alanlar', style: theme.textTheme.titleSmall),
+                      Text('Okul Alanları', style: theme.textTheme.titleSmall),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
-                        'Okulunuzdaki mesleki alanları ekleyin.',
+                        'Şubeleri gruplamak için okulunuzdaki alanları ekleyin.',
                         style: theme.textTheme.bodySmall,
                       ),
                       const SizedBox(height: AppSpacing.sm),
@@ -166,6 +167,12 @@ class _SetupPageState extends ConsumerState<SetupPage> {
 
   void _goToPreview() {
     if (!_formKey.currentState!.validate()) return;
+    if (_showFieldEditor && _fields.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('En az bir alan ekleyin.')));
+      return;
+    }
     setState(() => _step = 1);
   }
 

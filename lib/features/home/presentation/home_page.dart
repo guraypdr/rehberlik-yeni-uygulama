@@ -11,6 +11,27 @@ import '../../../features/todos/domain/todo_item.dart';
 import '../../../features/todos/presentation/todos_provider.dart';
 import '../../../shared/navigation/app_navigation.dart';
 
+String _schoolNameTitleCase(String name) => name
+    .trim()
+    .split(RegExp(r'\s+'))
+    .map((word) {
+      if (word.isEmpty) return word;
+      final lowercase = word
+          .replaceAll('İ', 'i')
+          .replaceAll('I', 'ı')
+          .toLowerCase()
+          .replaceAll('i\u0307', 'i');
+      final characters = lowercase.runes.toList();
+      final first = String.fromCharCode(characters.first);
+      final capitalizedFirst = switch (first) {
+        'i' => 'İ',
+        'ı' => 'I',
+        _ => first.toUpperCase(),
+      };
+      return '$capitalizedFirst${String.fromCharCodes(characters.skip(1))}';
+    })
+    .join(' ');
+
 /// Ana Sayfa — Referans tasarıma uygun dashboard.
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -248,7 +269,9 @@ class _StatCard extends StatelessWidget {
     final t = Theme.of(context).textTheme;
 
     return MouseRegion(
-      cursor: onTap != null ? SystemMouseCursors.click : SystemMouseCursors.basic,
+      cursor: onTap != null
+          ? SystemMouseCursors.click
+          : SystemMouseCursors.basic,
       child: GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
@@ -290,7 +313,9 @@ class _StatCard extends StatelessWidget {
                   children: [
                     Text(
                       value,
-                      style: t.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                      style: t.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     Text(label, style: t.bodySmall),
                   ],
@@ -426,7 +451,9 @@ class _HeroCard extends StatelessWidget {
 
           // Okul adı
           Text(
-            profile?.name ?? 'Rehberlik Yönetim',
+            profile == null
+                ? 'Rehberlik Yönetim'
+                : _schoolNameTitleCase(profile!.name),
             style: t.titleLarge?.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.w700,
@@ -576,7 +603,7 @@ class _SchoolInfoCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      profile!.name,
+                      _schoolNameTitleCase(profile!.name),
                       style: t.titleSmall,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
