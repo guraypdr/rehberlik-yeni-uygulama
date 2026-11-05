@@ -45,6 +45,7 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
   late TextEditingController _photoPathCtrl;
 
   late String _gender;
+  late String _boardingStatus;
   late String _status;
   late int _classId;
   late bool _hasRepeatedGrade;
@@ -116,6 +117,7 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
     _photoPathCtrl = TextEditingController(text: s.photoPath ?? '');
 
     _gender = s.gender;
+    _boardingStatus = s.boardingStatus;
     _status = s.status;
     _classId = s.classId;
     _hasRepeatedGrade = s.hasRepeatedGrade;
@@ -126,8 +128,9 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
     _motherJobCtrl = TextEditingController(text: s.motherJob ?? '');
     _motherPhoneCtrl = TextEditingController(text: s.motherPhone ?? '');
     _motherAddressCtrl = TextEditingController(text: s.motherAddress ?? '');
-    _motherDisabilityDetailsCtrl =
-        TextEditingController(text: s.motherDisabilityDetails ?? '');
+    _motherDisabilityDetailsCtrl = TextEditingController(
+      text: s.motherDisabilityDetails ?? '',
+    );
     _motherIsBiological = s.motherIsBiological;
     _motherIsAlive = s.motherIsAlive;
     _motherHasDisability = s.motherHasDisability;
@@ -138,8 +141,9 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
     _fatherJobCtrl = TextEditingController(text: s.fatherJob ?? '');
     _fatherPhoneCtrl = TextEditingController(text: s.fatherPhone ?? '');
     _fatherAddressCtrl = TextEditingController(text: s.fatherAddress ?? '');
-    _fatherDisabilityDetailsCtrl =
-        TextEditingController(text: s.fatherDisabilityDetails ?? '');
+    _fatherDisabilityDetailsCtrl = TextEditingController(
+      text: s.fatherDisabilityDetails ?? '',
+    );
     _fatherIsBiological = s.fatherIsBiological;
     _fatherIsAlive = s.fatherIsAlive;
     _fatherHasDisability = s.fatherHasDisability;
@@ -152,18 +156,25 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
 
     _siblingCount = s.siblingCount;
     _siblingDetailsCtrl = TextEditingController(text: s.siblingDetails ?? '');
-    _householdMembersCtrl = TextEditingController(text: s.householdMembers ?? '');
+    _householdMembersCtrl = TextEditingController(
+      text: s.householdMembers ?? '',
+    );
     _familyNotesCtrl = TextEditingController(text: s.familyNotes ?? '');
     _familyRiskLevel = s.familyRiskLevel;
 
     // Sağlık
     _hasChronicIllness = s.hasChronicIllness;
-    _chronicDetailsCtrl = TextEditingController(text: s.chronicIllnessDetails ?? '');
+    _chronicDetailsCtrl = TextEditingController(
+      text: s.chronicIllnessDetails ?? '',
+    );
     _usesRegularMedication = s.usesRegularMedication;
-    _medicationDetailsCtrl = TextEditingController(text: s.medicationDetails ?? '');
+    _medicationDetailsCtrl = TextEditingController(
+      text: s.medicationDetails ?? '',
+    );
     _hasPsychologicalHistory = s.hasPsychologicalHistory;
-    _psychologicalDetailsCtrl =
-        TextEditingController(text: s.psychologicalDetails ?? '');
+    _psychologicalDetailsCtrl = TextEditingController(
+      text: s.psychologicalDetails ?? '',
+    );
     _generalNotesCtrl = TextEditingController(text: s.generalNotes ?? '');
 
     _nameCtrl.addListener(() => setState(() {}));
@@ -217,11 +228,14 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
     final classes = classesState?.classes ?? [];
 
     final isFemale = _gender == 'Kız';
-    final genderColor = isFemale ? const Color(0xFFE91E63) : const Color(0xFF1976D2);
+    final genderColor = isFemale
+        ? const Color(0xFFE91E63)
+        : const Color(0xFF1976D2);
     final initials = _nameCtrl.text.trim().isNotEmpty
         ? _nameCtrl.text.trim().characters.first.toUpperCase()
         : 'Ö';
-    final fullName = '${_nameCtrl.text.trim()} ${_surnameCtrl.text.trim()}'.trim();
+    final fullName = '${_nameCtrl.text.trim()} ${_surnameCtrl.text.trim()}'
+        .trim();
 
     return Dialog(
       shape: RoundedRectangleBorder(
@@ -250,7 +264,10 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
                       gradient: LinearGradient(
                         colors: isFemale
                             ? [const Color(0xFFF06292), const Color(0xFFE91E63)]
-                            : [const Color(0xFF42A5F5), const Color(0xFF1976D2)],
+                            : [
+                                const Color(0xFF42A5F5),
+                                const Color(0xFF1976D2),
+                              ],
                       ),
                       shape: BoxShape.circle,
                       boxShadow: [
@@ -282,7 +299,9 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
                         Row(
                           children: [
                             Text(
-                              fullName.isNotEmpty ? fullName : 'Öğrenci Dosyası',
+                              fullName.isNotEmpty
+                                  ? fullName
+                                  : 'Öğrenci Dosyası',
                               style: t.titleMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 17,
@@ -296,7 +315,9 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
                               ),
                               decoration: BoxDecoration(
                                 color: AppColors.surfaceMuted,
-                                borderRadius: BorderRadius.circular(AppRadius.sm),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
+                                ),
                                 border: Border.all(color: AppColors.border),
                               ),
                               child: Text(
@@ -313,7 +334,9 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
                         const SizedBox(height: 2),
                         Text(
                           'Rehberlik & Psikolojik Danışma Servisi Öğrenci Tanıma Dosyası',
-                          style: t.bodySmall?.copyWith(color: AppColors.textMuted),
+                          style: t.bodySmall?.copyWith(
+                            color: AppColors.textMuted,
+                          ),
                         ),
                       ],
                     ),
@@ -344,10 +367,22 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
                     indicatorColor: cs.primary,
                     indicatorWeight: 3,
                     tabs: const [
-                      Tab(icon: Icon(Icons.badge_outlined, size: 18), text: 'Genel & Kayıt'),
-                      Tab(icon: Icon(Icons.family_restroom_outlined, size: 18), text: 'Aile & Veli'),
-                      Tab(icon: Icon(Icons.medical_services_outlined, size: 18), text: 'Sağlık Durumu'),
-                      Tab(icon: Icon(Icons.forum_outlined, size: 18), text: 'Görüşme Kayıtları'),
+                      Tab(
+                        icon: Icon(Icons.badge_outlined, size: 18),
+                        text: 'Genel & Kayıt',
+                      ),
+                      Tab(
+                        icon: Icon(Icons.family_restroom_outlined, size: 18),
+                        text: 'Aile & Veli',
+                      ),
+                      Tab(
+                        icon: Icon(Icons.medical_services_outlined, size: 18),
+                        text: 'Sağlık Durumu',
+                      ),
+                      Tab(
+                        icon: Icon(Icons.forum_outlined, size: 18),
+                        text: 'Görüşme Kayıtları',
+                      ),
                     ],
                   ),
                 ),
@@ -382,7 +417,9 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
                   ),
                   const Spacer(),
                   TextButton(
-                    onPressed: _saving ? null : () => Navigator.of(context).pop(),
+                    onPressed: _saving
+                        ? null
+                        : () => Navigator.of(context).pop(),
                     child: const Text('Vazgeç'),
                   ),
                   const SizedBox(width: AppSpacing.sm),
@@ -428,8 +465,9 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
                     child: TextFormField(
                       controller: _nameCtrl,
                       decoration: const InputDecoration(labelText: 'Adı *'),
-                      validator: (v) =>
-                          (v == null || v.trim().isEmpty) ? 'Ad zorunludur' : null,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'Ad zorunludur'
+                          : null,
                     ),
                   ),
                   const SizedBox(width: AppSpacing.md),
@@ -437,15 +475,18 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
                     child: TextFormField(
                       controller: _surnameCtrl,
                       decoration: const InputDecoration(labelText: 'Soyadı *'),
-                      validator: (v) =>
-                          (v == null || v.trim().isEmpty) ? 'Soyad zorunludur' : null,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'Soyad zorunludur'
+                          : null,
                     ),
                   ),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: TextFormField(
                       controller: _numberCtrl,
-                      decoration: const InputDecoration(labelText: 'Okul No *'),
+                      decoration: const InputDecoration(
+                        labelText: 'Öğrenci No *',
+                      ),
                       validator: (v) => (v == null || v.trim().isEmpty)
                           ? 'Numara zorunludur'
                           : null,
@@ -490,12 +531,20 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       initialValue: _status,
-                      decoration: const InputDecoration(labelText: 'Öğrencilik Durumu'),
+                      decoration: const InputDecoration(
+                        labelText: 'Öğrencilik Durumu',
+                      ),
                       items: const [
                         DropdownMenuItem(value: 'Aktif', child: Text('Aktif')),
-                        DropdownMenuItem(value: 'Nakil Gitti', child: Text('Nakil Gitti')),
+                        DropdownMenuItem(
+                          value: 'Nakil Gitti',
+                          child: Text('Nakil Gitti'),
+                        ),
                         DropdownMenuItem(value: 'Mezun', child: Text('Mezun')),
-                        DropdownMenuItem(value: 'Ayrıldı', child: Text('Ayrıldı')),
+                        DropdownMenuItem(
+                          value: 'Ayrıldı',
+                          child: Text('Ayrıldı'),
+                        ),
                       ],
                       onChanged: (s) {
                         if (s != null) setState(() => _status = s);
@@ -503,6 +552,23 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              DropdownButtonFormField<String>(
+                initialValue: _boardingStatus,
+                decoration: const InputDecoration(
+                  labelText: 'Pansiyon Durumu',
+                  prefixIcon: Icon(Icons.hotel_outlined, size: 18),
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'Yatılı', child: Text('Yatılı')),
+                  DropdownMenuItem(value: 'Gündüzlü', child: Text('Gündüzlü')),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => _boardingStatus = value);
+                  }
+                },
               ),
             ],
           ),
@@ -580,7 +646,9 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: const Text('Daha önce sınıf tekrarı yapmış mı?'),
-                subtitle: const Text('Devamsızlık veya akademik başarısızlık kaynaklı'),
+                subtitle: const Text(
+                  'Devamsızlık veya akademik başarısızlık kaynaklı',
+                ),
                 value: _hasRepeatedGrade,
                 onChanged: (v) => setState(() => _hasRepeatedGrade = v),
               ),
@@ -590,7 +658,8 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
                   controller: _repeatReasonCtrl,
                   decoration: const InputDecoration(
                     labelText: 'Sınıf Tekrarı Sebebi',
-                    hintText: 'Örn. Sağlık sebebiyle devamsızlık / Akademik yetersizlik',
+                    hintText:
+                        'Örn. Sağlık sebebiyle devamsızlık / Akademik yetersizlik',
                   ),
                 ),
               ],
@@ -599,7 +668,8 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
                 controller: _specialStatusCtrl,
                 decoration: const InputDecoration(
                   labelText: 'Özel Eğitim / Üstün Yetenek Tanısı',
-                  hintText: 'BİLSEM, Disleksi, Otizm Spektrum, DEHB, Fiziksel Engel vb.',
+                  hintText:
+                      'BİLSEM, Disleksi, Otizm Spektrum, DEHB, Fiziksel Engel vb.',
                   prefixIcon: Icon(Icons.star_outline_rounded),
                 ),
               ),
@@ -630,7 +700,11 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
             ),
             child: Row(
               children: [
-                const Icon(Icons.shield_outlined, color: AppColors.warning, size: 24),
+                const Icon(
+                  Icons.shield_outlined,
+                  color: AppColors.warning,
+                  size: 24,
+                ),
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: Column(
@@ -638,14 +712,16 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
                     children: [
                       const Text(
                         'Aile Risk Değerlendirmesi',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
                       ),
                       Text(
                         'Öğrencinin ailevi durumuna göre rehberlik öncelik seviyesi',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall
-                            ?.copyWith(color: AppColors.textMuted),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textMuted,
+                        ),
                       ),
                     ],
                   ),
@@ -654,10 +730,22 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
                   value: _familyRiskLevel,
                   underline: const SizedBox(),
                   items: const [
-                    DropdownMenuItem(value: 'Düşük', child: Text('🟢 Düşük Risk')),
-                    DropdownMenuItem(value: 'Orta', child: Text('🟡 Orta Risk (Takip)')),
-                    DropdownMenuItem(value: 'Yüksek', child: Text('🟠 Yüksek Risk (Öncelikli)')),
-                    DropdownMenuItem(value: 'Kritik', child: Text('🔴 Kritik Durum')),
+                    DropdownMenuItem(
+                      value: 'Düşük',
+                      child: Text('🟢 Düşük Risk'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Orta',
+                      child: Text('🟡 Orta Risk (Takip)'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Yüksek',
+                      child: Text('🟠 Yüksek Risk (Öncelikli)'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Kritik',
+                      child: Text('🔴 Kritik Durum'),
+                    ),
                   ],
                   onChanged: (val) {
                     if (val != null) setState(() => _familyRiskLevel = val);
@@ -683,7 +771,9 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
                   Expanded(
                     child: TextFormField(
                       controller: _motherSurnameCtrl,
-                      decoration: const InputDecoration(labelText: 'Anne Soyadı'),
+                      decoration: const InputDecoration(
+                        labelText: 'Anne Soyadı',
+                      ),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.md),
@@ -704,7 +794,9 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
                   Expanded(
                     child: TextFormField(
                       controller: _motherJobCtrl,
-                      decoration: const InputDecoration(labelText: 'Mesleği / Çalışma Durumu'),
+                      decoration: const InputDecoration(
+                        labelText: 'Mesleği / Çalışma Durumu',
+                      ),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.md),
@@ -714,21 +806,31 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
                       decoration: const InputDecoration(labelText: 'Öz / Üvey'),
                       items: const [
                         DropdownMenuItem(value: true, child: Text('Öz Anne')),
-                        DropdownMenuItem(value: false, child: Text('Üvey Anne')),
+                        DropdownMenuItem(
+                          value: false,
+                          child: Text('Üvey Anne'),
+                        ),
                       ],
-                      onChanged: (v) => setState(() => _motherIsBiological = v ?? true),
+                      onChanged: (v) =>
+                          setState(() => _motherIsBiological = v ?? true),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: DropdownButtonFormField<bool>(
                       initialValue: _motherIsAlive,
-                      decoration: const InputDecoration(labelText: 'Hayatta mı?'),
+                      decoration: const InputDecoration(
+                        labelText: 'Hayatta mı?',
+                      ),
                       items: const [
                         DropdownMenuItem(value: true, child: Text('Hayatta')),
-                        DropdownMenuItem(value: false, child: Text('Vefat Etmiş')),
+                        DropdownMenuItem(
+                          value: false,
+                          child: Text('Vefat Etmiş'),
+                        ),
                       ],
-                      onChanged: (v) => setState(() => _motherIsAlive = v ?? true),
+                      onChanged: (v) =>
+                          setState(() => _motherIsAlive = v ?? true),
                     ),
                   ),
                 ],
@@ -736,7 +838,9 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
               const SizedBox(height: AppSpacing.sm),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Annenin engellilik veya kronik rahatsızlık durumu var mı?'),
+                title: const Text(
+                  'Annenin engellilik veya kronik rahatsızlık durumu var mı?',
+                ),
                 value: _motherHasDisability,
                 onChanged: (v) => setState(() => _motherHasDisability = v),
               ),
@@ -767,7 +871,9 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
                   Expanded(
                     child: TextFormField(
                       controller: _fatherSurnameCtrl,
-                      decoration: const InputDecoration(labelText: 'Baba Soyadı'),
+                      decoration: const InputDecoration(
+                        labelText: 'Baba Soyadı',
+                      ),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.md),
@@ -788,7 +894,9 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
                   Expanded(
                     child: TextFormField(
                       controller: _fatherJobCtrl,
-                      decoration: const InputDecoration(labelText: 'Mesleği / Çalışma Durumu'),
+                      decoration: const InputDecoration(
+                        labelText: 'Mesleği / Çalışma Durumu',
+                      ),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.md),
@@ -798,21 +906,31 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
                       decoration: const InputDecoration(labelText: 'Öz / Üvey'),
                       items: const [
                         DropdownMenuItem(value: true, child: Text('Öz Baba')),
-                        DropdownMenuItem(value: false, child: Text('Üvey Baba')),
+                        DropdownMenuItem(
+                          value: false,
+                          child: Text('Üvey Baba'),
+                        ),
                       ],
-                      onChanged: (v) => setState(() => _fatherIsBiological = v ?? true),
+                      onChanged: (v) =>
+                          setState(() => _fatherIsBiological = v ?? true),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: DropdownButtonFormField<bool>(
                       initialValue: _fatherIsAlive,
-                      decoration: const InputDecoration(labelText: 'Hayatta mı?'),
+                      decoration: const InputDecoration(
+                        labelText: 'Hayatta mı?',
+                      ),
                       items: const [
                         DropdownMenuItem(value: true, child: Text('Hayatta')),
-                        DropdownMenuItem(value: false, child: Text('Vefat Etmiş')),
+                        DropdownMenuItem(
+                          value: false,
+                          child: Text('Vefat Etmiş'),
+                        ),
                       ],
-                      onChanged: (v) => setState(() => _fatherIsAlive = v ?? true),
+                      onChanged: (v) =>
+                          setState(() => _fatherIsAlive = v ?? true),
                     ),
                   ),
                 ],
@@ -820,7 +938,9 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
               const SizedBox(height: AppSpacing.sm),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Babanın engellilik veya kronik rahatsızlık durumu var mı?'),
+                title: const Text(
+                  'Babanın engellilik veya kronik rahatsızlık durumu var mı?',
+                ),
                 value: _fatherHasDisability,
                 onChanged: (v) => setState(() => _fatherHasDisability = v),
               ),
@@ -844,30 +964,63 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       initialValue: _parentsTogether,
-                      decoration: const InputDecoration(labelText: 'Anne-Baba Birliktelik Durumu'),
+                      decoration: const InputDecoration(
+                        labelText: 'Anne-Baba Birliktelik Durumu',
+                      ),
                       items: const [
-                        DropdownMenuItem(value: 'Birlikte', child: Text('Birlikte')),
-                        DropdownMenuItem(value: 'Ayrı / Boşanmış', child: Text('Ayrı / Boşanmış')),
-                        DropdownMenuItem(value: 'Resmen Evli / Ayrı Yaşıyor', child: Text('Ayrı Yaşıyor')),
-                        DropdownMenuItem(value: 'Vefat', child: Text('Ebeveyn Kaybı')),
+                        DropdownMenuItem(
+                          value: 'Birlikte',
+                          child: Text('Birlikte'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Ayrı / Boşanmış',
+                          child: Text('Ayrı / Boşanmış'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Resmen Evli / Ayrı Yaşıyor',
+                          child: Text('Ayrı Yaşıyor'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Vefat',
+                          child: Text('Ebeveyn Kaybı'),
+                        ),
                       ],
-                      onChanged: (v) => setState(() => _parentsTogether = v ?? 'Birlikte'),
+                      onChanged: (v) =>
+                          setState(() => _parentsTogether = v ?? 'Birlikte'),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       initialValue: _livesWith,
-                      decoration: const InputDecoration(labelText: 'Öğrenci Kiminle Yaşıyor?'),
+                      decoration: const InputDecoration(
+                        labelText: 'Öğrenci Kiminle Yaşıyor?',
+                      ),
                       items: const [
-                        DropdownMenuItem(value: 'Anne-Baba', child: Text('Anne ve Baba')),
-                        DropdownMenuItem(value: 'Sadece Anne', child: Text('Sadece Anne')),
-                        DropdownMenuItem(value: 'Sadece Baba', child: Text('Sadece Baba')),
-                        DropdownMenuItem(value: 'Akraba / Büyükanne', child: Text('Akraba / Büyükanne')),
-                        DropdownMenuItem(value: 'Yurt / Pansiyon', child: Text('Yurt / Pansiyon')),
+                        DropdownMenuItem(
+                          value: 'Anne-Baba',
+                          child: Text('Anne ve Baba'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Sadece Anne',
+                          child: Text('Sadece Anne'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Sadece Baba',
+                          child: Text('Sadece Baba'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Akraba / Büyükanne',
+                          child: Text('Akraba / Büyükanne'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Yurt / Pansiyon',
+                          child: Text('Yurt / Pansiyon'),
+                        ),
                         DropdownMenuItem(value: 'Diğer', child: Text('Diğer')),
                       ],
-                      onChanged: (v) => setState(() => _livesWith = v ?? 'Anne-Baba'),
+                      onChanged: (v) =>
+                          setState(() => _livesWith = v ?? 'Anne-Baba'),
                     ),
                   ),
                 ],
@@ -878,14 +1031,23 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       initialValue: _guardianType,
-                      decoration: const InputDecoration(labelText: 'Yasal Velisi Kim?'),
+                      decoration: const InputDecoration(
+                        labelText: 'Yasal Velisi Kim?',
+                      ),
                       items: const [
-                        DropdownMenuItem(value: 'Anne-Baba', child: Text('Anne ve Baba')),
+                        DropdownMenuItem(
+                          value: 'Anne-Baba',
+                          child: Text('Anne ve Baba'),
+                        ),
                         DropdownMenuItem(value: 'Anne', child: Text('Anne')),
                         DropdownMenuItem(value: 'Baba', child: Text('Baba')),
-                        DropdownMenuItem(value: 'Vasi / Diğer', child: Text('Vasi / Diğer')),
+                        DropdownMenuItem(
+                          value: 'Vasi / Diğer',
+                          child: Text('Vasi / Diğer'),
+                        ),
                       ],
-                      onChanged: (v) => setState(() => _guardianType = v ?? 'Anne-Baba'),
+                      onChanged: (v) =>
+                          setState(() => _guardianType = v ?? 'Anne-Baba'),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.md),
@@ -923,7 +1085,9 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
                     width: 130,
                     child: DropdownButtonFormField<int>(
                       initialValue: _siblingCount,
-                      decoration: const InputDecoration(labelText: 'Kardeş Sayısı'),
+                      decoration: const InputDecoration(
+                        labelText: 'Kardeş Sayısı',
+                      ),
                       items: [
                         for (int i = 0; i <= 10; i++)
                           DropdownMenuItem(value: i, child: Text('$i')),
@@ -937,7 +1101,8 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
                       controller: _siblingDetailsCtrl,
                       decoration: const InputDecoration(
                         labelText: 'Kardeşlerin Eğitim ve Yaş Durumu',
-                        hintText: 'Örn. 1 abla (üniversite), 1 küçük kardeş (ilkokul)',
+                        hintText:
+                            'Örn. 1 abla (üniversite), 1 küçük kardeş (ilkokul)',
                       ),
                     ),
                   ),
@@ -958,7 +1123,8 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
                 maxLines: 3,
                 decoration: const InputDecoration(
                   labelText: 'Aileyle Yapılan Görüşmeler ve Alınan Bilgiler',
-                  hintText: 'Aile dinamikleri, sosyoekonomik durum, ebeveyn tutumları vb.',
+                  hintText:
+                      'Aile dinamikleri, sosyoekonomik durum, ebeveyn tutumları vb.',
                   alignLabelWithHint: true,
                 ),
               ),
@@ -985,7 +1151,9 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: const Text('Sürekli bir hastalığı var mı?'),
-                subtitle: const Text('Astım, diyabet, epilepsi, alerji, kalp vb.'),
+                subtitle: const Text(
+                  'Astım, diyabet, epilepsi, alerji, kalp vb.',
+                ),
                 value: _hasChronicIllness,
                 onChanged: (v) => setState(() => _hasChronicIllness = v),
               ),
@@ -994,7 +1162,8 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
                   controller: _chronicDetailsCtrl,
                   decoration: const InputDecoration(
                     labelText: 'Hastalık Açıklaması ve Acil Durum Notları',
-                    hintText: 'Hastalığın türü, kriz anında yapılması gerekenler...',
+                    hintText:
+                        'Hastalığın türü, kriz anında yapılması gerekenler...',
                   ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
@@ -1003,7 +1172,9 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: const Text('Sürekli kullandığı bir ilaç var mı?'),
-                subtitle: const Text('Düzenli alınması gereken reçeteli ilaçlar'),
+                subtitle: const Text(
+                  'Düzenli alınması gereken reçeteli ilaçlar',
+                ),
                 value: _usesRegularMedication,
                 onChanged: (v) => setState(() => _usesRegularMedication = v),
               ),
@@ -1012,7 +1183,8 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
                   controller: _medicationDetailsCtrl,
                   decoration: const InputDecoration(
                     labelText: 'Kullanılan İlaçlar ve Doz Bilgisi',
-                    hintText: 'İlaç adı, kullanım saatleri, okulda alınması gerekiyor mu...',
+                    hintText:
+                        'İlaç adı, kullanım saatleri, okulda alınması gerekiyor mu...',
                   ),
                 ),
               ],
@@ -1025,8 +1197,12 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
             children: [
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Daha önce ruhsal veya psikolojik bir rahatsızlık geçirmiş mi?'),
-                subtitle: const Text('Psikiyatrik tanı, travma, fobi, terapi geçmişi'),
+                title: const Text(
+                  'Daha önce ruhsal veya psikolojik bir rahatsızlık geçirmiş mi?',
+                ),
+                subtitle: const Text(
+                  'Psikiyatrik tanı, travma, fobi, terapi geçmişi',
+                ),
                 value: _hasPsychologicalHistory,
                 onChanged: (v) => setState(() => _hasPsychologicalHistory = v),
               ),
@@ -1035,7 +1211,8 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
                   controller: _psychologicalDetailsCtrl,
                   decoration: const InputDecoration(
                     labelText: 'Ruhsal Durum / Tedavi Geçmişi Açıklaması',
-                    hintText: 'Takip eden hekim/hastane, terapi süreci, RAM raporu vb.',
+                    hintText:
+                        'Takip eden hekim/hastane, terapi süreci, RAM raporu vb.',
                   ),
                 ),
               ],
@@ -1051,7 +1228,8 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
                 maxLines: 4,
                 decoration: const InputDecoration(
                   labelText: 'Rehberlik Servisi Özel Notları',
-                  hintText: 'Öğrenci hakkında rehberlik servisine özel önemli notlar ve gözlemler...',
+                  hintText:
+                      'Öğrenci hakkında rehberlik servisine özel önemli notlar ve gözlemler...',
                   alignLabelWithHint: true,
                 ),
               ),
@@ -1066,8 +1244,9 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
   // 4. Sekme: Rehberlik Servisi Görüşme Kayıtları
   // ──────────────────────────────────────────────────────────────────────────
   Widget _buildTabInterviews() {
-    final interviewsAsync =
-        ref.watch(studentInterviewsProvider(widget.student.id));
+    final interviewsAsync = ref.watch(
+      studentInterviewsProvider(widget.student.id),
+    );
 
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.xl),
@@ -1118,7 +1297,8 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
           Expanded(
             child: interviewsAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Görüşmeler yüklenemedi: $e')),
+              error: (e, _) =>
+                  Center(child: Text('Görüşmeler yüklenemedi: $e')),
               data: (list) {
                 final filtered = list.where((i) {
                   if (_interviewFilter == 'all') return true;
@@ -1159,7 +1339,8 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
 
                 return ListView.separated(
                   itemCount: filtered.length,
-                  separatorBuilder: (_, index) => const SizedBox(height: AppSpacing.md),
+                  separatorBuilder: (_, index) =>
+                      const SizedBox(height: AppSpacing.md),
                   itemBuilder: (context, idx) {
                     final interview = filtered[idx];
                     return _InterviewCard(
@@ -1181,7 +1362,9 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Görüşmeyi Sil'),
-        content: const Text('Bu görüşme kaydını silmek istediğinize emin misiniz?'),
+        content: const Text(
+          'Bu görüşme kaydını silmek istediğinize emin misiniz?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -1213,6 +1396,7 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
         number: _numberCtrl.text.trim(),
         classId: _classId,
         gender: _gender,
+        boardingStatus: _boardingStatus,
         status: _status,
         tcNo: _tcCtrl.text.trim().isEmpty ? null : _tcCtrl.text.trim(),
         birthDate: _birthDateCtrl.text.trim().isEmpty
@@ -1228,7 +1412,8 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
             ? null
             : _transferGradeCtrl.text.trim(),
         hasRepeatedGrade: _hasRepeatedGrade,
-        repeatReason: _hasRepeatedGrade && _repeatReasonCtrl.text.trim().isNotEmpty
+        repeatReason:
+            _hasRepeatedGrade && _repeatReasonCtrl.text.trim().isNotEmpty
             ? _repeatReasonCtrl.text.trim()
             : null,
         specialStatus: _specialStatusCtrl.text.trim().isEmpty
@@ -1256,7 +1441,8 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
         motherIsBiological: _motherIsBiological,
         motherIsAlive: _motherIsAlive,
         motherHasDisability: _motherHasDisability,
-        motherDisabilityDetails: _motherHasDisability &&
+        motherDisabilityDetails:
+            _motherHasDisability &&
                 _motherDisabilityDetailsCtrl.text.trim().isNotEmpty
             ? _motherDisabilityDetailsCtrl.text.trim()
             : null,
@@ -1278,7 +1464,8 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
         fatherIsBiological: _fatherIsBiological,
         fatherIsAlive: _fatherIsAlive,
         fatherHasDisability: _fatherHasDisability,
-        fatherDisabilityDetails: _fatherHasDisability &&
+        fatherDisabilityDetails:
+            _fatherHasDisability &&
                 _fatherDisabilityDetailsCtrl.text.trim().isNotEmpty
             ? _fatherDisabilityDetailsCtrl.text.trim()
             : null,
@@ -1304,17 +1491,19 @@ class _StudentDetailSheetState extends ConsumerState<StudentDetailSheet>
         familyRiskLevel: _familyRiskLevel,
         // Sağlık
         hasChronicIllness: _hasChronicIllness,
-        chronicIllnessDetails: _hasChronicIllness &&
-                _chronicDetailsCtrl.text.trim().isNotEmpty
+        chronicIllnessDetails:
+            _hasChronicIllness && _chronicDetailsCtrl.text.trim().isNotEmpty
             ? _chronicDetailsCtrl.text.trim()
             : null,
         usesRegularMedication: _usesRegularMedication,
-        medicationDetails: _usesRegularMedication &&
+        medicationDetails:
+            _usesRegularMedication &&
                 _medicationDetailsCtrl.text.trim().isNotEmpty
             ? _medicationDetailsCtrl.text.trim()
             : null,
         hasPsychologicalHistory: _hasPsychologicalHistory,
-        psychologicalDetails: _hasPsychologicalHistory &&
+        psychologicalDetails:
+            _hasPsychologicalHistory &&
                 _psychologicalDetailsCtrl.text.trim().isNotEmpty
             ? _psychologicalDetailsCtrl.text.trim()
             : null,
@@ -1434,7 +1623,10 @@ class _RiskBadge extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: 4,
+      ),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -1465,7 +1657,10 @@ class _FilterChip extends StatelessWidget {
       onTap: onSelected,
       borderRadius: BorderRadius.circular(AppRadius.pill),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 6),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: 6,
+        ),
         decoration: BoxDecoration(
           color: selected ? cs.primary : AppColors.surfaceMuted,
           borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -1484,10 +1679,7 @@ class _FilterChip extends StatelessWidget {
 }
 
 class _InterviewCard extends StatelessWidget {
-  const _InterviewCard({
-    required this.interview,
-    required this.onDelete,
-  });
+  const _InterviewCard({required this.interview, required this.onDelete});
 
   final StudentInterview interview;
   final VoidCallback onDelete;
@@ -1573,9 +1765,13 @@ class _InterviewCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             interview.notes,
-            style: t.bodyMedium?.copyWith(color: AppColors.textPrimary, height: 1.4),
+            style: t.bodyMedium?.copyWith(
+              color: AppColors.textPrimary,
+              height: 1.4,
+            ),
           ),
-          if (interview.actionPlan != null && interview.actionPlan!.isNotEmpty) ...[
+          if (interview.actionPlan != null &&
+              interview.actionPlan!.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.sm),
             Container(
               padding: const EdgeInsets.all(AppSpacing.sm),
@@ -1586,7 +1782,11 @@ class _InterviewCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.flag_outlined, size: 14, color: AppColors.textMuted),
+                  const Icon(
+                    Icons.flag_outlined,
+                    size: 14,
+                    color: AppColors.textMuted,
+                  ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(

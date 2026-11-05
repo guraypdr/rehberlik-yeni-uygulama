@@ -6,6 +6,7 @@ import '../../domain/grade_level.dart';
 import '../../domain/school_class.dart';
 import '../classes_provider.dart';
 import 'class_edit_dialog.dart';
+import 'class_students_dialog.dart';
 
 /// Tek bir şubenin kartı.
 class ClassCard extends ConsumerWidget {
@@ -69,15 +70,29 @@ class ClassCard extends ConsumerWidget {
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    schoolClass.displayName,
-                    style: theme.textTheme.titleSmall,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                onTap: () => ClassStudentsDialog.show(context, schoolClass),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        schoolClass.displayName,
+                        style: theme.textTheme.titleSmall,
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        'Öğrencileri görüntüle ve ekle',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
             IconButton(

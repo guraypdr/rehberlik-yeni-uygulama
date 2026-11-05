@@ -40,6 +40,7 @@ void main() {
         name: 'Zeynep',
         surname: 'Kaya',
         gender: 'Kız',
+        boardingStatus: 'Yatılı',
         status: 'Aktif',
         hasChronicIllness: true,
         chronicIllnessDetails: 'Astım',
@@ -53,6 +54,7 @@ void main() {
       expect(fromMap.number, student.number);
       expect(fromMap.fullName, 'Zeynep Kaya');
       expect(fromMap.gender, 'Kız');
+      expect(fromMap.boardingStatus, 'Yatılı');
       expect(fromMap.hasChronicIllness, isTrue);
       expect(fromMap.chronicIllnessDetails, 'Astım');
     });
@@ -115,4 +117,3 @@ void main() {
     });
   });
 }
-

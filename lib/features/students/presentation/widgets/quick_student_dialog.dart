@@ -43,6 +43,7 @@ class _QuickStudentDialogState extends ConsumerState<QuickStudentDialog> {
   final _numberCtrl = TextEditingController();
 
   String _gender = 'Kız';
+  String _boardingStatus = 'Gündüzlü';
   int? _selectedGradeLevelId;
   int? _selectedClassId;
   bool _saving = false;
@@ -94,10 +95,14 @@ class _QuickStudentDialogState extends ConsumerState<QuickStudentDialog> {
       _selectedClassId = currentBranches.first.id;
     }
 
-    final selectedClass = classes.where((c) => c.id == _selectedClassId).firstOrNull;
+    final selectedClass = classes
+        .where((c) => c.id == _selectedClassId)
+        .firstOrNull;
 
     final isFemale = _gender == 'Kız';
-    final genderColor = isFemale ? const Color(0xFFE91E63) : const Color(0xFF1976D2);
+    final genderColor = isFemale
+        ? const Color(0xFFE91E63)
+        : const Color(0xFF1976D2);
     final genderGradient = isFemale
         ? const LinearGradient(
             colors: [Color(0xFFF06292), Color(0xFFE91E63)],
@@ -110,7 +115,8 @@ class _QuickStudentDialogState extends ConsumerState<QuickStudentDialog> {
             end: Alignment.bottomRight,
           );
 
-    final fullName = '${_nameCtrl.text.trim()} ${_surnameCtrl.text.trim()}'.trim();
+    final fullName = '${_nameCtrl.text.trim()} ${_surnameCtrl.text.trim()}'
+        .trim();
     final initials = _nameCtrl.text.trim().isNotEmpty
         ? _nameCtrl.text.trim().characters.first.toUpperCase()
         : 'Ö';
@@ -285,7 +291,9 @@ class _QuickStudentDialogState extends ConsumerState<QuickStudentDialog> {
                                           vertical: 2,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: cs.primary.withValues(alpha: 0.10),
+                                          color: cs.primary.withValues(
+                                            alpha: 0.10,
+                                          ),
                                           borderRadius: BorderRadius.circular(
                                             AppRadius.pill,
                                           ),
@@ -309,7 +317,9 @@ class _QuickStudentDialogState extends ConsumerState<QuickStudentDialog> {
                                           vertical: 2,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: genderColor.withValues(alpha: 0.10),
+                                          color: genderColor.withValues(
+                                            alpha: 0.10,
+                                          ),
                                           borderRadius: BorderRadius.circular(
                                             AppRadius.pill,
                                           ),
@@ -353,9 +363,13 @@ class _QuickStudentDialogState extends ConsumerState<QuickStudentDialog> {
                                 decoration: const InputDecoration(
                                   labelText: 'Adı *',
                                   hintText: 'Örn. Ahmet',
-                                  prefixIcon: Icon(Icons.person_outline, size: 18),
+                                  prefixIcon: Icon(
+                                    Icons.person_outline,
+                                    size: 18,
+                                  ),
                                 ),
-                                validator: (v) => (v == null || v.trim().isEmpty)
+                                validator: (v) =>
+                                    (v == null || v.trim().isEmpty)
                                     ? 'Ad zorunludur'
                                     : null,
                                 textInputAction: TextInputAction.next,
@@ -368,9 +382,13 @@ class _QuickStudentDialogState extends ConsumerState<QuickStudentDialog> {
                                 decoration: const InputDecoration(
                                   labelText: 'Soyadı *',
                                   hintText: 'Örn. Yılmaz',
-                                  prefixIcon: Icon(Icons.badge_outlined, size: 18),
+                                  prefixIcon: Icon(
+                                    Icons.badge_outlined,
+                                    size: 18,
+                                  ),
                                 ),
-                                validator: (v) => (v == null || v.trim().isEmpty)
+                                validator: (v) =>
+                                    (v == null || v.trim().isEmpty)
                                     ? 'Soyad zorunludur'
                                     : null,
                                 textInputAction: TextInputAction.next,
@@ -390,11 +408,15 @@ class _QuickStudentDialogState extends ConsumerState<QuickStudentDialog> {
                               child: TextFormField(
                                 controller: _numberCtrl,
                                 decoration: const InputDecoration(
-                                  labelText: 'Okul Numarası *',
+                                  labelText: 'Öğrenci No *',
                                   hintText: 'Örn. 142',
-                                  prefixIcon: Icon(Icons.numbers_outlined, size: 18),
+                                  prefixIcon: Icon(
+                                    Icons.numbers_outlined,
+                                    size: 18,
+                                  ),
                                 ),
-                                validator: (v) => (v == null || v.trim().isEmpty)
+                                validator: (v) =>
+                                    (v == null || v.trim().isEmpty)
                                     ? 'Numara zorunludur'
                                     : null,
                                 keyboardType: TextInputType.text,
@@ -422,7 +444,8 @@ class _QuickStudentDialogState extends ConsumerState<QuickStudentDialog> {
                                           icon: Icons.female,
                                           isSelected: _gender == 'Kız',
                                           color: const Color(0xFFE91E63),
-                                          onTap: () => setState(() => _gender = 'Kız'),
+                                          onTap: () =>
+                                              setState(() => _gender = 'Kız'),
                                         ),
                                       ),
                                       const SizedBox(width: AppSpacing.sm),
@@ -432,7 +455,8 @@ class _QuickStudentDialogState extends ConsumerState<QuickStudentDialog> {
                                           icon: Icons.male,
                                           isSelected: _gender == 'Erkek',
                                           color: const Color(0xFF1976D2),
-                                          onTap: () => setState(() => _gender = 'Erkek'),
+                                          onTap: () =>
+                                              setState(() => _gender = 'Erkek'),
                                         ),
                                       ),
                                     ],
@@ -444,129 +468,181 @@ class _QuickStudentDialogState extends ConsumerState<QuickStudentDialog> {
                         ),
                         const SizedBox(height: AppSpacing.lg),
 
-                        // ── Sınıf ve Şube Seçimi (Görsel Seçici) ─────────────
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.meeting_room_outlined,
-                              size: 18,
-                              color: AppColors.textSecondary,
+                        DropdownButtonFormField<String>(
+                          initialValue: _boardingStatus,
+                          decoration: const InputDecoration(
+                            labelText: 'Pansiyon Durumu',
+                            prefixIcon: Icon(Icons.hotel_outlined, size: 18),
+                          ),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'Yatılı',
+                              child: Text('Yatılı'),
                             ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Sınıf Düzeyi ve Şube *',
-                              style: t.labelMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
+                            DropdownMenuItem(
+                              value: 'Gündüzlü',
+                              child: Text('Gündüzlü'),
                             ),
                           ],
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(() => _boardingStatus = value);
+                            }
+                          },
                         ),
-                        const SizedBox(height: AppSpacing.sm),
+                        const SizedBox(height: AppSpacing.lg),
 
-                        if (classes.isEmpty) ...[
-                          Container(
-                            padding: const EdgeInsets.all(AppSpacing.md),
-                            decoration: BoxDecoration(
-                              color: AppColors.warning.withValues(alpha: 0.10),
-                              borderRadius: BorderRadius.circular(AppRadius.md),
-                              border: Border.all(
-                                color: AppColors.warning.withValues(alpha: 0.30),
+                        // ── Sınıf ve Şube Seçimi (Görsel Seçici) ─────────────
+                        if (widget.initialClassId == null) ...[
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.meeting_room_outlined,
+                                size: 18,
+                                color: AppColors.textSecondary,
                               ),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.warning_amber_rounded,
-                                  color: AppColors.warning,
-                                  size: 20,
+                              const SizedBox(width: 6),
+                              Text(
+                                'Sınıf Düzeyi ve Şube *',
+                                style: t.labelMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
                                 ),
-                                const SizedBox(width: AppSpacing.sm),
-                                Expanded(
-                                  child: Text(
-                                    'Kayıt yapabilmek için önce Sınıflar sayfasından en az bir şube tanımlamalısınız.',
-                                    style: t.bodySmall?.copyWith(
-                                      color: AppColors.warning,
-                                    ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+
+                          if (classes.isEmpty) ...[
+                            Container(
+                              padding: const EdgeInsets.all(AppSpacing.md),
+                              decoration: BoxDecoration(
+                                color: AppColors.warning.withValues(
+                                  alpha: 0.10,
+                                ),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.md,
+                                ),
+                                border: Border.all(
+                                  color: AppColors.warning.withValues(
+                                    alpha: 0.30,
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
-                        ] else ...[
-                          // Sınıf Düzeyi Butonları (9. Sınıf, 10. Sınıf vb.)
-                          if (gradeLevels.length > 1) ...[
-                            SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
+                              ),
                               child: Row(
                                 children: [
-                                  for (final g in gradeLevels) ...[
-                                    _LevelChip(
-                                      label: g.label,
-                                      isSelected: _selectedGradeLevelId == g.id,
-                                      onTap: () {
-                                        setState(() {
-                                          _selectedGradeLevelId = g.id;
-                                          final br = classes
-                                              .where((c) => c.gradeLevelId == g.id)
-                                              .toList();
-                                          if (br.isNotEmpty) {
-                                            _selectedClassId = br.first.id;
-                                          } else {
-                                            _selectedClassId = null;
-                                          }
-                                        });
-                                      },
+                                  const Icon(
+                                    Icons.warning_amber_rounded,
+                                    color: AppColors.warning,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: AppSpacing.sm),
+                                  Expanded(
+                                    child: Text(
+                                      'Kayıt yapabilmek için önce Sınıflar sayfasından en az bir şube tanımlamalısınız.',
+                                      style: t.bodySmall?.copyWith(
+                                        color: AppColors.warning,
+                                      ),
                                     ),
-                                    const SizedBox(width: 6),
-                                  ],
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.sm),
-                          ],
-
-                          // Seçili Düzeyin Şubeleri (A, B, C, D vb.)
-                          if (currentBranches.isNotEmpty) ...[
-                            Container(
-                              padding: const EdgeInsets.all(AppSpacing.sm),
-                              decoration: BoxDecoration(
-                                color: AppColors.surfaceMuted,
-                                borderRadius: BorderRadius.circular(AppRadius.md),
-                                border: Border.all(color: AppColors.border),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Wrap(
-                                    spacing: 8,
-                                    runSpacing: 8,
-                                    children: [
-                                      for (final c in currentBranches) ...[
-                                        _BranchButton(
-                                          branch: c.branch,
-                                          fieldName: c.fieldName,
-                                          isSelected: _selectedClassId == c.id,
-                                          onTap: () {
-                                            setState(() => _selectedClassId = c.id);
-                                          },
-                                        ),
-                                      ],
-                                    ],
                                   ),
                                 ],
                               ),
                             ),
                           ] else ...[
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              child: Text(
-                                'Bu sınıf düzeyinde henüz şube açılmamış.',
-                                style: t.bodySmall?.copyWith(
-                                  color: AppColors.textMuted,
+                            // Sınıf Düzeyi Butonları (9. Sınıf, 10. Sınıf vb.)
+                            if (gradeLevels.length > 1) ...[
+                              SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  children: [
+                                    for (final g in gradeLevels) ...[
+                                      _LevelChip(
+                                        label: g.label,
+                                        isSelected:
+                                            _selectedGradeLevelId == g.id,
+                                        onTap: () {
+                                          setState(() {
+                                            _selectedGradeLevelId = g.id;
+                                            final br = classes
+                                                .where(
+                                                  (c) => c.gradeLevelId == g.id,
+                                                )
+                                                .toList();
+                                            if (br.isNotEmpty) {
+                                              _selectedClassId = br.first.id;
+                                            } else {
+                                              _selectedClassId = null;
+                                            }
+                                          });
+                                        },
+                                      ),
+                                      const SizedBox(width: 6),
+                                    ],
+                                  ],
                                 ),
                               ),
-                            ),
+                              const SizedBox(height: AppSpacing.sm),
+                            ],
+
+                            // Seçili Düzeyin Şubeleri (A, B, C, D vb.)
+                            if (currentBranches.isNotEmpty) ...[
+                              Container(
+                                padding: const EdgeInsets.all(AppSpacing.sm),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surfaceMuted,
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.md,
+                                  ),
+                                  border: Border.all(color: AppColors.border),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: [
+                                        for (final c in currentBranches) ...[
+                                          _BranchButton(
+                                            branch: c.branch,
+                                            fieldName: c.fieldName,
+                                            isSelected:
+                                                _selectedClassId == c.id,
+                                            onTap: () {
+                                              setState(
+                                                () => _selectedClassId = c.id,
+                                              );
+                                            },
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ] else ...[
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
+                                child: Text(
+                                  'Bu sınıf düzeyinde henüz şube açılmamış.',
+                                  style: t.bodySmall?.copyWith(
+                                    color: AppColors.textMuted,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ],
+                        ] else ...[
+                          InputDecorator(
+                            decoration: const InputDecoration(
+                              labelText: 'Sınıf / Şube',
+                              prefixIcon: Icon(Icons.meeting_room_outlined),
+                            ),
+                            child: Text(
+                              selectedClass?.displayName ?? 'Sınıf bulunamadı',
+                            ),
+                          ),
                         ],
                       ],
                     ),
@@ -586,19 +662,27 @@ class _QuickStudentDialogState extends ConsumerState<QuickStudentDialog> {
                   child: Row(
                     children: [
                       TextButton(
-                        onPressed: _saving ? null : () => Navigator.of(context).pop(),
+                        onPressed: _saving
+                            ? null
+                            : () => Navigator.of(context).pop(),
                         child: const Text('Vazgeç'),
                       ),
                       const Spacer(),
                       OutlinedButton(
-                        onPressed: (_saving || classes.isEmpty || _selectedClassId == null)
+                        onPressed:
+                            (_saving ||
+                                classes.isEmpty ||
+                                _selectedClassId == null)
                             ? null
                             : () => _submit(openDetails: false),
                         child: const Text('Kaydet'),
                       ),
                       const SizedBox(width: AppSpacing.sm),
                       FilledButton.icon(
-                        onPressed: (_saving || classes.isEmpty || _selectedClassId == null)
+                        onPressed:
+                            (_saving ||
+                                classes.isEmpty ||
+                                _selectedClassId == null)
                             ? null
                             : () => _submit(openDetails: true),
                         icon: _saving
@@ -627,21 +711,24 @@ class _QuickStudentDialogState extends ConsumerState<QuickStudentDialog> {
   Future<void> _submit({required bool openDetails}) async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedClassId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lütfen bir şube seçiniz.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Lütfen bir şube seçiniz.')));
       return;
     }
 
     setState(() => _saving = true);
 
     try {
-      final student = await ref.read(studentsProvider.notifier).addBasicStudent(
+      final student = await ref
+          .read(studentsProvider.notifier)
+          .addBasicStudent(
             classId: _selectedClassId!,
             number: _numberCtrl.text.trim(),
             name: _nameCtrl.text.trim(),
             surname: _surnameCtrl.text.trim(),
             gender: _gender,
+            boardingStatus: _boardingStatus,
           );
 
       if (mounted) {
@@ -649,6 +736,12 @@ class _QuickStudentDialogState extends ConsumerState<QuickStudentDialog> {
         if (student != null && widget.onStudentCreated != null) {
           widget.onStudentCreated!(student, openDetails);
         }
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Öğrenci kaydedilemedi: $error')),
+        );
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -745,9 +838,7 @@ class _LevelChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected ? cs.primary : AppColors.surfaceMuted,
           borderRadius: BorderRadius.circular(AppRadius.pill),
-          border: Border.all(
-            color: isSelected ? cs.primary : AppColors.border,
-          ),
+          border: Border.all(color: isSelected ? cs.primary : AppColors.border),
         ),
         child: Text(
           label,

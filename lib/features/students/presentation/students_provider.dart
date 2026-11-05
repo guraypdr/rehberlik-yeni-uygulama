@@ -25,6 +25,7 @@ class StudentsNotifier extends AsyncNotifier<List<Student>> {
     required String name,
     required String surname,
     required String gender,
+    String boardingStatus = 'Gündüzlü',
   }) async {
     if (_dao == null) return null;
     final created = await _dao!.insertBasic(
@@ -33,6 +34,7 @@ class StudentsNotifier extends AsyncNotifier<List<Student>> {
       name: name,
       surname: surname,
       gender: gender,
+      boardingStatus: boardingStatus,
     );
     final all = await _dao!.fetchAll();
     state = AsyncValue.data(all);
@@ -71,8 +73,7 @@ class StudentsNotifier extends AsyncNotifier<List<Student>> {
   }
 }
 
-final studentsProvider =
-    AsyncNotifierProvider<StudentsNotifier, List<Student>>(
+final studentsProvider = AsyncNotifierProvider<StudentsNotifier, List<Student>>(
   StudentsNotifier.new,
 );
 
@@ -117,8 +118,9 @@ class StudentInterviewsNotifier
   }
 }
 
-final studentInterviewsProvider = AsyncNotifierProviderFamily<
-    StudentInterviewsNotifier, List<StudentInterview>, int>(
-  StudentInterviewsNotifier.new,
-);
-
+final studentInterviewsProvider =
+    AsyncNotifierProviderFamily<
+      StudentInterviewsNotifier,
+      List<StudentInterview>,
+      int
+    >(StudentInterviewsNotifier.new);

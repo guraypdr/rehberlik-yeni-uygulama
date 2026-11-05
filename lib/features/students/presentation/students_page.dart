@@ -5,10 +5,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../features/classes/presentation/classes_provider.dart';
 import '../domain/student.dart';
 import 'students_provider.dart';
-import 'widgets/quick_student_dialog.dart';
 import 'widgets/student_card.dart';
-import 'widgets/student_detail_sheet.dart';
-import 'widgets/student_import_dialog.dart';
 
 /// Öğrenciler Sayfası.
 class StudentsPage extends ConsumerStatefulWidget {
@@ -47,46 +44,15 @@ class _StudentsPageState extends ConsumerState<StudentsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── 1. Başlık ve Üst Butonlar ──────────────────────────────
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+              // ── 1. Başlık ──────────────────────────────────────────────
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Öğrenciler', style: t.headlineSmall),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Öğrenci profilleri, aile/veli bilgileri, sağlık durumu ve görüşme takibi',
-                          style: t.bodySmall?.copyWith(color: AppColors.textMuted),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  // Excel içe aktar
-                  OutlinedButton.icon(
-                    icon: const Icon(Icons.file_upload_outlined, size: 16),
-                    label: const Text('Excel\'den İçe Aktar'),
-                    onPressed: () => StudentImportDialog.show(context),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  // Yeni öğrenci ekle
-                  FilledButton.icon(
-                    icon: const Icon(Icons.person_add_outlined, size: 16),
-                    label: const Text('Yeni Öğrenci'),
-                    onPressed: () {
-                      QuickStudentDialog.show(
-                        context,
-                        initialClassId: _selectedClassFilter,
-                        onStudentCreated: (student, openDetails) {
-                          if (openDetails) {
-                            StudentDetailSheet.show(context, student);
-                          }
-                        },
-                      );
-                    },
+                  Text('Öğrenciler', style: t.headlineSmall),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Öğrenci profilleri ve görüşme takibi. Yeni öğrenci eklemek için Sınıflar bölümünden bir sınıf açın.',
+                    style: t.bodySmall?.copyWith(color: AppColors.textMuted),
                   ),
                 ],
               ),
@@ -96,12 +62,15 @@ class _StudentsPageState extends ConsumerState<StudentsPage> {
               studentsAsync.when(
                 data: (allStudents) {
                   final total = allStudents.length;
-                  final femaleCount =
-                      allStudents.where((s) => s.gender == 'Kız').length;
-                  final maleCount =
-                      allStudents.where((s) => s.gender == 'Erkek').length;
-                  final activeCount =
-                      allStudents.where((s) => s.status == 'Aktif').length;
+                  final femaleCount = allStudents
+                      .where((s) => s.gender == 'Kız')
+                      .length;
+                  final maleCount = allStudents
+                      .where((s) => s.gender == 'Erkek')
+                      .length;
+                  final activeCount = allStudents
+                      .where((s) => s.status == 'Aktif')
+                      .length;
 
                   return Row(
                     children: [
@@ -188,7 +157,10 @@ class _StudentsPageState extends ConsumerState<StudentsPage> {
                             horizontal: AppSpacing.md,
                             vertical: AppSpacing.xs + 2,
                           ),
-                          prefixIcon: Icon(Icons.meeting_room_outlined, size: 16),
+                          prefixIcon: Icon(
+                            Icons.meeting_room_outlined,
+                            size: 16,
+                          ),
                         ),
                         items: [
                           const DropdownMenuItem(
@@ -220,9 +192,15 @@ class _StudentsPageState extends ConsumerState<StudentsPage> {
                           ),
                         ),
                         items: const [
-                          DropdownMenuItem(value: 'all', child: Text('Tüm Cinsiyet')),
+                          DropdownMenuItem(
+                            value: 'all',
+                            child: Text('Tüm Cinsiyet'),
+                          ),
                           DropdownMenuItem(value: 'Kız', child: Text('Kız')),
-                          DropdownMenuItem(value: 'Erkek', child: Text('Erkek')),
+                          DropdownMenuItem(
+                            value: 'Erkek',
+                            child: Text('Erkek'),
+                          ),
                         ],
                         onChanged: (g) =>
                             setState(() => _selectedGenderFilter = g ?? 'all'),
@@ -243,11 +221,26 @@ class _StudentsPageState extends ConsumerState<StudentsPage> {
                           ),
                         ),
                         items: const [
-                          DropdownMenuItem(value: 'all', child: Text('Tüm Durumlar')),
-                          DropdownMenuItem(value: 'Aktif', child: Text('Aktif')),
-                          DropdownMenuItem(value: 'Nakil Gitti', child: Text('Nakil')),
-                          DropdownMenuItem(value: 'Mezun', child: Text('Mezun')),
-                          DropdownMenuItem(value: 'Ayrıldı', child: Text('Ayrıldı')),
+                          DropdownMenuItem(
+                            value: 'all',
+                            child: Text('Tüm Durumlar'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Aktif',
+                            child: Text('Aktif'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Nakil Gitti',
+                            child: Text('Nakil'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Mezun',
+                            child: Text('Mezun'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Ayrıldı',
+                            child: Text('Ayrıldı'),
+                          ),
                         ],
                         onChanged: (s) =>
                             setState(() => _selectedStatusFilter = s ?? 'all'),
@@ -266,26 +259,13 @@ class _StudentsPageState extends ConsumerState<StudentsPage> {
                     child: CircularProgressIndicator(),
                   ),
                 ),
-                error: (err, _) => Center(
-                  child: Text('Öğrenciler yüklenemedi: $err'),
-                ),
+                error: (err, _) =>
+                    Center(child: Text('Öğrenciler yüklenemedi: $err')),
                 data: (allStudents) {
                   final filtered = _filterStudents(allStudents);
 
                   if (allStudents.isEmpty) {
-                    return _EmptyStudentsView(
-                      onAdd: () {
-                        QuickStudentDialog.show(
-                          context,
-                          onStudentCreated: (s, openDetails) {
-                            if (openDetails) {
-                              StudentDetailSheet.show(context, s);
-                            }
-                          },
-                        );
-                      },
-                      onImport: () => StudentImportDialog.show(context),
-                    );
+                    return const _EmptyStudentsView();
                   }
 
                   if (filtered.isEmpty) {
@@ -294,8 +274,11 @@ class _StudentsPageState extends ConsumerState<StudentsPage> {
                         padding: const EdgeInsets.all(40),
                         child: Column(
                           children: [
-                            const Icon(Icons.search_off_rounded,
-                                size: 48, color: AppColors.textMuted),
+                            const Icon(
+                              Icons.search_off_rounded,
+                              size: 48,
+                              color: AppColors.textMuted,
+                            ),
                             const SizedBox(height: AppSpacing.sm),
                             const Text(
                               'Arama kriterlerine uygun öğrenci bulunamadı.',
@@ -479,13 +462,7 @@ class _StatChip extends StatelessWidget {
 // ────────────────────────────────────────────────────────────────────────────
 
 class _EmptyStudentsView extends StatelessWidget {
-  const _EmptyStudentsView({
-    required this.onAdd,
-    required this.onImport,
-  });
-
-  final VoidCallback onAdd;
-  final VoidCallback onImport;
+  const _EmptyStudentsView();
 
   @override
   Widget build(BuildContext context) {
@@ -523,26 +500,13 @@ class _EmptyStudentsView extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              'Okulunuzdaki öğrencileri tek tek temel bilgilerle ekleyebilir veya Excel listenizden kopyalayarak toplu içe aktarabilirsiniz.',
+              'Öğrencileri eklemek için Sınıflar bölümünden bir sınıf açın. '
+              'Buradan tek tek veya Excel listenizden toplu ekleme yapabilirsiniz.',
               textAlign: TextAlign.center,
-              style: t.bodySmall?.copyWith(color: AppColors.textMuted, height: 1.5),
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                OutlinedButton.icon(
-                  icon: const Icon(Icons.file_upload_outlined, size: 16),
-                  label: const Text('Excel\'den Aktar'),
-                  onPressed: onImport,
-                ),
-                const SizedBox(width: AppSpacing.md),
-                FilledButton.icon(
-                  icon: const Icon(Icons.person_add_outlined, size: 16),
-                  label: const Text('Öğrenci Ekle'),
-                  onPressed: onAdd,
-                ),
-              ],
+              style: t.bodySmall?.copyWith(
+                color: AppColors.textMuted,
+                height: 1.5,
+              ),
             ),
           ],
         ),

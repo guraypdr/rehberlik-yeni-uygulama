@@ -7,11 +7,7 @@ import 'student_detail_sheet.dart';
 
 /// Öğrenci kartı widget'ı.
 class StudentCard extends StatelessWidget {
-  const StudentCard({
-    super.key,
-    required this.student,
-    required this.onDelete,
-  });
+  const StudentCard({super.key, required this.student, required this.onDelete});
 
   final Student student;
   final VoidCallback onDelete;
@@ -22,7 +18,9 @@ class StudentCard extends StatelessWidget {
     final t = Theme.of(context).textTheme;
 
     final isFemale = student.gender == 'Kız';
-    final genderColor = isFemale ? const Color(0xFFE91E63) : const Color(0xFF1976D2);
+    final genderColor = isFemale
+        ? const Color(0xFFE91E63)
+        : const Color(0xFF1976D2);
 
     return InkWell(
       onTap: () => StudentDetailSheet.show(context, student),
@@ -72,7 +70,9 @@ class StudentCard extends StatelessWidget {
                           Flexible(
                             child: Text(
                               student.fullName,
-                              style: t.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                              style: t.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -137,34 +137,29 @@ class StudentCard extends StatelessWidget {
               spacing: 6,
               runSpacing: 4,
               children: [
+                _Badge(label: student.gender, color: genderColor),
                 _Badge(
-                  label: student.gender,
-                  color: genderColor,
+                  label: student.boardingStatus,
+                  color: student.boardingStatus == 'Yatılı'
+                      ? Colors.deepPurple
+                      : AppColors.textSecondary,
                 ),
                 if (student.status != 'Aktif')
-                  _Badge(
-                    label: student.status,
-                    color: AppColors.warning,
-                  ),
+                  _Badge(label: student.status, color: AppColors.warning),
                 if (student.familyRiskLevel != 'Düşük')
                   _Badge(
                     label: '${student.familyRiskLevel} Risk',
-                    color: student.familyRiskLevel == 'Kritik' ||
+                    color:
+                        student.familyRiskLevel == 'Kritik' ||
                             student.familyRiskLevel == 'Yüksek'
                         ? AppColors.danger
                         : AppColors.warning,
                   ),
                 if (student.specialStatus != null &&
                     student.specialStatus!.isNotEmpty)
-                  _Badge(
-                    label: student.specialStatus!,
-                    color: Colors.purple,
-                  ),
+                  _Badge(label: student.specialStatus!, color: Colors.purple),
                 if (student.hasChronicIllness)
-                  const _Badge(
-                    label: 'Kronik Sağlık',
-                    color: Colors.teal,
-                  ),
+                  const _Badge(label: 'Kronik Sağlık', color: Colors.teal),
                 if (student.parentsTogether != 'Birlikte')
                   _Badge(
                     label: student.parentsTogether,
@@ -174,11 +169,17 @@ class StudentCard extends StatelessWidget {
             ),
 
             // Alt bilgi: Veli veya iletişim (varsa)
-            if (student.guardianPhone != null || student.motherPhone != null || student.fatherPhone != null) ...[
+            if (student.guardianPhone != null ||
+                student.motherPhone != null ||
+                student.fatherPhone != null) ...[
               const SizedBox(height: AppSpacing.sm),
               Row(
                 children: [
-                  const Icon(Icons.phone_outlined, size: 12, color: AppColors.textMuted),
+                  const Icon(
+                    Icons.phone_outlined,
+                    size: 12,
+                    color: AppColors.textMuted,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     student.guardianPhone ??
@@ -190,7 +191,8 @@ class StudentCard extends StatelessWidget {
                       fontSize: 11,
                     ),
                   ),
-                  if (student.guardianName != null && student.guardianName!.isNotEmpty) ...[
+                  if (student.guardianName != null &&
+                      student.guardianName!.isNotEmpty) ...[
                     const SizedBox(width: 6),
                     Text(
                       '(${student.guardianName})',

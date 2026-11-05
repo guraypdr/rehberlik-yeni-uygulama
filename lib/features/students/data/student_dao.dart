@@ -24,7 +24,8 @@ class StudentDao {
 
   /// ID ile tek bir öğrenciyi çeker.
   Future<Student?> getById(int id) async {
-    final rows = await _db.db.rawQuery('''
+    final rows = await _db.db.rawQuery(
+      '''
       SELECT 
         s.*,
         (g.label || ' / ' || c.branch) AS class_name,
@@ -33,7 +34,9 @@ class StudentDao {
       JOIN classes c ON s.class_id = c.id
       JOIN grade_levels g ON c.grade_level_id = g.id
       WHERE s.id = ?
-    ''', [id]);
+    ''',
+      [id],
+    );
     if (rows.isEmpty) return null;
     return Student.fromMap(rows.first);
   }
@@ -45,6 +48,7 @@ class StudentDao {
     required String name,
     required String surname,
     required String gender,
+    String boardingStatus = 'Gündüzlü',
   }) async {
     final now = DateTime.now().toIso8601String();
     final map = {
@@ -53,6 +57,7 @@ class StudentDao {
       'name': name.trim(),
       'surname': surname.trim(),
       'gender': gender,
+      'boarding_status': boardingStatus,
       'status': 'Aktif',
       'created_at': now,
     };
@@ -66,6 +71,7 @@ class StudentDao {
           name: name,
           surname: surname,
           gender: gender,
+          boardingStatus: boardingStatus,
           createdAt: now,
         );
   }
@@ -104,4 +110,3 @@ class StudentDao {
     await _db.db.delete('students', where: 'id = ?', whereArgs: [id]);
   }
 }
-
