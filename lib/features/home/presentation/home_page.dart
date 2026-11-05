@@ -82,7 +82,9 @@ class _Header extends StatelessWidget {
               Text(_greet(now.hour), style: theme.textTheme.bodyMedium),
               const SizedBox(height: 2),
               Text(
-                profile?.name ?? 'Ana Sayfa',
+                profile == null
+                    ? 'Ana Sayfa'
+                    : _schoolNameTitleCase(profile!.name),
                 style: theme.textTheme.headlineSmall,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
