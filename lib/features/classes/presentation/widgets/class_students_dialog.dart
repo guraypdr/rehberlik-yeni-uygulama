@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../students/presentation/students_provider.dart';
 import '../../../students/presentation/widgets/quick_student_dialog.dart';
-import '../../../students/presentation/widgets/student_detail_sheet.dart';
 import '../../../students/presentation/widgets/student_import_dialog.dart';
+import '../../../students/presentation/widgets/student_info_form_sheet.dart';
+import '../../../students/presentation/widgets/student_info_form_status.dart';
+import '../../../students/presentation/widgets/student_profile_page.dart';
 import '../../domain/school_class.dart';
 
 class ClassStudentsDialog extends ConsumerWidget {
@@ -83,7 +85,7 @@ class ClassStudentsDialog extends ConsumerWidget {
                       initialClassId: schoolClass.id,
                       onStudentCreated: (student, openDetails) {
                         if (openDetails) {
-                          StudentDetailSheet.show(context, student);
+                          StudentInfoFormSheet.show(context, student);
                         }
                       },
                     ),
@@ -138,11 +140,18 @@ class ClassStudentsDialog extends ConsumerWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          subtitle: Text(
-                            '${student.gender} · ${student.boardingStatus}',
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${student.gender} · ${student.boardingStatus}',
+                              ),
+                              const SizedBox(height: 4),
+                              StudentInfoFormStatus(student: student),
+                            ],
                           ),
                           onTap: () =>
-                              StudentDetailSheet.show(context, student),
+                              StudentProfilePage.show(context, student),
                         );
                       },
                     );

@@ -1,3 +1,5 @@
+import 'package:sqflite/sqflite.dart';
+
 import '../../../core/database/app_database.dart';
 import '../domain/student.dart';
 
@@ -12,9 +14,11 @@ class StudentDao {
     final rows = await _db.db.rawQuery('''
       SELECT 
         s.*,
+        p.*,
         (g.label || ' / ' || c.branch) AS class_name,
         g.label AS grade_level_label
       FROM students s
+      LEFT JOIN student_info_forms p ON p.student_id = s.id
       JOIN classes c ON s.class_id = c.id
       JOIN grade_levels g ON c.grade_level_id = g.id
       ORDER BY g.sort_order ASC, c.branch ASC, s.name ASC, s.surname ASC
@@ -28,9 +32,11 @@ class StudentDao {
       '''
       SELECT 
         s.*,
+        p.*,
         (g.label || ' / ' || c.branch) AS class_name,
         g.label AS grade_level_label
       FROM students s
+      LEFT JOIN student_info_forms p ON p.student_id = s.id
       JOIN classes c ON s.class_id = c.id
       JOIN grade_levels g ON c.grade_level_id = g.id
       WHERE s.id = ?
@@ -58,7 +64,6 @@ class StudentDao {
       'surname': surname.trim(),
       'gender': gender,
       'boarding_status': boardingStatus,
-      'status': 'Aktif',
       'created_at': now,
     };
     final id = await _db.db.insert('students', map);
@@ -79,7 +84,12 @@ class StudentDao {
   /// Tam öğrenci kaydı ekler.
   Future<Student> insert(Student student) async {
     final map = student.toMap()..remove('id');
-    final id = await _db.db.insert('students', map);
+    final id = await _db.db.transaction((txn) async {
+      final id = await txn.insert('students', map);
+      final formMap = student.toInfoFormMap()..['student_id'] = id;
+      await txn.insert('student_info_forms', formMap);
+      return id;
+    });
     return (await getById(id)) ?? student.copyWith(id: id);
   }
 
@@ -97,12 +107,20 @@ class StudentDao {
   /// Öğrenci bilgilerini günceller.
   Future<void> update(Student student) async {
     final map = student.toMap()..remove('id');
-    await _db.db.update(
-      'students',
-      map,
-      where: 'id = ?',
-      whereArgs: [student.id],
-    );
+    final formMap = student.toInfoFormMap()..['student_id'] = student.id;
+    await _db.db.transaction((txn) async {
+      await txn.update(
+        'students',
+        map,
+        where: 'id = ?',
+        whereArgs: [student.id],
+      );
+      await txn.insert(
+        'student_info_forms',
+        formMap,
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    });
   }
 
   /// Öğrenciyi siler.

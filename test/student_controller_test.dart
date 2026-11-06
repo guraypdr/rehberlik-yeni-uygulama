@@ -16,6 +16,77 @@ void main() {
       expect(student.fullName, 'Ahmet Yılmaz');
     });
 
+    test('öğrenci bilgi formu doluluk oranını hesaplar', () {
+      const student = Student(
+        id: 1,
+        classId: 2,
+        number: '101',
+        name: 'Ahmet',
+        surname: 'Yılmaz',
+        createdAt: '2026-11-03',
+      );
+      final partial = Student(
+        id: 1,
+        classId: 2,
+        number: '101',
+        name: 'Ahmet',
+        surname: 'Yılmaz',
+        createdAt: '2026-11-03',
+        birthDate: '2010-01-01',
+        preschoolEducation: true,
+        usesRegularMedication: false,
+        hasChronicIllness: false,
+        likesActivities: 'Kitap okumak',
+      );
+      expect(student.studentInfoFormCompletion, 0);
+      expect(partial.studentInfoFormCompletion, greaterThan(0));
+      expect(partial.studentInfoFormCompletion, lessThan(100));
+
+      final complete = Student(
+        id: 1,
+        classId: 2,
+        number: '101',
+        name: 'Ahmet',
+        surname: 'Yılmaz',
+        createdAt: '2026-11-03',
+        birthPlace: 'Ankara',
+        birthDate: '2010-01-01',
+        address: 'Çankaya',
+        preschoolEducation: true,
+        usesRegularMedication: false,
+        hasChronicIllness: false,
+        likesActivities: 'Kitap okumak',
+        hasRecentMoveOrSchoolChange: false,
+        extracurricularActivities: 'Spor',
+        hasTechnologyDevice: true,
+        technologyUsageMinutes: 120,
+        hasInfluentialEvent: false,
+        motherName: 'Ayşe',
+        motherSurname: 'Yılmaz',
+        motherBirthPlace: 'Ankara',
+        motherBirthDate: '1980-01-01',
+        motherIsAlive: true,
+        motherIsBiological: true,
+        motherHasDisability: false,
+        motherEducation: 'Lisans',
+        motherJob: 'Öğretmen',
+        fatherName: 'Mehmet',
+        fatherSurname: 'Yılmaz',
+        fatherBirthPlace: 'İzmir',
+        fatherBirthDate: '1978-01-01',
+        fatherIsAlive: true,
+        fatherIsBiological: true,
+        fatherHasDisability: false,
+        fatherEducation: 'Lisans',
+        fatherJob: 'Memur',
+        siblingCount: 1,
+        childOrder: 1,
+        familyHasChronicIllness: false,
+        householdMembers: 'Anne, baba ve öğrenci',
+      );
+      expect(complete.studentInfoFormCompletion, 100);
+    });
+
     test('copyWith doğru çalışır', () {
       const student = Student(
         id: 1,
@@ -41,21 +112,64 @@ void main() {
         surname: 'Kaya',
         gender: 'Kız',
         boardingStatus: 'Yatılı',
-        status: 'Aktif',
-        hasChronicIllness: true,
+        birthPlace: 'Ankara',
+        address: 'Çankaya',
+        birthDate: '2010-01-01',
+        preschoolEducation: true,
+        likesActivities: 'Kitap okumak',
+        hasRecentMoveOrSchoolChange: false,
+        motherBirthPlace: 'Ankara',
+        motherBirthDate: '1980-01-01',
+        motherEducation: 'Lisans',
+        fatherBirthPlace: 'İzmir',
+        fatherBirthDate: '1978-01-01',
+        fatherEducation: 'Lisans',
+        siblingCount: 2,
+        childOrder: 1,
+        familyHasChronicIllness: false,
         chronicIllnessDetails: 'Astım',
         createdAt: '2026-11-03',
       );
       final map = student.toMap();
-      final fromMap = Student.fromMap(map);
+      final formMap = student.toInfoFormMap();
+      final fromMap = Student.fromMap({
+        ...map,
+        ...formMap,
+        'preschool_education': 1,
+        'has_recent_move_or_school_change': 0,
+        'family_has_chronic_illness': 0,
+      });
 
+      expect(map.keys, {
+        'id',
+        'class_id',
+        'number',
+        'name',
+        'surname',
+        'gender',
+        'boarding_status',
+        'created_at',
+      });
       expect(fromMap.id, student.id);
       expect(fromMap.classId, student.classId);
       expect(fromMap.number, student.number);
       expect(fromMap.fullName, 'Zeynep Kaya');
       expect(fromMap.gender, 'Kız');
       expect(fromMap.boardingStatus, 'Yatılı');
-      expect(fromMap.hasChronicIllness, isTrue);
+      expect(fromMap.birthPlace, 'Ankara');
+      expect(fromMap.address, 'Çankaya');
+      expect(fromMap.preschoolEducation, isTrue);
+      expect(fromMap.likesActivities, 'Kitap okumak');
+      expect(fromMap.motherBirthPlace, 'Ankara');
+      expect(fromMap.motherBirthDate, '1980-01-01');
+      expect(fromMap.motherEducation, 'Lisans');
+      expect(fromMap.fatherBirthPlace, 'İzmir');
+      expect(fromMap.fatherBirthDate, '1978-01-01');
+      expect(fromMap.fatherEducation, 'Lisans');
+      expect(fromMap.siblingCount, 2);
+      expect(fromMap.childOrder, 1);
+      expect(fromMap.familyHasChronicIllness, isFalse);
+      expect(fromMap.hasChronicIllness, isNull);
       expect(fromMap.chronicIllnessDetails, 'Astım');
     });
   });

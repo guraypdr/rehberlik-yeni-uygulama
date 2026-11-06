@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/student.dart';
-import 'interview_dialog.dart';
-import 'student_detail_sheet.dart';
+import 'student_form_menu.dart';
+import 'student_info_form_sheet.dart';
+import 'student_info_form_status.dart';
+import 'student_profile_page.dart';
 
 /// Öğrenci kartı widget'ı.
 class StudentCard extends StatelessWidget {
@@ -23,7 +25,7 @@ class StudentCard extends StatelessWidget {
         : const Color(0xFF1976D2);
 
     return InkWell(
-      onTap: () => StudentDetailSheet.show(context, student),
+      onTap: () => StudentProfilePage.show(context, student),
       borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.md),
@@ -107,18 +109,20 @@ class StudentCard extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
+                      const SizedBox(height: 3),
+                      StudentInfoFormStatus(
+                        student: student,
+                        showProgressBar: true,
+                      ),
                     ],
                   ),
                 ),
-                IconButton(
-                  tooltip: 'Hızlı Görüşme Ekle',
-                  icon: const Icon(Icons.add_comment_outlined, size: 18),
-                  onPressed: () {
-                    InterviewDialog.show(
-                      context,
-                      studentId: student.id,
-                      studentName: student.fullName,
-                    );
+                StudentFormMenu(
+                  onSelected: (action) {
+                    switch (action) {
+                      case StudentFormAction.studentInfo:
+                        StudentInfoFormSheet.show(context, student);
+                    }
                   },
                 ),
                 IconButton(
@@ -132,7 +136,7 @@ class StudentCard extends StatelessWidget {
             const Divider(height: 1),
             const SizedBox(height: AppSpacing.sm),
 
-            // Rozetler & Bilgi etiketleri
+            // Temel öğrenci bilgileri
             Wrap(
               spacing: 6,
               runSpacing: 4,
@@ -144,67 +148,8 @@ class StudentCard extends StatelessWidget {
                       ? Colors.deepPurple
                       : AppColors.textSecondary,
                 ),
-                if (student.status != 'Aktif')
-                  _Badge(label: student.status, color: AppColors.warning),
-                if (student.familyRiskLevel != 'Düşük')
-                  _Badge(
-                    label: '${student.familyRiskLevel} Risk',
-                    color:
-                        student.familyRiskLevel == 'Kritik' ||
-                            student.familyRiskLevel == 'Yüksek'
-                        ? AppColors.danger
-                        : AppColors.warning,
-                  ),
-                if (student.specialStatus != null &&
-                    student.specialStatus!.isNotEmpty)
-                  _Badge(label: student.specialStatus!, color: Colors.purple),
-                if (student.hasChronicIllness)
-                  const _Badge(label: 'Kronik Sağlık', color: Colors.teal),
-                if (student.parentsTogether != 'Birlikte')
-                  _Badge(
-                    label: student.parentsTogether,
-                    color: Colors.deepOrange,
-                  ),
               ],
             ),
-
-            // Alt bilgi: Veli veya iletişim (varsa)
-            if (student.guardianPhone != null ||
-                student.motherPhone != null ||
-                student.fatherPhone != null) ...[
-              const SizedBox(height: AppSpacing.sm),
-              Row(
-                children: [
-                  const Icon(
-                    Icons.phone_outlined,
-                    size: 12,
-                    color: AppColors.textMuted,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    student.guardianPhone ??
-                        student.motherPhone ??
-                        student.fatherPhone ??
-                        '',
-                    style: t.bodySmall?.copyWith(
-                      color: AppColors.textMuted,
-                      fontSize: 11,
-                    ),
-                  ),
-                  if (student.guardianName != null &&
-                      student.guardianName!.isNotEmpty) ...[
-                    const SizedBox(width: 6),
-                    Text(
-                      '(${student.guardianName})',
-                      style: t.bodySmall?.copyWith(
-                        color: AppColors.textMuted,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ],
           ],
         ),
       ),

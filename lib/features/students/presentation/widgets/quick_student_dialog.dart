@@ -695,7 +695,9 @@ class _QuickStudentDialogState extends ConsumerState<QuickStudentDialog> {
                                 ),
                               )
                             : const Icon(Icons.arrow_forward_rounded, size: 16),
-                        label: const Text('Kaydet ve Detayları Doldur'),
+                        label: const Text(
+                          'Kaydet ve Öğrenci Bilgi Formunu Doldur',
+                        ),
                       ),
                     ],
                   ),

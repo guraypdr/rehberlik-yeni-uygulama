@@ -379,7 +379,6 @@ class _StudentImportDialogState extends ConsumerState<StudentImportDialog> {
               surname: row.surname,
               gender: row.gender,
               boardingStatus: row.boardingStatus,
-              status: 'Aktif',
               createdAt: now,
             ),
           )

@@ -20,7 +20,6 @@ class _StudentsPageState extends ConsumerState<StudentsPage> {
 
   int? _selectedClassFilter;
   String _selectedGenderFilter = 'all'; // 'all', 'Kız', 'Erkek'
-  String _selectedStatusFilter = 'all'; // 'all', 'Aktif', 'Nakil', 'Mezun'
 
   @override
   void dispose() {
@@ -68,8 +67,8 @@ class _StudentsPageState extends ConsumerState<StudentsPage> {
                   final maleCount = allStudents
                       .where((s) => s.gender == 'Erkek')
                       .length;
-                  final activeCount = allStudents
-                      .where((s) => s.status == 'Aktif')
+                  final completedForms = allStudents
+                      .where((s) => s.studentInfoFormCompletion == 100)
                       .length;
 
                   return Row(
@@ -97,8 +96,8 @@ class _StudentsPageState extends ConsumerState<StudentsPage> {
                       const SizedBox(width: AppSpacing.md),
                       _StatChip(
                         icon: Icons.check_circle_outline,
-                        label: 'Aktif Öğrenci',
-                        value: '$activeCount',
+                        label: 'Formu Tamamlanan',
+                        value: '$completedForms',
                         color: AppColors.success,
                       ),
                     ],
@@ -121,11 +120,11 @@ class _StudentsPageState extends ConsumerState<StudentsPage> {
                   children: [
                     // Arama kutusu
                     Expanded(
-                      flex: 4,
+                      flex: 5,
                       child: TextField(
                         controller: _searchCtrl,
                         decoration: InputDecoration(
-                          hintText: 'Ad, soyad, okul no veya TC ile ara...',
+                          hintText: 'Ad, soyad veya öğrenci no ile ara...',
                           prefixIcon: const Icon(Icons.search, size: 18),
                           suffixIcon: _searchCtrl.text.isNotEmpty
                               ? IconButton(
@@ -206,46 +205,6 @@ class _StudentsPageState extends ConsumerState<StudentsPage> {
                             setState(() => _selectedGenderFilter = g ?? 'all'),
                       ),
                     ),
-                    const SizedBox(width: AppSpacing.md),
-
-                    // Durum Filtresi
-                    Expanded(
-                      flex: 2,
-                      child: DropdownButtonFormField<String>(
-                        initialValue: _selectedStatusFilter,
-                        decoration: const InputDecoration(
-                          isDense: true,
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: AppSpacing.md,
-                            vertical: AppSpacing.xs + 2,
-                          ),
-                        ),
-                        items: const [
-                          DropdownMenuItem(
-                            value: 'all',
-                            child: Text('Tüm Durumlar'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Aktif',
-                            child: Text('Aktif'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Nakil Gitti',
-                            child: Text('Nakil'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Mezun',
-                            child: Text('Mezun'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Ayrıldı',
-                            child: Text('Ayrıldı'),
-                          ),
-                        ],
-                        onChanged: (s) =>
-                            setState(() => _selectedStatusFilter = s ?? 'all'),
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -291,7 +250,6 @@ class _StudentsPageState extends ConsumerState<StudentsPage> {
                                   _searchCtrl.clear();
                                   _selectedClassFilter = null;
                                   _selectedGenderFilter = 'all';
-                                  _selectedStatusFilter = 'all';
                                 });
                               },
                               child: const Text('Filtreleri Temizle'),
@@ -312,7 +270,7 @@ class _StudentsPageState extends ConsumerState<StudentsPage> {
                       crossAxisCount: crossCount,
                       mainAxisSpacing: AppSpacing.md,
                       crossAxisSpacing: AppSpacing.md,
-                      mainAxisExtent: 148,
+                      mainAxisExtent: 172,
                     ),
                     itemCount: filtered.length,
                     itemBuilder: (context, index) {
@@ -344,17 +302,12 @@ class _StudentsPageState extends ConsumerState<StudentsPage> {
       if (_selectedGenderFilter != 'all' && s.gender != _selectedGenderFilter) {
         return false;
       }
-      // Durum filtresi
-      if (_selectedStatusFilter != 'all' && s.status != _selectedStatusFilter) {
-        return false;
-      }
       // Arama metni
       if (q.isNotEmpty) {
         final matchName = s.fullName.toLowerCase().contains(q);
         final matchNo = s.number.toLowerCase().contains(q);
-        final matchTc = s.tcNo?.toLowerCase().contains(q) ?? false;
         final matchClass = s.displayClass.toLowerCase().contains(q);
-        if (!matchName && !matchNo && !matchTc && !matchClass) {
+        if (!matchName && !matchNo && !matchClass) {
           return false;
         }
       }

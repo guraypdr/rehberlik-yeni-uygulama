@@ -15,7 +15,7 @@ class AppDatabase {
   /// Veritabanı bağlantısına doğrudan erişim (DAO'lar için).
   Database get db => _db;
 
-  static const int _currentVersion = 3;
+  static const int _currentVersion = 6;
 
   /// Verilen dosya yolunda veritabanını açar; yoksa oluşturur.
   static Future<AppDatabase> open(String path) async {
@@ -49,6 +49,7 @@ class AppDatabase {
     final batch = db.batch();
     _createCoreTables(batch);
     _createStudentsTable(batch);
+    _createStudentInfoFormsTable(batch);
     _createInterviewsTable(batch);
     await batch.commit(noResult: true);
   }
@@ -70,9 +71,9 @@ class AppDatabase {
 
         await db.execute('''
           INSERT INTO students (
-            id, class_id, number, name, surname, tc_no, general_notes, created_at
+            id, class_id, number, name, surname, created_at
           )
-          SELECT id, class_id, CAST(no AS TEXT), name, surname, tc_no, notes, datetime('now', 'localtime')
+          SELECT id, class_id, CAST(no AS TEXT), name, surname, datetime('now', 'localtime')
           FROM _students_old
         ''');
         await db.execute('DROP TABLE _students_old');
@@ -88,6 +89,39 @@ class AppDatabase {
       await db.execute(
         "ALTER TABLE students ADD COLUMN boarding_status TEXT NOT NULL DEFAULT 'Gündüzlü'",
       );
+    }
+    if (oldVersion >= 2 && oldVersion < 4) {
+      await db.execute('ALTER TABLE students ADD COLUMN birth_place TEXT');
+      await db.execute('ALTER TABLE students ADD COLUMN address TEXT');
+      await db.execute(
+        'ALTER TABLE students ADD COLUMN preschool_education TEXT',
+      );
+    }
+    if (oldVersion >= 2 && oldVersion < 5) {
+      for (final column in [
+        'likes_activities',
+        'recent_trauma',
+        'move_or_school_change',
+        'extracurricular_activities',
+        'technology_devices',
+        'technology_usage',
+        'influential_event',
+        'influential_event_details',
+        'mother_birth_place',
+        'mother_birth_date',
+        'mother_education',
+        'father_birth_place',
+        'father_birth_date',
+        'father_education',
+        'sibling_order',
+        'child_order',
+        'household_chronic_illness',
+      ]) {
+        await db.execute('ALTER TABLE students ADD COLUMN $column TEXT');
+      }
+    }
+    if (oldVersion < 6) {
+      await _migrateStudentInfoForms(db);
     }
   }
 
@@ -155,61 +189,250 @@ class AppDatabase {
         surname                    TEXT    NOT NULL,
         gender                     TEXT    NOT NULL DEFAULT 'Erkek',
         boarding_status            TEXT    NOT NULL DEFAULT 'Gündüzlü',
-        tc_no                      TEXT,
-        birth_date                 TEXT,
-        photo_path                 TEXT,
-        enrollment_date            TEXT,
-        status                     TEXT    NOT NULL DEFAULT 'Aktif',
-        transfer_school            TEXT,
-        transfer_grade             TEXT,
-        has_repeated_grade         INTEGER NOT NULL DEFAULT 0,
-        repeat_reason              TEXT,
-        special_status             TEXT,
-
-        -- Aile ve Veli Bilgileri
-        mother_name                TEXT,
-        mother_surname             TEXT,
-        mother_is_biological       INTEGER NOT NULL DEFAULT 1,
-        mother_is_alive            INTEGER NOT NULL DEFAULT 1,
-        mother_job                 TEXT,
-        mother_phone               TEXT,
-        mother_address             TEXT,
-        mother_has_disability      INTEGER NOT NULL DEFAULT 0,
-        mother_disability_details  TEXT,
-
-        father_name                TEXT,
-        father_surname             TEXT,
-        father_is_biological       INTEGER NOT NULL DEFAULT 1,
-        father_is_alive            INTEGER NOT NULL DEFAULT 1,
-        father_job                 TEXT,
-        father_phone               TEXT,
-        father_address             TEXT,
-        father_has_disability      INTEGER NOT NULL DEFAULT 0,
-        father_disability_details  TEXT,
-
-        parents_together           TEXT    NOT NULL DEFAULT 'Birlikte',
-        lives_with                 TEXT    NOT NULL DEFAULT 'Anne-Baba',
-        guardian_type              TEXT    NOT NULL DEFAULT 'Anne-Baba',
-        guardian_name              TEXT,
-        guardian_phone             TEXT,
-        sibling_count              INTEGER NOT NULL DEFAULT 0,
-        sibling_details            TEXT,
-        household_members          TEXT,
-        family_notes               TEXT,
-        family_risk_level          TEXT    NOT NULL DEFAULT 'Düşük',
-
-        -- Sağlık Durumu Bilgileri
-        has_chronic_illness        INTEGER NOT NULL DEFAULT 0,
-        chronic_illness_details    TEXT,
-        uses_regular_medication    INTEGER NOT NULL DEFAULT 0,
-        medication_details         TEXT,
-        has_psychological_history  INTEGER NOT NULL DEFAULT 0,
-        psychological_details      TEXT,
-
-        general_notes              TEXT,
         created_at                 TEXT    NOT NULL
       )
     ''');
+  }
+
+  static void _createStudentInfoFormsTable(Batch batch) {
+    batch.execute('''
+      CREATE TABLE IF NOT EXISTS student_info_forms (
+        student_id                         INTEGER PRIMARY KEY REFERENCES students(id) ON DELETE CASCADE,
+        birth_place                        TEXT,
+        birth_date                         TEXT,
+        address                            TEXT,
+        preschool_education                INTEGER,
+        uses_regular_medication            INTEGER,
+        medication_details                 TEXT,
+        has_chronic_illness                INTEGER,
+        chronic_illness_details            TEXT,
+        likes_activities                   TEXT,
+        has_recent_move_or_school_change   INTEGER,
+        move_or_school_change_details      TEXT,
+        extracurricular_activities         TEXT,
+        has_technology_device              INTEGER,
+        technology_usage_minutes           INTEGER,
+        has_influential_event              INTEGER,
+        influential_event_details          TEXT,
+        mother_name                        TEXT,
+        mother_surname                     TEXT,
+        mother_birth_place                 TEXT,
+        mother_birth_date                  TEXT,
+        mother_is_alive                    INTEGER,
+        mother_is_biological               INTEGER,
+        mother_has_disability              INTEGER,
+        mother_disability_details          TEXT,
+        mother_education                   TEXT,
+        mother_job                         TEXT,
+        father_name                        TEXT,
+        father_surname                     TEXT,
+        father_birth_place                 TEXT,
+        father_birth_date                  TEXT,
+        father_is_alive                    INTEGER,
+        father_is_biological               INTEGER,
+        father_has_disability              INTEGER,
+        father_disability_details          TEXT,
+        father_education                   TEXT,
+        father_job                         TEXT,
+        sibling_count                      INTEGER,
+        child_order                        INTEGER,
+        family_has_chronic_illness         INTEGER,
+        household_chronic_illness_details  TEXT,
+        household_members                  TEXT
+      )
+    ''');
+  }
+
+  static Future<void> _migrateStudentInfoForms(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS student_info_forms (
+        student_id                         INTEGER PRIMARY KEY REFERENCES students(id) ON DELETE CASCADE,
+        birth_place                        TEXT,
+        birth_date                         TEXT,
+        address                            TEXT,
+        preschool_education                INTEGER,
+        uses_regular_medication            INTEGER,
+        medication_details                 TEXT,
+        has_chronic_illness                INTEGER,
+        chronic_illness_details            TEXT,
+        likes_activities                   TEXT,
+        has_recent_move_or_school_change   INTEGER,
+        move_or_school_change_details      TEXT,
+        extracurricular_activities         TEXT,
+        has_technology_device              INTEGER,
+        technology_usage_minutes           INTEGER,
+        has_influential_event              INTEGER,
+        influential_event_details          TEXT,
+        mother_name                        TEXT,
+        mother_surname                     TEXT,
+        mother_birth_place                 TEXT,
+        mother_birth_date                  TEXT,
+        mother_is_alive                    INTEGER,
+        mother_is_biological               INTEGER,
+        mother_has_disability              INTEGER,
+        mother_disability_details          TEXT,
+        mother_education                   TEXT,
+        mother_job                         TEXT,
+        father_name                        TEXT,
+        father_surname                     TEXT,
+        father_birth_place                 TEXT,
+        father_birth_date                  TEXT,
+        father_is_alive                    INTEGER,
+        father_is_biological               INTEGER,
+        father_has_disability              INTEGER,
+        father_disability_details          TEXT,
+        father_education                   TEXT,
+        father_job                         TEXT,
+        sibling_count                      INTEGER,
+        child_order                        INTEGER,
+        family_has_chronic_illness         INTEGER,
+        household_chronic_illness_details  TEXT,
+        household_members                  TEXT
+      )
+    ''');
+
+    final columns = (await db.rawQuery(
+      'PRAGMA table_info(students)',
+    )).map((row) => row['name'] as String).toSet();
+    final legacyRows = await db.query('students');
+    final batch = db.batch();
+    for (final row in legacyRows) {
+      Object? value(String column) =>
+          columns.contains(column) ? row[column] : null;
+      final moveDetails = _legacyDetails(value('move_or_school_change'));
+      final householdIllness = _legacyDetails(
+        value('household_chronic_illness'),
+      );
+      final event = _legacyDetails(value('influential_event'));
+      final minutes = _legacyUsageMinutes(value('technology_usage'));
+      batch.insert('student_info_forms', {
+        'student_id': row['id'],
+        'birth_place': value('birth_place'),
+        'birth_date': value('birth_date'),
+        'address': value('address'),
+        'preschool_education': _legacyBoolean(value('preschool_education')),
+        'uses_regular_medication': _legacyBoolean(
+          value('uses_regular_medication'),
+        ),
+        'medication_details': value('medication_details'),
+        'has_chronic_illness': _legacyBoolean(value('has_chronic_illness')),
+        'chronic_illness_details': value('chronic_illness_details'),
+        'likes_activities': value('likes_activities'),
+        'has_recent_move_or_school_change': _legacyPresence(
+          value('move_or_school_change'),
+        ),
+        'move_or_school_change_details': moveDetails,
+        'extracurricular_activities': value('extracurricular_activities'),
+        'has_technology_device': _legacyPresence(value('technology_devices')),
+        'technology_usage_minutes': minutes,
+        'has_influential_event': _legacyPresence(
+          value('influential_event_details') ?? value('influential_event'),
+        ),
+        'influential_event_details':
+            value('influential_event_details') ?? event,
+        'mother_name': value('mother_name'),
+        'mother_surname': value('mother_surname'),
+        'mother_birth_place': value('mother_birth_place'),
+        'mother_birth_date': value('mother_birth_date'),
+        'mother_is_alive': _legacyBoolean(value('mother_is_alive')),
+        'mother_is_biological': _legacyBoolean(value('mother_is_biological')),
+        'mother_has_disability': _legacyBoolean(value('mother_has_disability')),
+        'mother_disability_details': value('mother_disability_details'),
+        'mother_education': value('mother_education'),
+        'mother_job': value('mother_job'),
+        'father_name': value('father_name'),
+        'father_surname': value('father_surname'),
+        'father_birth_place': value('father_birth_place'),
+        'father_birth_date': value('father_birth_date'),
+        'father_is_alive': _legacyBoolean(value('father_is_alive')),
+        'father_is_biological': _legacyBoolean(value('father_is_biological')),
+        'father_has_disability': _legacyBoolean(value('father_has_disability')),
+        'father_disability_details': value('father_disability_details'),
+        'father_education': value('father_education'),
+        'father_job': value('father_job'),
+        'sibling_count': value('sibling_count'),
+        'child_order': _legacyInteger(value('child_order')),
+        'family_has_chronic_illness': _legacyPresence(
+          value('household_chronic_illness'),
+        ),
+        'household_chronic_illness_details': householdIllness,
+        'household_members': value('household_members'),
+      });
+    }
+    await batch.commit(noResult: true);
+
+    const retainedColumns = {
+      'id',
+      'class_id',
+      'number',
+      'name',
+      'surname',
+      'gender',
+      'boarding_status',
+      'created_at',
+    };
+    for (final column in columns.difference(retainedColumns)) {
+      await db.execute('ALTER TABLE students DROP COLUMN $column');
+    }
+  }
+
+  static int? _legacyBoolean(Object? value) {
+    if (value == null) return null;
+    final normalized = value.toString().trim().toLowerCase();
+    if (normalized.isEmpty) return null;
+    if (const {'1', 'true', 'evet', 'var', 'yes'}.contains(normalized)) {
+      return 1;
+    }
+    if (const {
+      '0',
+      'false',
+      'hayır',
+      'hayir',
+      'yok',
+      'bulunmuyor',
+      'no',
+    }.contains(normalized)) {
+      return 0;
+    }
+    return normalized == '0.0' ? 0 : null;
+  }
+
+  static int? _legacyPresence(Object? value) =>
+      _legacyBoolean(value) ?? (_legacyDetails(value) == null ? null : 1);
+
+  static String? _legacyDetails(Object? value) {
+    if (value == null) return null;
+    final text = value.toString().trim();
+    if (text.isEmpty ||
+        const {
+          'yok',
+          'hayır',
+          'hayir',
+          'bulunmuyor',
+          'false',
+          '0',
+        }.contains(text.toLowerCase())) {
+      return null;
+    }
+    return text;
+  }
+
+  static int? _legacyInteger(Object? value) {
+    if (value == null) return null;
+    return int.tryParse(value.toString().trim());
+  }
+
+  static int? _legacyUsageMinutes(Object? value) {
+    if (value == null) return null;
+    final text = value.toString().trim().toLowerCase();
+    if (text.isEmpty) return null;
+    final hours = RegExp(r'(\d+)\s*saat').firstMatch(text);
+    final minutes = RegExp(r'(\d+)\s*dakika').firstMatch(text);
+    if (hours != null || minutes != null) {
+      return (int.tryParse(hours?.group(1) ?? '0') ?? 0) * 60 +
+          (int.tryParse(minutes?.group(1) ?? '0') ?? 0);
+    }
+    return int.tryParse(text);
   }
 
   static void _createInterviewsTable(Batch batch) {
