@@ -30,7 +30,9 @@ void main() {
       ProviderScope(
         overrides: [
           databaseProvider.overrideWithValue(null),
-          classesProvider.overrideWith(() => _FakeClassesNotifier(schoolClass)),
+          classesProvider.overrideWith(
+            () => _FakeClassesNotifier([schoolClass]),
+          ),
           schoolRiskCountsProvider.overrideWith(
             () => _FakeSchoolRiskCountsNotifier(counts),
           ),
@@ -82,14 +84,14 @@ void main() {
         overrides: [
           databaseProvider.overrideWithValue(null),
           classesProvider.overrideWith(
-            () => _FakeClassesNotifier(
+            () => _FakeClassesNotifier([
               const SchoolClass(
                 id: 3,
                 gradeLevelId: 1,
                 gradeLevelLabel: '9. Sınıf',
                 branch: 'A',
               ),
-            ),
+            ]),
           ),
           schoolRiskCountsProvider.overrideWith(
             () => _FakeSchoolRiskCountsNotifier(const {}),
@@ -112,23 +114,105 @@ void main() {
       0,
     );
   });
+
+  testWidgets('sınıfları düzey sırasına göre alandan bağımsız dizer', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1800, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final classes = [
+      const SchoolClass(
+        id: 12,
+        gradeLevelId: 1,
+        gradeLevelLabel: '12. Sınıf',
+        branch: 'A',
+        fieldName: 'Sayısal',
+      ),
+      const SchoolClass(
+        id: 10,
+        gradeLevelId: 2,
+        gradeLevelLabel: '5. Sınıf',
+        branch: 'A',
+        fieldName: 'Sözel',
+      ),
+      const SchoolClass(
+        id: 15,
+        gradeLevelId: 3,
+        gradeLevelLabel: 'Hazırlık',
+        branch: 'A',
+      ),
+      const SchoolClass(
+        id: 11,
+        gradeLevelId: 4,
+        gradeLevelLabel: '10. Sınıf',
+        branch: 'A',
+        fieldName: 'Dil',
+      ),
+      const SchoolClass(
+        id: 14,
+        gradeLevelId: 5,
+        gradeLevelLabel: '8. Sınıf',
+        branch: 'A',
+      ),
+      const SchoolClass(
+        id: 13,
+        gradeLevelId: 6,
+        gradeLevelLabel: '9. Sınıf',
+        branch: 'A',
+      ),
+      const SchoolClass(
+        id: 16,
+        gradeLevelId: 7,
+        gradeLevelLabel: '6. Sınıf',
+        branch: 'A',
+      ),
+      const SchoolClass(
+        id: 17,
+        gradeLevelId: 8,
+        gradeLevelLabel: '7. Sınıf',
+        branch: 'A',
+      ),
+    ];
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          databaseProvider.overrideWithValue(null),
+          classesProvider.overrideWith(() => _FakeClassesNotifier(classes)),
+          schoolRiskCountsProvider.overrideWith(
+            () => _FakeSchoolRiskCountsNotifier(const {}),
+          ),
+        ],
+        child: const MaterialApp(home: SchoolRiskMapPage()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final orderedClassIds = [15, 10, 16, 17, 14, 13, 11, 12];
+    final topPositions = [
+      for (final id in orderedClassIds)
+        tester.getTopLeft(find.byKey(Key('school_risk_class_$id'))).dy,
+    ];
+    expect(topPositions, orderedEquals([...topPositions]..sort()));
+  });
 }
 
 class _FakeClassesNotifier extends ClassesNotifier {
-  _FakeClassesNotifier(SchoolClass schoolClass) : _schoolClass = schoolClass;
+  _FakeClassesNotifier(this.classes);
 
-  final SchoolClass _schoolClass;
+  final List<SchoolClass> classes;
 
   @override
   Future<ClassesState> build() async => ClassesState(
     gradeLevels: [
-      GradeLevel(
-        id: _schoolClass.gradeLevelId,
-        label: '9. Sınıf',
-        sortOrder: 1,
-      ),
+      for (final gradeId
+          in classes.map((schoolClass) => schoolClass.gradeLevelId).toSet())
+        GradeLevel(id: gradeId, label: '', sortOrder: gradeId),
     ],
-    classes: [_schoolClass],
+    classes: classes,
   );
 }
 

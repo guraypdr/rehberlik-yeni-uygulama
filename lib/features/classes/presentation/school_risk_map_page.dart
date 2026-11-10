@@ -75,7 +75,7 @@ class _SchoolRiskMapPageState extends ConsumerState<SchoolRiskMapPage> {
           error: (error, _) =>
               Center(child: Text('Risk sayıları yüklenemedi: $error')),
           data: (counts) {
-            final classes = classState.classes;
+            final classes = _sortClasses(classState.classes);
             if (classes.isEmpty) {
               return const Center(child: Text('Henüz sınıf eklenmedi.'));
             }
@@ -84,6 +84,30 @@ class _SchoolRiskMapPageState extends ConsumerState<SchoolRiskMapPage> {
         ),
       ),
     );
+  }
+
+  List<SchoolClass> _sortClasses(List<SchoolClass> classes) {
+    final sorted = [...classes];
+    sorted.sort((a, b) {
+      final gradeComparison = _gradeOrder(a).compareTo(_gradeOrder(b));
+      if (gradeComparison != 0) return gradeComparison;
+
+      final labelComparison = a.gradeLevelLabel.compareTo(b.gradeLevelLabel);
+      if (labelComparison != 0 && _gradeOrder(a) >= 10000) {
+        return labelComparison;
+      }
+      return a.branch.compareTo(b.branch);
+    });
+    return sorted;
+  }
+
+  int _gradeOrder(SchoolClass schoolClass) {
+    final label = schoolClass.gradeLevelLabel.trim().toLowerCase();
+    if (label == 'hazırlık' || label == 'hazirlik') return 0;
+
+    final gradeNumber = RegExp(r'\d+').firstMatch(label);
+    if (gradeNumber == null) return 10000;
+    return int.parse(gradeNumber.group(0)!) + 1;
   }
 
   Widget _buildMap(
@@ -196,14 +220,15 @@ class _SchoolRiskMapPageState extends ConsumerState<SchoolRiskMapPage> {
   }
 
   Future<void> _printSchoolRiskMap() async {
-    final classes = ref.read(classesProvider).valueOrNull?.classes;
+    final loadedClasses = ref.read(classesProvider).valueOrNull?.classes;
     final counts = ref.read(schoolRiskCountsProvider).valueOrNull;
-    if (classes == null || counts == null) {
+    if (loadedClasses == null || counts == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Risk haritası yazdırmaya hazır değil.')),
       );
       return;
     }
+    final classes = _sortClasses(loadedClasses);
     if (classes.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Yazdırılacak sınıf bulunmuyor.')),
