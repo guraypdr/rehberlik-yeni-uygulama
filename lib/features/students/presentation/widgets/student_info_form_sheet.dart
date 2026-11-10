@@ -102,7 +102,17 @@ class _StudentInfoFormSheetState extends ConsumerState<StudentInfoFormSheet> {
   @override
   void initState() {
     super.initState();
-    final student = widget.student;
+    final cachedStudent = ref
+        .read(studentsProvider)
+        .valueOrNull
+        ?.where((item) => item.id == widget.student.id)
+        .firstOrNull;
+    final student =
+        cachedStudent != null &&
+            cachedStudent.studentInfoFormCompletion >=
+                widget.student.studentInfoFormCompletion
+        ? cachedStudent
+        : widget.student;
     for (final entry in _textInitializers.entries) {
       final value = entry.value(student);
       _text[entry.key] = TextEditingController(
@@ -450,6 +460,7 @@ class _StudentInfoFormSheetState extends ConsumerState<StudentInfoFormSheet> {
                   ),
                   const Spacer(),
                   FilledButton.icon(
+                    key: const Key('student_info_save_button'),
                     onPressed: _saving || selectedClassId == null
                         ? null
                         : _save,
