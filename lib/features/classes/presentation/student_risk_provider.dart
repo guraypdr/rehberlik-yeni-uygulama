@@ -52,3 +52,12 @@ final studentRiskProvider =
     AsyncNotifierProviderFamily<StudentRiskNotifier, StudentRiskAnswers, int>(
       StudentRiskNotifier.new,
     );
+
+final classRiskMapCompletedProvider = FutureProvider.family<bool, int>((
+  ref,
+  classId,
+) async {
+  final database = ref.watch(databaseProvider);
+  if (database == null) return false;
+  return StudentRiskDao(database).isClassRiskMapCompleted(classId);
+});

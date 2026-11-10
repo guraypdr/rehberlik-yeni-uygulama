@@ -62,6 +62,9 @@ void main() {
           await database.db.query('class_risk_responses'),
           hasLength(questionKeys.length),
         );
+        expect(await dao.isClassRiskMapCompleted(1), isFalse);
+        await dao.markClassRiskMapCompleted(1);
+        expect(await dao.isClassRiskMapCompleted(1), isTrue);
       } finally {
         await database.close();
         await directory.delete(recursive: true);

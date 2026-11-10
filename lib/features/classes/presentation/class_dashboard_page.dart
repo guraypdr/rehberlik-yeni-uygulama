@@ -8,6 +8,8 @@ import '../../students/presentation/widgets/student_profile_page.dart';
 import '../../teachers/presentation/teachers_provider.dart';
 import '../domain/school_class.dart';
 import 'class_risk_map_page.dart';
+import 'class_risk_map_overview_page.dart';
+import 'student_risk_provider.dart';
 
 class ClassDashboardPage extends ConsumerWidget {
   const ClassDashboardPage({super.key, required this.schoolClass});
@@ -18,6 +20,9 @@ class ClassDashboardPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final studentsAsync = ref.watch(studentsProvider);
     final teachersAsync = ref.watch(teachersProvider);
+    final riskMapCompletedAsync = ref.watch(
+      classRiskMapCompletedProvider(schoolClass.id),
+    );
 
     return Scaffold(
       appBar: AppBar(title: Text(schoolClass.displayName)),
@@ -44,6 +49,7 @@ class ClassDashboardPage extends ConsumerWidget {
             final teacher = teachers
                 .where((item) => item.id == schoolClass.teacherId)
                 .firstOrNull;
+            final riskMapCompleted = riskMapCompletedAsync.valueOrNull ?? false;
 
             return ListView(
               padding: const EdgeInsets.all(AppSpacing.lg),
@@ -89,12 +95,24 @@ class ClassDashboardPage extends ConsumerWidget {
                       key: const Key('open_class_risk_map'),
                       onPressed: () => Navigator.of(context).push(
                         MaterialPageRoute<void>(
-                          builder: (_) =>
-                              ClassRiskMapPage(schoolClass: schoolClass),
+                          builder: (_) => riskMapCompleted
+                              ? ClassRiskMapOverviewPage(
+                                  schoolClass: schoolClass,
+                                )
+                              : ClassRiskMapPage(schoolClass: schoolClass),
                         ),
                       ),
-                      icon: const Icon(Icons.grid_view_outlined, size: 18),
-                      label: const Text('Sınıf Risk Haritası'),
+                      icon: Icon(
+                        riskMapCompleted
+                            ? Icons.visibility_outlined
+                            : Icons.grid_view_outlined,
+                        size: 18,
+                      ),
+                      label: Text(
+                        riskMapCompleted
+                            ? 'Risk Haritasını Görüntüle'
+                            : 'Sınıf Risk Haritası',
+                      ),
                     ),
                   ],
                 ),

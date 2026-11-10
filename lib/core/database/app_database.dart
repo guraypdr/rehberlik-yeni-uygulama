@@ -15,7 +15,7 @@ class AppDatabase {
   /// Veritabanı bağlantısına doğrudan erişim (DAO'lar için).
   Database get db => _db;
 
-  static const int _currentVersion = 7;
+  static const int _currentVersion = 8;
 
   /// Verilen dosya yolunda veritabanını açar; yoksa oluşturur.
   static Future<AppDatabase> open(String path) async {
@@ -51,6 +51,7 @@ class AppDatabase {
     _createStudentsTable(batch);
     _createStudentInfoFormsTable(batch);
     _createClassRiskResponsesTable(batch);
+    _createClassRiskMapStatusTable(batch);
     _createInterviewsTable(batch);
     await batch.commit(noResult: true);
   }
@@ -127,6 +128,11 @@ class AppDatabase {
     if (oldVersion < 7) {
       final batch = db.batch();
       _createClassRiskResponsesTable(batch);
+      await batch.commit(noResult: true);
+    }
+    if (oldVersion < 8) {
+      final batch = db.batch();
+      _createClassRiskMapStatusTable(batch);
       await batch.commit(noResult: true);
     }
   }
@@ -257,6 +263,15 @@ class AppDatabase {
         answer      INTEGER NOT NULL DEFAULT 0 CHECK (answer IN (0, 1)),
         updated_at  TEXT NOT NULL,
         PRIMARY KEY (student_id, question_key)
+      )
+    ''');
+  }
+
+  static void _createClassRiskMapStatusTable(Batch batch) {
+    batch.execute('''
+      CREATE TABLE IF NOT EXISTS class_risk_map_status (
+        class_id INTEGER PRIMARY KEY REFERENCES classes(id) ON DELETE CASCADE,
+        completed_at TEXT NOT NULL
       )
     ''');
   }

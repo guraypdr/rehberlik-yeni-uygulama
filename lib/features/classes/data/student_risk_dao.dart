@@ -67,4 +67,22 @@ class StudentRiskDao {
       'updated_at': DateTime.now().toIso8601String(),
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
+
+  Future<bool> isClassRiskMapCompleted(int classId) async {
+    final rows = await _database.db.query(
+      'class_risk_map_status',
+      columns: ['class_id'],
+      where: 'class_id = ?',
+      whereArgs: [classId],
+      limit: 1,
+    );
+    return rows.isNotEmpty;
+  }
+
+  Future<void> markClassRiskMapCompleted(int classId) async {
+    await _database.db.insert('class_risk_map_status', {
+      'class_id': classId,
+      'completed_at': DateTime.now().toIso8601String(),
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
 }

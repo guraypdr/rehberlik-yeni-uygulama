@@ -187,6 +187,12 @@ void main() {
         ),
         hasLength(1),
       );
+      expect(
+        await database.db.rawQuery(
+          "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'class_risk_map_status'",
+        ),
+        hasLength(1),
+      );
       expect(await database.db.query('student_interviews'), hasLength(1));
       final dao = StudentDao(database);
       final student = await dao.getById(1);

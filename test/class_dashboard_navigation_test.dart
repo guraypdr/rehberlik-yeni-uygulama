@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rehberlik_app/core/providers/session_provider.dart';
 import 'package:rehberlik_app/features/classes/domain/school_class.dart';
 import 'package:rehberlik_app/features/classes/presentation/class_dashboard_page.dart';
+import 'package:rehberlik_app/features/classes/presentation/student_risk_provider.dart';
 import 'package:rehberlik_app/features/classes/presentation/widgets/class_card.dart';
 import 'package:rehberlik_app/features/students/domain/student.dart';
 import 'package:rehberlik_app/features/students/presentation/students_provider.dart';
@@ -96,6 +97,39 @@ void main() {
       expect(find.text('Öğrenci Profili'), findsOneWidget);
     },
   );
+
+  testWidgets('tamamlanan risk haritası doğrudan görünümde açılır', (
+    tester,
+  ) async {
+    const schoolClass = SchoolClass(
+      id: 1,
+      gradeLevelId: 1,
+      gradeLevelLabel: '9. Sınıf',
+      branch: 'A',
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          databaseProvider.overrideWithValue(null),
+          studentsProvider.overrideWith(() => _FakeStudentsNotifier([])),
+          teachersProvider.overrideWith(() => _FakeTeachersNotifier([])),
+          classRiskMapCompletedProvider.overrideWith(
+            (ref, classId) async => true,
+          ),
+        ],
+        child: const MaterialApp(
+          home: ClassDashboardPage(schoolClass: schoolClass),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('open_class_risk_map')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('edit_class_risk_map')), findsOneWidget);
+  });
 }
 
 class _FakeStudentsNotifier extends StudentsNotifier {
