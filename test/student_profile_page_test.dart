@@ -5,6 +5,8 @@ import 'package:rehberlik_app/core/providers/session_provider.dart';
 import 'package:rehberlik_app/features/students/domain/student.dart';
 import 'package:rehberlik_app/features/students/presentation/students_provider.dart';
 import 'package:rehberlik_app/features/students/presentation/widgets/student_profile_page.dart';
+import 'package:rehberlik_app/features/students/presentation/widgets/student_info_form_sheet.dart';
+import 'package:rehberlik_app/features/students/presentation/widgets/student_interviews_dialog.dart';
 
 void main() {
   testWidgets('öğrenci profili kayıtlı bilgileri bölümler halinde gösterir', (
@@ -150,6 +152,48 @@ void main() {
 
     expect(find.text('Mehmet Demir'), findsNWidgets(2));
     expect(find.text('202'), findsWidgets);
+  });
+
+  testWidgets('bilgi formu ve görüşmeler detaydan ayrı açılır', (tester) async {
+    const student = Student(
+      id: 1,
+      classId: 2,
+      number: '101',
+      name: 'Ayşe',
+      surname: 'Kaya',
+      createdAt: '2026-11-06',
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [databaseProvider.overrideWithValue(null)],
+        child: const MaterialApp(home: _ProfileHost(student: student)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('open_student_info_form')), findsOneWidget);
+    expect(find.byKey(const Key('open_student_interviews')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('open_student_info_form')));
+    await tester.pumpAndSettle();
+    expect(find.byType(StudentInfoFormSheet), findsOneWidget);
+    expect(find.text('Öğrenci Bilgi Formu'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(StudentInfoFormSheet),
+        matching: find.byType(TabBar),
+      ),
+      findsNothing,
+    );
+    await tester.tap(find.byTooltip('Kapat'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('open_student_interviews')));
+    await tester.pumpAndSettle();
+    expect(find.byType(StudentInterviewsDialog), findsOneWidget);
+    expect(find.text('Görüşmeler · Ayşe Kaya'), findsOneWidget);
+    expect(find.byKey(const Key('student_add_interview')), findsOneWidget);
   });
 }
 

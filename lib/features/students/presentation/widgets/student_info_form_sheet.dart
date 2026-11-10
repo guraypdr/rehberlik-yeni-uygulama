@@ -4,9 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../classes/presentation/classes_provider.dart';
 import '../../domain/student.dart';
-import '../../domain/student_interview.dart';
 import '../students_provider.dart';
-import 'interview_dialog.dart';
 
 class StudentInfoFormSheet extends ConsumerStatefulWidget {
   const StudentInfoFormSheet({super.key, required this.student});
@@ -26,9 +24,7 @@ class StudentInfoFormSheet extends ConsumerStatefulWidget {
       _StudentInfoFormSheetState();
 }
 
-class _StudentInfoFormSheetState extends ConsumerState<StudentInfoFormSheet>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabs;
+class _StudentInfoFormSheetState extends ConsumerState<StudentInfoFormSheet> {
   final _formKey = GlobalKey<FormState>();
   final Map<String, TextEditingController> _text = {};
   final Map<String, bool?> _answers = {};
@@ -107,7 +103,6 @@ class _StudentInfoFormSheetState extends ConsumerState<StudentInfoFormSheet>
   void initState() {
     super.initState();
     final student = widget.student;
-    _tabs = TabController(length: 2, vsync: this);
     for (final entry in _textInitializers.entries) {
       final value = entry.value(student);
       _text[entry.key] = TextEditingController(
@@ -156,7 +151,6 @@ class _StudentInfoFormSheetState extends ConsumerState<StudentInfoFormSheet>
 
   @override
   void dispose() {
-    _tabs.dispose();
     for (final controller in _text.values) {
       controller.dispose();
     }
@@ -207,20 +201,10 @@ class _StudentInfoFormSheetState extends ConsumerState<StudentInfoFormSheet>
                 ],
               ),
             ),
-            TabBar(
-              controller: _tabs,
-              tabs: const [
-                Tab(text: 'Öğrenci Bilgi Formu'),
-                Tab(text: 'Görüşmeler'),
-              ],
-            ),
             Expanded(
-              child: TabBarView(
-                controller: _tabs,
-                children: [
-                  Form(
-                    key: _formKey,
-                    child: ListView(
+              child: Form(
+                key: _formKey,
+                child: ListView(
                       padding: const EdgeInsets.all(20),
                       children: [
                         _section('Temel Öğrenci Bilgileri'),
@@ -452,10 +436,7 @@ class _StudentInfoFormSheetState extends ConsumerState<StudentInfoFormSheet>
                           maxLines: 2,
                         ),
                       ],
-                    ),
-                  ),
-                  _buildInterviews(),
-                ],
+                ),
               ),
             ),
             const Divider(height: 1),
@@ -538,83 +519,6 @@ class _StudentInfoFormSheetState extends ConsumerState<StudentInfoFormSheet>
         ),
       ],
     );
-  }
-
-  Widget _buildInterviews() {
-    final interviews = ref.watch(studentInterviewsProvider(widget.student.id));
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          Align(
-            alignment: Alignment.centerRight,
-            child: FilledButton.icon(
-              onPressed: () => InterviewDialog.show(
-                context,
-                studentId: widget.student.id,
-                studentName: widget.student.fullName,
-              ),
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Yeni Görüşme Ekle'),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: interviews.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) =>
-                  Center(child: Text('Görüşmeler yüklenemedi: $error')),
-              data: (items) => items.isEmpty
-                  ? const Center(child: Text('Kayıtlı görüşme bulunmuyor.'))
-                  : ListView.separated(
-                      itemCount: items.length,
-                      separatorBuilder: (context, index) =>
-                          const Divider(height: 1),
-                      itemBuilder: (context, index) {
-                        final interview = items[index];
-                        return ListTile(
-                          title: Text(interview.subject),
-                          subtitle: Text(
-                            '${interview.typeLabel} · ${interview.date}',
-                          ),
-                          trailing: IconButton(
-                            tooltip: 'Görüşmeyi sil',
-                            icon: const Icon(Icons.delete_outline),
-                            onPressed: () => _deleteInterview(interview),
-                          ),
-                        );
-                      },
-                    ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _deleteInterview(StudentInterview interview) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Görüşmeyi Sil'),
-        content: const Text('Bu görüşme kaydını silmek istiyor musunuz?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('İptal'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Sil'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed == true) {
-      await ref
-          .read(studentInterviewsProvider(widget.student.id).notifier)
-          .deleteInterview(interview.id);
-    }
   }
 
   Widget _section(String title) => Padding(
@@ -700,10 +604,7 @@ class _StudentInfoFormSheetState extends ConsumerState<StudentInfoFormSheet>
       );
 
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) {
-      _tabs.animateTo(0);
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
     final minutes = _intValue(_usageMinutes.text);
     if (_answers['hasTechnologyDevice'] == true &&
         minutes != null &&
@@ -713,7 +614,6 @@ class _StudentInfoFormSheetState extends ConsumerState<StudentInfoFormSheet>
           content: Text('Dakika değeri 0 ile 59 arasında olmalı.'),
         ),
       );
-      _tabs.animateTo(0);
       return;
     }
 

@@ -10,6 +10,7 @@ import '../students_provider.dart';
 import 'interview_dialog.dart';
 import 'student_info_form_sheet.dart';
 import 'student_info_form_status.dart';
+import 'student_interviews_dialog.dart';
 
 class StudentProfilePage extends ConsumerWidget {
   const StudentProfilePage({super.key, required this.student});
@@ -63,13 +64,17 @@ class StudentProfilePage extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: ConstrainedBox(
-                                constraints: const BoxConstraints(
-                                  maxWidth: 480,
-                                ),
+                        LayoutBuilder(
+                          builder: (context, constraints) => Wrap(
+                            spacing: AppSpacing.sm,
+                            runSpacing: AppSpacing.sm,
+                            alignment: WrapAlignment.spaceBetween,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              SizedBox(
+                                width: constraints.maxWidth >= 520
+                                    ? 480
+                                    : constraints.maxWidth,
                                 child: _StudentProfileSearch(
                                   onSelected: (selectedStudent) {
                                     if (selectedStudent.id ==
@@ -86,17 +91,32 @@ class StudentProfilePage extends ConsumerWidget {
                                   },
                                 ),
                               ),
-                            ),
-                            const Spacer(),
-                            OutlinedButton.icon(
-                              onPressed: () => StudentInfoFormSheet.show(
-                                context,
-                                currentStudent,
+                              OutlinedButton.icon(
+                                key: const Key('open_student_info_form'),
+                                onPressed: () => StudentInfoFormSheet.show(
+                                  context,
+                                  currentStudent,
+                                ),
+                                icon: const Icon(
+                                  Icons.assignment_outlined,
+                                  size: 18,
+                                ),
+                                label: const Text('Öğrenci Bilgi Formu'),
                               ),
-                              icon: const Icon(Icons.edit_outlined, size: 18),
-                              label: const Text('Düzenle'),
-                            ),
-                          ],
+                              OutlinedButton.icon(
+                                key: const Key('open_student_interviews'),
+                                onPressed: () => StudentInterviewsDialog.show(
+                                  context,
+                                  currentStudent,
+                                ),
+                                icon: const Icon(
+                                  Icons.forum_outlined,
+                                  size: 18,
+                                ),
+                                label: const Text('Görüşmeler'),
+                              ),
+                            ],
+                          ),
                         ),
                         const SizedBox(height: AppSpacing.sm),
                         Row(
