@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rehberlik_app/core/providers/session_provider.dart';
 import 'package:rehberlik_app/features/students/domain/student.dart';
+import 'package:rehberlik_app/features/students/presentation/students_provider.dart';
 import 'package:rehberlik_app/features/students/presentation/widgets/student_profile_page.dart';
 
 void main() {
@@ -57,49 +58,108 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Öğrenci Profili'), findsOneWidget);
-    expect(find.text('Ayşe Kaya'), findsOneWidget);
-    expect(find.text('No 101'), findsOneWidget);
-    expect(find.text('Yatılı'), findsNWidgets(2));
-    expect(find.text('Temel Öğrenci Bilgileri'), findsOneWidget);
-    expect(find.text('Öğrenci Bilgileri'), findsOneWidget);
+    expect(find.text('Ayşe Kaya'), findsNWidgets(2));
+    expect(find.text('101'), findsWidgets);
+    expect(find.text('Yatılı'), findsOneWidget);
+    expect(find.text('Kişisel Bilgiler'), findsOneWidget);
+    final profileScrollable = find.descendant(
+      of: find.byKey(const Key('student_profile_tab_content_0')),
+      matching: find.byType(Scrollable),
+    );
 
     await tester.scrollUntilVisible(
-      find.text('Öğrenci Bilgileri'),
+      find.text('Doğum Yeri'),
       300,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: profileScrollable,
     );
-    await tester.tap(find.text('Öğrenci Bilgileri'));
-    await tester.pumpAndSettle();
     expect(find.text('Doğum Yeri'), findsOneWidget);
     expect(find.text('Ankara'), findsOneWidget);
 
-    await tester.scrollUntilVisible(
-      find.text('Anne Bilgileri'),
-      400,
-      scrollable: find.byType(Scrollable).first,
+    await tester.tap(
+      find.byKey(const Key('student_profile_tab_Aile Bilgileri')),
     );
-    await tester.tap(find.text('Anne Bilgileri'));
     await tester.pumpAndSettle();
     expect(find.text('Anne Bilgileri'), findsOneWidget);
     expect(find.text('Fatma'), findsOneWidget);
 
-    await tester.scrollUntilVisible(
-      find.text('Kardeş ve Hane Bilgileri'),
-      400,
-      scrollable: find.byType(Scrollable).first,
+    await tester.drag(
+      find.byKey(const Key('student_profile_tab_bar')),
+      const Offset(-500, 0),
     );
-    await tester.tap(find.text('Kardeş ve Hane Bilgileri'));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('student_profile_tab_Sosyal Bilgiler')),
+    );
     await tester.pumpAndSettle();
     expect(find.text('Kardeş Sayısı'), findsOneWidget);
 
-    await tester.scrollUntilVisible(
-      find.text('Görüşme Kayıtları'),
-      400,
-      scrollable: find.byType(Scrollable).first,
+    await tester.drag(
+      find.byKey(const Key('student_profile_tab_bar')),
+      const Offset(-500, 0),
     );
-    expect(find.text('Görüşme Kayıtları'), findsOneWidget);
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('student_profile_tab_Görüşme Geçmişi')),
+    );
+    await tester.pumpAndSettle();
     expect(find.text('Görüşme Kayıtları'), findsOneWidget);
   });
+
+  testWidgets('profil araması numaraya göre öğrenci değiştirebilir', (
+    tester,
+  ) async {
+    const currentStudent = Student(
+      id: 1,
+      classId: 2,
+      number: '101',
+      name: 'Ayşe',
+      surname: 'Kaya',
+      createdAt: '2026-11-06',
+    );
+    const matchingStudent = Student(
+      id: 2,
+      classId: 2,
+      number: '202',
+      name: 'Mehmet',
+      surname: 'Demir',
+      createdAt: '2026-11-06',
+      className: '9/A',
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          databaseProvider.overrideWithValue(null),
+          studentsProvider.overrideWith(
+            () => _ProfileStudentsNotifier([currentStudent, matchingStudent]),
+          ),
+        ],
+        child: const MaterialApp(home: _ProfileHost(student: currentStudent)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('student_profile_search')),
+      '202',
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Öğrenci Ara'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Mehmet Demir'), findsNWidgets(2));
+    expect(find.text('202'), findsWidgets);
+  });
+}
+
+class _ProfileStudentsNotifier extends StudentsNotifier {
+  _ProfileStudentsNotifier(this.students);
+
+  final List<Student> students;
+
+  @override
+  Future<List<Student>> build() async => students;
 }
 
 class _ProfileHost extends StatelessWidget {

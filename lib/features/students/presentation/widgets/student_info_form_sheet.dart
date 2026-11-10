@@ -137,19 +137,20 @@ class _StudentInfoFormSheetState extends ConsumerState<StudentInfoFormSheet>
     _boardingStatus = student.boardingStatus;
     _classId = student.classId;
     _answers.addAll({
-      'preschoolEducation': student.preschoolEducation,
-      'usesRegularMedication': student.usesRegularMedication,
-      'hasChronicIllness': student.hasChronicIllness,
-      'hasRecentMoveOrSchoolChange': student.hasRecentMoveOrSchoolChange,
+      'preschoolEducation': student.preschoolEducation ?? false,
+      'usesRegularMedication': student.usesRegularMedication ?? false,
+      'hasChronicIllness': student.hasChronicIllness ?? false,
+      'hasRecentMoveOrSchoolChange':
+          student.hasRecentMoveOrSchoolChange ?? false,
       'hasTechnologyDevice': student.hasTechnologyDevice,
-      'hasInfluentialEvent': student.hasInfluentialEvent,
-      'motherIsAlive': student.motherIsAlive,
-      'motherIsBiological': student.motherIsBiological,
-      'motherHasDisability': student.motherHasDisability,
-      'fatherIsAlive': student.fatherIsAlive,
-      'fatherIsBiological': student.fatherIsBiological,
-      'fatherHasDisability': student.fatherHasDisability,
-      'familyHasChronicIllness': student.familyHasChronicIllness,
+      'hasInfluentialEvent': student.hasInfluentialEvent ?? false,
+      'motherIsAlive': student.motherIsAlive ?? true,
+      'motherIsBiological': student.motherIsBiological ?? true,
+      'motherHasDisability': student.motherHasDisability ?? false,
+      'fatherIsAlive': student.fatherIsAlive ?? true,
+      'fatherIsBiological': student.fatherIsBiological ?? true,
+      'fatherHasDisability': student.fatherHasDisability ?? false,
+      'familyHasChronicIllness': student.familyHasChronicIllness ?? false,
     });
   }
 
@@ -512,8 +513,14 @@ class _StudentInfoFormSheetState extends ConsumerState<StudentInfoFormSheet>
           ],
         ),
         _answerField('${prefix}IsAlive', '$label sağ mı?'),
-        _answerField('${prefix}IsBiological', '$label öz mü?'),
-        _answerField('${prefix}HasDisability', '$label engeli var mı?'),
+        _answerField(
+          '${prefix}IsBiological',
+          '$label öz mü?',
+        ),
+        _answerField(
+          '${prefix}HasDisability',
+          '$label engeli var mı?',
+        ),
         if (_answers['${prefix}HasDisability'] == true)
           _textField(
             '${prefix}DisabilityDetails',
