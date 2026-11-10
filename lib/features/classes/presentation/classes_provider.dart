@@ -32,8 +32,12 @@ class ClassesNotifier extends AsyncNotifier<ClassesState> {
     String? fieldName,
     int? teacherId,
   }) async {
-    if (_dao == null) return;
-    final created = await _dao!.insert(
+    _validateTeacherAssignment(teacherId, excludingClassId: null);
+    final dao = _dao;
+    if (dao == null) {
+      throw StateError('Açık bir veritabanı bulunamadı.');
+    }
+    final created = await dao.insert(
       gradeLevelId: gradeLevelId,
       gradeLevelLabel: gradeLevelLabel,
       branch: branch,
@@ -62,8 +66,15 @@ class ClassesNotifier extends AsyncNotifier<ClassesState> {
   }
 
   Future<void> updateClass(SchoolClass updatedClass) async {
-    if (_dao == null) return;
-    await _dao!.update(updatedClass);
+    _validateTeacherAssignment(
+      updatedClass.teacherId,
+      excludingClassId: updatedClass.id,
+    );
+    final dao = _dao;
+    if (dao == null) {
+      throw StateError('Açık bir veritabanı bulunamadı.');
+    }
+    await dao.update(updatedClass);
     final current = state.valueOrNull ?? const ClassesState();
     state = AsyncValue.data(
       ClassesState(
@@ -77,6 +88,25 @@ class ClassesNotifier extends AsyncNotifier<ClassesState> {
         ],
       ),
     );
+  }
+
+  void _validateTeacherAssignment(
+    int? teacherId, {
+    required int? excludingClassId,
+  }) {
+    if (teacherId == null) return;
+    final assignedClass = state.valueOrNull?.classes
+        .where(
+          (schoolClass) =>
+              schoolClass.id != excludingClassId &&
+              schoolClass.teacherId == teacherId,
+        )
+        .firstOrNull;
+    if (assignedClass != null) {
+      throw StateError(
+        'Bu öğretmen zaten ${assignedClass.displayName} sınıfına atanmış.',
+      );
+    }
   }
 }
 
