@@ -181,6 +181,12 @@ void main() {
       expect(forms.single['child_order'], 2);
       expect(forms.single['family_has_chronic_illness'], 1);
       expect(forms.single['household_chronic_illness_details'], 'Astım');
+      expect(
+        await database.db.rawQuery(
+          "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'class_risk_responses'",
+        ),
+        hasLength(1),
+      );
       expect(await database.db.query('student_interviews'), hasLength(1));
       final dao = StudentDao(database);
       final student = await dao.getById(1);
