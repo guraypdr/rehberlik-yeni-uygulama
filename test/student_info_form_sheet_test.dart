@@ -63,6 +63,66 @@ void main() {
     expect(studentsNotifier.updatedStudent?.birthPlace, 'Ankara');
     expect(studentsNotifier.updatedStudent?.motherName, 'Fatma');
   });
+
+  testWidgets('anne ve baba eğitim durumu verilen seçeneklerden seçilir', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 3000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    const student = Student(
+      id: 1,
+      classId: 2,
+      number: '101',
+      name: 'Ayşe',
+      surname: 'Kaya',
+      createdAt: '2026-11-10',
+    );
+    final studentsNotifier = _FormStudentsNotifier([student]);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          databaseProvider.overrideWithValue(null),
+          studentsProvider.overrideWith(() => studentsNotifier),
+          classesProvider.overrideWith(
+            () => _FormClassesNotifier(
+              const SchoolClass(
+                id: 2,
+                gradeLevelId: 1,
+                gradeLevelLabel: '9. Sınıf',
+                branch: 'A',
+              ),
+            ),
+          ),
+        ],
+        child: MaterialApp(home: _FormHost(staleStudent: student)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('open_student_form')));
+    await tester.pumpAndSettle();
+
+    final motherEducation = find.byKey(const Key('motherEducation_dropdown'));
+    await tester.tap(motherEducation);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Üniversite').last);
+    await tester.pumpAndSettle();
+
+    final fatherEducation = find.byKey(const Key('fatherEducation_dropdown'));
+    await tester.tap(fatherEducation);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Lise').last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('student_info_save_button')));
+    await tester.pumpAndSettle();
+
+    expect(studentsNotifier.updatedStudent?.motherEducation, 'Üniversite');
+    expect(studentsNotifier.updatedStudent?.fatherEducation, 'Lise');
+  });
 }
 
 class _FormStudentsNotifier extends StudentsNotifier {

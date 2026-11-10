@@ -25,6 +25,14 @@ class StudentInfoFormSheet extends ConsumerStatefulWidget {
 }
 
 class _StudentInfoFormSheetState extends ConsumerState<StudentInfoFormSheet> {
+  static const _educationOptions = [
+    'Okuma yazma bilmiyor',
+    'İlkokul',
+    'Ortaokul',
+    'Lise',
+    'Üniversite',
+  ];
+
   final _formKey = GlobalKey<FormState>();
   final Map<String, TextEditingController> _text = {};
   final Map<String, bool?> _answers = {};
@@ -215,237 +223,228 @@ class _StudentInfoFormSheetState extends ConsumerState<StudentInfoFormSheet> {
               child: Form(
                 key: _formKey,
                 child: ListView(
-                      padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(20),
+                  children: [
+                    _section('Temel Öğrenci Bilgileri'),
+                    if (MediaQuery.sizeOf(context).width < 600) ...[
+                      _basicField(_number, 'Öğrenci No', required: true),
+                      _basicField(_name, 'Adı', required: true),
+                      _basicField(_surname, 'Soyadı', required: true),
+                    ] else
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _basicField(
+                              _number,
+                              'Öğrenci No',
+                              required: true,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _basicField(_name, 'Adı', required: true),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _basicField(
+                              _surname,
+                              'Soyadı',
+                              required: true,
+                            ),
+                          ),
+                        ],
+                      ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<int>(
+                      initialValue: selectedClassId,
+                      decoration: const InputDecoration(
+                        labelText: 'Sınıf / Şube',
+                      ),
+                      items: [
+                        for (final schoolClass in classes)
+                          DropdownMenuItem(
+                            value: schoolClass.id,
+                            child: Text(schoolClass.displayName),
+                          ),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) setState(() => _classId = value);
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
                       children: [
-                        _section('Temel Öğrenci Bilgileri'),
-                        if (MediaQuery.sizeOf(context).width < 600) ...[
-                          _basicField(_number, 'Öğrenci No', required: true),
-                          _basicField(_name, 'Adı', required: true),
-                          _basicField(_surname, 'Soyadı', required: true),
-                        ] else
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _basicField(
-                                  _number,
-                                  'Öğrenci No',
-                                  required: true,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _basicField(
-                                  _name,
-                                  'Adı',
-                                  required: true,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _basicField(
-                                  _surname,
-                                  'Soyadı',
-                                  required: true,
-                                ),
-                              ),
-                            ],
-                          ),
-                        const SizedBox(height: 12),
-                        DropdownButtonFormField<int>(
-                          initialValue: selectedClassId,
-                          decoration: const InputDecoration(
-                            labelText: 'Sınıf / Şube',
-                          ),
-                          items: [
-                            for (final schoolClass in classes)
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            initialValue: _gender,
+                            decoration: const InputDecoration(
+                              labelText: 'Cinsiyeti',
+                            ),
+                            items: const [
                               DropdownMenuItem(
-                                value: schoolClass.id,
-                                child: Text(schoolClass.displayName),
+                                value: 'Kız',
+                                child: Text('Kız'),
                               ),
-                          ],
-                          onChanged: (value) {
-                            if (value != null) setState(() => _classId = value);
-                          },
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: DropdownButtonFormField<String>(
-                                initialValue: _gender,
-                                decoration: const InputDecoration(
-                                  labelText: 'Cinsiyeti',
-                                ),
-                                items: const [
-                                  DropdownMenuItem(
-                                    value: 'Kız',
-                                    child: Text('Kız'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'Erkek',
-                                    child: Text('Erkek'),
-                                  ),
-                                ],
-                                onChanged: (value) {
-                                  if (value != null) {
-                                    setState(() => _gender = value);
-                                  }
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: DropdownButtonFormField<String>(
-                                initialValue: _boardingStatus,
-                                decoration: const InputDecoration(
-                                  labelText: 'Pansiyon Durumu',
-                                ),
-                                items: const [
-                                  DropdownMenuItem(
-                                    value: 'Gündüzlü',
-                                    child: Text('Gündüzlü'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'Yatılı',
-                                    child: Text('Yatılı'),
-                                  ),
-                                ],
-                                onChanged: (value) {
-                                  if (value != null) {
-                                    setState(() => _boardingStatus = value);
-                                  }
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                        _section('Öğrenci Bilgileri'),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _dateField('birthDate', 'Doğum Tarihi'),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _textField('birthPlace', 'Doğum Yeri'),
-                            ),
-                          ],
-                        ),
-                        _textField('address', 'Adresi', maxLines: 2),
-                        _answerField(
-                          'preschoolEducation',
-                          'Okul öncesi eğitim almış mı?',
-                        ),
-                        _answerField(
-                          'usesRegularMedication',
-                          'Sürekli kullandığı ilaç / tıbbi cihaz var mı?',
-                        ),
-                        if (_answers['usesRegularMedication'] == true)
-                          _textField(
-                            'medicationDetails',
-                            'İlaç / tıbbi cihaz açıklaması',
-                            maxLines: 2,
-                          ),
-                        _answerField(
-                          'hasChronicIllness',
-                          'Sürekli hastalığı var mı?',
-                        ),
-                        if (_answers['hasChronicIllness'] == true)
-                          _textField(
-                            'chronicIllnessDetails',
-                            'Sürekli hastalık açıklaması',
-                            maxLines: 2,
-                          ),
-                        _textField(
-                          'likesActivities',
-                          'Yapmaktan hoşlandığı şeyler',
-                          maxLines: 2,
-                        ),
-                        _answerField(
-                          'hasRecentMoveOrSchoolChange',
-                          'Yakın zamanda taşınmış mı / okul değiştirmiş mi?',
-                        ),
-                        if (_answers['hasRecentMoveOrSchoolChange'] == true)
-                          _textField(
-                            'moveOrSchoolChangeDetails',
-                            'Taşınma / okul değiştirme açıklaması',
-                            maxLines: 2,
-                          ),
-                        _textField(
-                          'extracurricularActivities',
-                          'Ders dışı faaliyetleri',
-                          maxLines: 2,
-                        ),
-                        _answerField(
-                          'hasTechnologyDevice',
-                          'Kendisine ait teknolojik cihaz var mı?',
-                        ),
-                        if (_answers['hasTechnologyDevice'] == true)
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _numberField(
-                                  _usageHours,
-                                  'Günlük kullanım (saat)',
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _numberField(
-                                  _usageMinutes,
-                                  'Dakika (0–59)',
-                                ),
+                              DropdownMenuItem(
+                                value: 'Erkek',
+                                child: Text('Erkek'),
                               ),
                             ],
+                            onChanged: (value) {
+                              if (value != null) {
+                                setState(() => _gender = value);
+                              }
+                            },
                           ),
-                        _answerField(
-                          'hasInfluentialEvent',
-                          'Hâlâ etkisinde olduğu bir olay yaşamış mı?',
                         ),
-                        if (_answers['hasInfluentialEvent'] == true)
-                          _textField(
-                            'influentialEventDetails',
-                            'Etkileyen olay açıklaması',
-                            maxLines: 3,
-                          ),
-                        _section('Anne Bilgileri'),
-                        _parentFields('mother'),
-                        _section('Baba Bilgileri'),
-                        _parentFields('father'),
-                        _section('Kardeş ve Hane Bilgileri'),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _numberField(
-                                _siblingCount,
-                                'Öğrencinin kardeş sayısı',
-                              ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            initialValue: _boardingStatus,
+                            decoration: const InputDecoration(
+                              labelText: 'Pansiyon Durumu',
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _numberField(
-                                _childOrder,
-                                'Öğrenci kaçıncı çocuk?',
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'Gündüzlü',
+                                child: Text('Gündüzlü'),
                               ),
-                            ),
-                          ],
-                        ),
-                        _answerField(
-                          'familyHasChronicIllness',
-                          'Ailesinde sürekli hastalığı olan biri var mı?',
-                        ),
-                        if (_answers['familyHasChronicIllness'] == true)
-                          _textField(
-                            'householdChronicIllnessDetails',
-                            'Aile üyeleri sürekli hastalık açıklaması',
-                            maxLines: 2,
+                              DropdownMenuItem(
+                                value: 'Yatılı',
+                                child: Text('Yatılı'),
+                              ),
+                            ],
+                            onChanged: (value) {
+                              if (value != null) {
+                                setState(() => _boardingStatus = value);
+                              }
+                            },
                           ),
-                        _textField(
-                          'householdMembers',
-                          'Evde kimler yaşıyor?',
-                          maxLines: 2,
                         ),
                       ],
+                    ),
+                    _section('Öğrenci Bilgileri'),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _dateField('birthDate', 'Doğum Tarihi'),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(child: _textField('birthPlace', 'Doğum Yeri')),
+                      ],
+                    ),
+                    _textField('address', 'Adresi', maxLines: 2),
+                    _answerField(
+                      'preschoolEducation',
+                      'Okul öncesi eğitim almış mı?',
+                    ),
+                    _answerField(
+                      'usesRegularMedication',
+                      'Sürekli kullandığı ilaç / tıbbi cihaz var mı?',
+                    ),
+                    if (_answers['usesRegularMedication'] == true)
+                      _textField(
+                        'medicationDetails',
+                        'İlaç / tıbbi cihaz açıklaması',
+                        maxLines: 2,
+                      ),
+                    _answerField(
+                      'hasChronicIllness',
+                      'Sürekli hastalığı var mı?',
+                    ),
+                    if (_answers['hasChronicIllness'] == true)
+                      _textField(
+                        'chronicIllnessDetails',
+                        'Sürekli hastalık açıklaması',
+                        maxLines: 2,
+                      ),
+                    _textField(
+                      'likesActivities',
+                      'Yapmaktan hoşlandığı şeyler',
+                      maxLines: 2,
+                    ),
+                    _answerField(
+                      'hasRecentMoveOrSchoolChange',
+                      'Yakın zamanda taşınmış mı / okul değiştirmiş mi?',
+                    ),
+                    if (_answers['hasRecentMoveOrSchoolChange'] == true)
+                      _textField(
+                        'moveOrSchoolChangeDetails',
+                        'Taşınma / okul değiştirme açıklaması',
+                        maxLines: 2,
+                      ),
+                    _textField(
+                      'extracurricularActivities',
+                      'Ders dışı faaliyetleri',
+                      maxLines: 2,
+                    ),
+                    _answerField(
+                      'hasTechnologyDevice',
+                      'Kendisine ait teknolojik cihaz var mı?',
+                    ),
+                    if (_answers['hasTechnologyDevice'] == true)
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _numberField(
+                              _usageHours,
+                              'Günlük kullanım (saat)',
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _numberField(_usageMinutes, 'Dakika (0–59)'),
+                          ),
+                        ],
+                      ),
+                    _answerField(
+                      'hasInfluentialEvent',
+                      'Hâlâ etkisinde olduğu bir olay yaşamış mı?',
+                    ),
+                    if (_answers['hasInfluentialEvent'] == true)
+                      _textField(
+                        'influentialEventDetails',
+                        'Etkileyen olay açıklaması',
+                        maxLines: 3,
+                      ),
+                    _section('Anne Bilgileri'),
+                    _parentFields('mother'),
+                    _section('Baba Bilgileri'),
+                    _parentFields('father'),
+                    _section('Kardeş ve Hane Bilgileri'),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _numberField(
+                            _siblingCount,
+                            'Öğrencinin kardeş sayısı',
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _numberField(
+                            _childOrder,
+                            'Öğrenci kaçıncı çocuk?',
+                          ),
+                        ),
+                      ],
+                    ),
+                    _answerField(
+                      'familyHasChronicIllness',
+                      'Ailesinde sürekli hastalığı olan biri var mı?',
+                    ),
+                    if (_answers['familyHasChronicIllness'] == true)
+                      _textField(
+                        'householdChronicIllnessDetails',
+                        'Aile üyeleri sürekli hastalık açıklaması',
+                        maxLines: 2,
+                      ),
+                    _textField(
+                      'householdMembers',
+                      'Evde kimler yaşıyor?',
+                      maxLines: 2,
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -505,14 +504,8 @@ class _StudentInfoFormSheetState extends ConsumerState<StudentInfoFormSheet> {
           ],
         ),
         _answerField('${prefix}IsAlive', '$label sağ mı?'),
-        _answerField(
-          '${prefix}IsBiological',
-          '$label öz mü?',
-        ),
-        _answerField(
-          '${prefix}HasDisability',
-          '$label engeli var mı?',
-        ),
+        _answerField('${prefix}IsBiological', '$label öz mü?'),
+        _answerField('${prefix}HasDisability', '$label engeli var mı?'),
         if (_answers['${prefix}HasDisability'] == true)
           _textField(
             '${prefix}DisabilityDetails',
@@ -522,13 +515,48 @@ class _StudentInfoFormSheetState extends ConsumerState<StudentInfoFormSheet> {
         Row(
           children: [
             Expanded(
-              child: _textField('${prefix}Education', '$label eğitim durumu'),
+              child: _educationField(
+                '${prefix}Education',
+                '$label eğitim durumu',
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(child: _textField('${prefix}Job', '$label mesleği')),
           ],
         ),
       ],
+    );
+  }
+
+  Widget _educationField(String key, String label) {
+    final controller = _text[key]!;
+    final currentValue = controller.text;
+    final options = [
+      ..._educationOptions,
+      if (currentValue.isNotEmpty && !_educationOptions.contains(currentValue))
+        currentValue,
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: DropdownButtonFormField<String>(
+        key: Key('${key}_dropdown'),
+        initialValue: currentValue.isEmpty ? null : currentValue,
+        isExpanded: true,
+        decoration: InputDecoration(labelText: label),
+        items: [
+          for (final option in options)
+            DropdownMenuItem(value: option, child: Text(option)),
+        ],
+        selectedItemBuilder: (context) => [
+          for (final option in options)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(option, maxLines: 1, overflow: TextOverflow.ellipsis),
+            ),
+        ],
+        onChanged: (value) => setState(() => controller.text = value ?? ''),
+      ),
     );
   }
 
