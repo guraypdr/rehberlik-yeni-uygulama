@@ -15,14 +15,36 @@ class TeacherDao {
   Future<Teacher> insert({
     required String name,
     required String surname,
-    String? branch,
+    required String branch,
+    String? email,
+    String? phone,
   }) async {
     final id = await _db.db.insert('teachers', {
       'name': name,
       'surname': surname,
       'branch': branch,
+      'email': email,
+      'phone': phone,
     });
-    return Teacher(id: id, name: name, surname: surname, branch: branch);
+    return Teacher(
+      id: id,
+      name: name,
+      surname: surname,
+      branch: branch,
+      email: email,
+      phone: phone,
+    );
+  }
+
+  Future<int> insertBatch(List<Teacher> teachers) async {
+    if (teachers.isEmpty) return 0;
+    final batch = _db.db.batch();
+    for (final teacher in teachers) {
+      final values = teacher.toMap()..remove('id');
+      batch.insert('teachers', values);
+    }
+    final results = await batch.commit(noResult: false);
+    return results.length;
   }
 
   Future<void> update(Teacher teacher) async {

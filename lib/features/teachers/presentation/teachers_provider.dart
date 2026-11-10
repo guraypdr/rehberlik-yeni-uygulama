@@ -18,14 +18,59 @@ class TeachersNotifier extends AsyncNotifier<List<Teacher>> {
   Future<void> addTeacher({
     required String name,
     required String surname,
-    String? branch,
+    required String branch,
+    String? email,
+    String? phone,
   }) async {
-    if (_dao == null) return;
-    final created = await _dao!.insert(name: name, surname: surname, branch: branch);
+    final dao = _dao;
+    if (dao == null) {
+      throw StateError('Açık bir veritabanı bulunamadı.');
+    }
+    final normalizedEmail = email?.trim();
+    final normalizedPhone = phone?.trim();
+    final created = await dao.insert(
+      name: name.trim(),
+      surname: surname.trim(),
+      branch: branch.trim(),
+      email: normalizedEmail == null || normalizedEmail.isEmpty
+          ? null
+          : normalizedEmail,
+      phone: normalizedPhone == null || normalizedPhone.isEmpty
+          ? null
+          : normalizedPhone,
+    );
     final current = state.valueOrNull ?? [];
     state = AsyncValue.data(
       [...current, created]..sort((a, b) => a.surname.compareTo(b.surname)),
     );
+  }
+
+  Future<int> addBatch(List<Teacher> teachers) async {
+    final dao = _dao;
+    if (dao == null) {
+      throw StateError('Açık bir veritabanı bulunamadı.');
+    }
+    if (teachers.isEmpty) return 0;
+    final count = await dao.insertBatch(
+      teachers
+          .map(
+            (teacher) => teacher.copyWith(
+              name: teacher.name.trim(),
+              surname: teacher.surname.trim(),
+              branch: teacher.branch?.trim(),
+              email: teacher.email?.trim().isEmpty ?? true
+                  ? null
+                  : teacher.email!.trim(),
+              phone: teacher.phone?.trim().isEmpty ?? true
+                  ? null
+                  : teacher.phone!.trim(),
+            ),
+          )
+          .toList(),
+    );
+    final all = await dao.fetchAll();
+    state = AsyncValue.data(all);
+    return count;
   }
 
   Future<void> deleteTeacher(int id) async {

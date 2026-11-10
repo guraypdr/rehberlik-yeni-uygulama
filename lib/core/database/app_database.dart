@@ -15,7 +15,7 @@ class AppDatabase {
   /// Veritabanı bağlantısına doğrudan erişim (DAO'lar için).
   Database get db => _db;
 
-  static const int _currentVersion = 8;
+  static const int _currentVersion = 10;
 
   /// Verilen dosya yolunda veritabanını açar; yoksa oluşturur.
   static Future<AppDatabase> open(String path) async {
@@ -135,6 +135,9 @@ class AppDatabase {
       _createClassRiskMapStatusTable(batch);
       await batch.commit(noResult: true);
     }
+    if (oldVersion < 10) {
+      await _migrateTeacherContactFields(db);
+    }
   }
 
   static void _createCoreTables(Batch batch) {
@@ -176,7 +179,9 @@ class AppDatabase {
         id       INTEGER PRIMARY KEY AUTOINCREMENT,
         name     TEXT NOT NULL,
         surname  TEXT NOT NULL,
-        branch   TEXT
+        branch   TEXT,
+        email    TEXT,
+        phone    TEXT
       )
     ''');
 
@@ -274,6 +279,28 @@ class AppDatabase {
         completed_at TEXT NOT NULL
       )
     ''');
+  }
+
+  static Future<void> _migrateTeacherContactFields(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS teachers (
+        id       INTEGER PRIMARY KEY AUTOINCREMENT,
+        name     TEXT NOT NULL,
+        surname  TEXT NOT NULL,
+        branch   TEXT,
+        email    TEXT,
+        phone    TEXT
+      )
+    ''');
+    final columns = (await db.rawQuery(
+      'PRAGMA table_info(teachers)',
+    )).map((row) => row['name'] as String).toSet();
+    if (!columns.contains('email')) {
+      await db.execute('ALTER TABLE teachers ADD COLUMN email TEXT');
+    }
+    if (!columns.contains('phone')) {
+      await db.execute('ALTER TABLE teachers ADD COLUMN phone TEXT');
+    }
   }
 
   static Future<void> _migrateStudentInfoForms(Database db) async {

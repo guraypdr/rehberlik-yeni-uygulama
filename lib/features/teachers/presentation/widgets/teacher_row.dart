@@ -61,11 +61,27 @@ class _TeacherRowState extends State<TeacherRow> {
                       style: theme.textTheme.bodyLarge,
                     ),
                     Text(
-                      widget.teacher.surname,
+                      widget.teacher.branch ?? 'Branş belirtilmemiş',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodySmall,
                     ),
+                    if (widget.teacher.email != null &&
+                        widget.teacher.email!.isNotEmpty)
+                      Text(
+                        widget.teacher.email!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    if (widget.teacher.phone != null &&
+                        widget.teacher.phone!.isNotEmpty)
+                      Text(
+                        widget.teacher.phone!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall,
+                      ),
                   ],
                 ),
               ),

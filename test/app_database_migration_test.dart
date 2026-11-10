@@ -193,6 +193,10 @@ void main() {
         ),
         hasLength(1),
       );
+      final teacherColumns = (await database.db.rawQuery(
+        'PRAGMA table_info(teachers)',
+      )).map((row) => row['name']).toSet();
+      expect(teacherColumns, containsAll(['email', 'phone']));
       expect(await database.db.query('student_interviews'), hasLength(1));
       final dao = StudentDao(database);
       final student = await dao.getById(1);

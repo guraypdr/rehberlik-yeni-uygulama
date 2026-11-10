@@ -5,20 +5,32 @@ class Teacher {
     required this.name,
     required this.surname,
     this.branch,
+    this.email,
+    this.phone,
   });
 
   final int id;
   final String name;
   final String surname;
   final String? branch;
+  final String? email;
+  final String? phone;
 
   String get fullName => '$name $surname';
 
-  Teacher copyWith({String? name, String? surname, String? branch}) => Teacher(
+  Teacher copyWith({
+    String? name,
+    String? surname,
+    String? branch,
+    String? email,
+    String? phone,
+  }) => Teacher(
     id: id,
     name: name ?? this.name,
     surname: surname ?? this.surname,
     branch: branch ?? this.branch,
+    email: email ?? this.email,
+    phone: phone ?? this.phone,
   );
 
   Map<String, Object?> toMap() => {
@@ -26,6 +38,8 @@ class Teacher {
     'name': name,
     'surname': surname,
     'branch': branch,
+    'email': email,
+    'phone': phone,
   };
 
   static Teacher fromMap(Map<String, Object?> map) => Teacher(
@@ -33,6 +47,8 @@ class Teacher {
     name: map['name']! as String,
     surname: map['surname']! as String,
     branch: map['branch'] as String?,
+    email: map['email'] as String?,
+    phone: map['phone'] as String?,
   );
 
   @override
