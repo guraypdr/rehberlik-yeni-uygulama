@@ -32,6 +32,8 @@ dependencies:
 
   # Routing
   go_router: ^14.8.1
+  pdf: ^3.12.0
+  printing: ^5.14.3
 
 dev_dependencies:
   flutter_test:
@@ -42,5 +44,12 @@ dev_dependencies:
   custom_lint: ^0.7.5
   riverpod_lint: ^2.6.5
 
+dependency_overrides:
+  # image 4.11 requires an archive API excluded by pdf's archive constraint.
+  image: 4.8.0
+
 flutter:
   uses-material-design: true
+  assets:
+    - assets/fonts/Lato-Regular.ttf
+    - assets/fonts/Lato-Bold.ttf

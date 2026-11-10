@@ -9,6 +9,8 @@ import '../../setup/presentation/widgets/field_chip_editor.dart';
 import '../domain/grade_level.dart';
 import '../domain/school_class.dart';
 import 'classes_provider.dart';
+import 'school_risk_map_page.dart';
+import 'school_risk_provider.dart';
 import 'widgets/class_card.dart';
 import 'widgets/class_composer.dart';
 
@@ -52,7 +54,28 @@ class _ClassesPageState extends ConsumerState<ClassesPage> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            PageHeader(title: 'Sınıflar', subtitle: subtitle),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: PageHeader(title: 'Sınıflar', subtitle: subtitle)),
+                Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.xs),
+                  child: OutlinedButton.icon(
+                    key: const Key('open_school_risk_map'),
+                    onPressed: () {
+                      ref.invalidate(schoolRiskCountsProvider);
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const SchoolRiskMapPage(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.view_column_outlined, size: 18),
+                    label: const Text('Okul Risk Haritası'),
+                  ),
+                ),
+              ],
+            ),
             if (supportsFields) ...[
               Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.md),
@@ -105,38 +128,36 @@ class _ClassList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final groupedClasses = <(String, List<SchoolClass>)>[];
+    if (fields.isEmpty) {
+      groupedClasses.add(('', classes));
+    } else {
+      for (final field in fields) {
+        final fieldClasses = classes
+            .where((schoolClass) => schoolClass.fieldName == field)
+            .toList();
+        if (fieldClasses.isNotEmpty) {
+          groupedClasses.add((field, fieldClasses));
+        }
+      }
+      final unassignedClasses = classes
+          .where(
+            (schoolClass) =>
+                schoolClass.fieldName == null ||
+                !fields.contains(schoolClass.fieldName),
+          )
+          .toList();
+      if (unassignedClasses.isNotEmpty) {
+        groupedClasses.add(('Alan belirtilmemiş', unassignedClasses));
+      }
+    }
+
     return ListView(
       key: const Key('class_list'),
       padding: const EdgeInsets.only(bottom: AppSpacing.xxl),
-      children: fields.isEmpty
-          ? [for (final schoolClass in classes) _classCard(schoolClass)]
-          : [
-              for (final field in fields)
-                if (classes.any(
-                  (schoolClass) => schoolClass.fieldName == field,
-                ))
-                  _fieldGroup(
-                    field,
-                    classes
-                        .where((schoolClass) => schoolClass.fieldName == field)
-                        .toList(),
-                  ),
-              if (classes.any(
-                (schoolClass) =>
-                    schoolClass.fieldName == null ||
-                    !fields.contains(schoolClass.fieldName),
-              ))
-                _fieldGroup(
-                  'Alan belirtilmemiş',
-                  classes
-                      .where(
-                        (schoolClass) =>
-                            schoolClass.fieldName == null ||
-                            !fields.contains(schoolClass.fieldName),
-                      )
-                      .toList(),
-                ),
-            ],
+      children: [
+        for (final group in groupedClasses) _fieldGroup(group.$1, group.$2),
+      ],
     );
   }
 
@@ -145,29 +166,48 @@ class _ClassList extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(
-            left: AppSpacing.xs,
-            bottom: AppSpacing.sm,
+        if (title.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(
+              left: AppSpacing.xs,
+              bottom: AppSpacing.sm,
+            ),
+            child: Text(
+              title,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
           ),
-          child: Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final columnCount = constraints.maxWidth >= 900
+                ? 3
+                : constraints.maxWidth >= 560
+                ? 2
+                : 1;
+            const spacing = AppSpacing.md;
+            final cardWidth =
+                (constraints.maxWidth - spacing * (columnCount - 1)) /
+                columnCount;
+
+            return Wrap(
+              spacing: spacing,
+              runSpacing: spacing,
+              children: [
+                for (final schoolClass in classes)
+                  SizedBox(width: cardWidth, child: _classCard(schoolClass)),
+              ],
+            );
+          },
         ),
-        for (final schoolClass in classes) _classCard(schoolClass),
       ],
     ),
   );
 
-  Widget _classCard(SchoolClass schoolClass) => Padding(
-    padding: const EdgeInsets.only(bottom: AppSpacing.md),
-    child: ClassCard(
-      key: ValueKey<int>(schoolClass.id),
-      schoolClass: schoolClass,
-      gradeLevels: gradeLevels,
-      fields: fields,
-    ),
+  Widget _classCard(SchoolClass schoolClass) => ClassCard(
+    key: ValueKey<int>(schoolClass.id),
+    schoolClass: schoolClass,
+    gradeLevels: gradeLevels,
+    fields: fields,
   );
 }
 
