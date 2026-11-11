@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/classes/presentation/classes_page.dart';
 import '../../features/home/presentation/home_page.dart';
 import '../../features/settings/presentation/settings_page.dart';
+import '../../features/special_education/presentation/special_education_page.dart';
 import '../../features/students/presentation/students_page.dart';
 import '../../features/teachers/presentation/teachers_page.dart';
 import '../../features/todos/presentation/todos_page.dart';
@@ -57,6 +58,12 @@ const List<AppDestination> appDestinations = <AppDestination>[
     builder: _buildStudentsPage,
   ),
   AppDestination(
+    id: 'special_education',
+    label: 'Özel Eğitim',
+    icon: Icons.accessible_forward_outlined,
+    builder: _buildSpecialEducationPage,
+  ),
+  AppDestination(
     id: 'classes',
     label: 'Sınıflar',
     icon: Icons.meeting_room_outlined,
@@ -84,6 +91,8 @@ const List<AppDestination> appDestinations = <AppDestination>[
 
 Widget _buildHomePage(BuildContext context) => const HomePage();
 Widget _buildStudentsPage(BuildContext context) => const StudentsPage();
+Widget _buildSpecialEducationPage(BuildContext context) =>
+    const SpecialEducationPage();
 Widget _buildClassesPage(BuildContext context) => const ClassesPage();
 Widget _buildTeachersPage(BuildContext context) => const TeachersPage();
 Widget _buildTodosPage(BuildContext context) => const TodosPage();

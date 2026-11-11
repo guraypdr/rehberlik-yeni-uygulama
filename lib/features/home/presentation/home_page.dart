@@ -684,6 +684,13 @@ class _QuickAccessCard extends ConsumerWidget {
         destinationId: 'students',
       ),
       _QItem(
+        icon: Icons.accessible_forward_outlined,
+        label: 'Özel Eğitim',
+        sub: 'Özel eğitim öğrencileri',
+        color: Color(0xFF8B5CF6),
+        destinationId: 'special_education',
+      ),
+      _QItem(
         icon: Icons.meeting_room_outlined,
         label: 'Sınıflar',
         sub: 'Şube yönetimi',
