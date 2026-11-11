@@ -13,14 +13,26 @@ import 'student_info_form_status.dart';
 import 'student_interviews_dialog.dart';
 
 class StudentProfilePage extends ConsumerWidget {
-  const StudentProfilePage({super.key, required this.student});
+  const StudentProfilePage({
+    super.key,
+    required this.student,
+    this.sourceDestinationId = 'students',
+  });
 
   final Student student;
+  final String sourceDestinationId;
 
-  static Future<void> show(BuildContext context, Student student) {
+  static Future<void> show(
+    BuildContext context,
+    Student student, {
+    String sourceDestinationId = 'students',
+  }) {
     return Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => StudentProfilePage(student: student),
+        builder: (_) => StudentProfilePage(
+          student: student,
+          sourceDestinationId: sourceDestinationId,
+        ),
       ),
     );
   }
@@ -45,7 +57,7 @@ class StudentProfilePage extends ConsumerWidget {
           children: [
             AppTopBar(
               destinations: appDestinations,
-              selectedId: 'students',
+              selectedId: sourceDestinationId,
               onSelected: (destinationId) {
                 ref.read(navigationProvider.notifier).select(destinationId);
                 Navigator.of(context).pop();
@@ -85,23 +97,13 @@ class StudentProfilePage extends ConsumerWidget {
                                       MaterialPageRoute<void>(
                                         builder: (_) => StudentProfilePage(
                                           student: selectedStudent,
+                                          sourceDestinationId:
+                                              sourceDestinationId,
                                         ),
                                       ),
                                     );
                                   },
                                 ),
-                              ),
-                              OutlinedButton.icon(
-                                key: const Key('open_student_info_form'),
-                                onPressed: () => StudentInfoFormSheet.show(
-                                  context,
-                                  currentStudent,
-                                ),
-                                icon: const Icon(
-                                  Icons.assignment_outlined,
-                                  size: 18,
-                                ),
-                                label: const Text('Öğrenci Bilgi Formu'),
                               ),
                               OutlinedButton.icon(
                                 key: const Key('open_student_interviews'),
@@ -122,7 +124,9 @@ class StudentProfilePage extends ConsumerWidget {
                         Row(
                           children: [
                             Text(
-                              'Öğrenciler',
+                              sourceDestinationId == 'special_education'
+                                  ? 'Özel Eğitim'
+                                  : 'Öğrenciler',
                               style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(color: AppColors.textMuted),
                             ),
@@ -727,6 +731,8 @@ class _StudentProfileTabsState extends State<_StudentProfileTabs>
                   _InfoPanel(
                     title: 'Kişisel Bilgiler',
                     icon: Icons.person_outline,
+                    student: student,
+                    section: StudentInfoSection.basic,
                     fields: [
                       ('Adı Soyadı', student.fullName),
                       ('Cinsiyet', student.gender),
@@ -746,6 +752,8 @@ class _StudentProfileTabsState extends State<_StudentProfileTabs>
                   _InfoPanel(
                     title: 'Anne Bilgileri',
                     icon: Icons.woman_outlined,
+                    student: student,
+                    section: StudentInfoSection.mother,
                     fields: [
                       (
                         'Adı Soyadı',
@@ -764,6 +772,8 @@ class _StudentProfileTabsState extends State<_StudentProfileTabs>
                   _InfoPanel(
                     title: 'Baba Bilgileri',
                     icon: Icons.man_outlined,
+                    student: student,
+                    section: StudentInfoSection.father,
                     fields: [
                       (
                         'Adı Soyadı',
@@ -782,6 +792,8 @@ class _StudentProfileTabsState extends State<_StudentProfileTabs>
                   _InfoPanel(
                     title: 'Hane Bilgileri',
                     icon: Icons.home_outlined,
+                    student: student,
+                    section: StudentInfoSection.household,
                     fields: [
                       ('Kardeş Sayısı', student.siblingCount?.toString()),
                       ('Kaçıncı Çocuk?', student.childOrder?.toString()),
@@ -796,6 +808,8 @@ class _StudentProfileTabsState extends State<_StudentProfileTabs>
                   _InfoPanel(
                     title: 'Sağlık Bilgileri',
                     icon: Icons.favorite_border,
+                    student: student,
+                    section: StudentInfoSection.health,
                     fields: [
                       (
                         'Sürekli Hastalığı Var mı?',
@@ -815,14 +829,6 @@ class _StudentProfileTabsState extends State<_StudentProfileTabs>
                         'Aile Hastalık Açıklaması',
                         student.householdChronicIllnessDetails,
                       ),
-                      (
-                        'Anne Engel Durumu',
-                        _yesNo(student.motherHasDisability),
-                      ),
-                      (
-                        'Baba Engel Durumu',
-                        _yesNo(student.fatherHasDisability),
-                      ),
                     ],
                   ),
                 ],
@@ -833,10 +839,16 @@ class _StudentProfileTabsState extends State<_StudentProfileTabs>
                   _InfoPanel(
                     title: 'Eğitim Bilgileri',
                     icon: Icons.school_outlined,
+                    student: student,
+                    section: StudentInfoSection.education,
                     fields: [
                       (
                         'Okul Öncesi Eğitim',
                         _yesNo(student.preschoolEducation),
+                      ),
+                      (
+                        'Özel Eğitim Öğrencisi mi?',
+                        _yesNo(student.hasSpecialEducation),
                       ),
                       (
                         'Yakın Zamanda Taşınma / Okul Değişikliği',
@@ -868,11 +880,10 @@ class _StudentProfileTabsState extends State<_StudentProfileTabs>
                   _InfoPanel(
                     title: 'Sosyal ve Aile Yaşamı',
                     icon: Icons.home_outlined,
+                    student: student,
+                    section: StudentInfoSection.social,
                     fields: [
                       ('Yapmaktan Hoşlandığı Şeyler', student.likesActivities),
-                      ('Kardeş Sayısı', student.siblingCount?.toString()),
-                      ('Kaçıncı Çocuk?', student.childOrder?.toString()),
-                      ('Evde Kimler Yaşıyor?', student.householdMembers),
                       (
                         'Etkisinde Olduğu Bir Olay Var mı?',
                         _yesNo(student.hasInfluentialEvent),
@@ -912,16 +923,27 @@ class _ProfileTabBody extends StatelessWidget {
   );
 }
 
-class _InfoPanel extends StatelessWidget {
+class _InfoPanel extends StatefulWidget {
   const _InfoPanel({
     required this.title,
     required this.icon,
+    required this.student,
+    required this.section,
     required this.fields,
   });
 
   final String title;
   final IconData icon;
+  final Student student;
+  final StudentInfoSection section;
   final List<(String, String?)> fields;
+
+  @override
+  State<_InfoPanel> createState() => _InfoPanelState();
+}
+
+class _InfoPanelState extends State<_InfoPanel> {
+  bool _editing = false;
 
   @override
   Widget build(BuildContext context) => Card(
@@ -943,35 +965,59 @@ class _InfoPanel extends StatelessWidget {
           child: Row(
             children: [
               Icon(
-                icon,
+                widget.icon,
                 size: 19,
                 color: Theme.of(context).colorScheme.primary,
               ),
               const SizedBox(width: AppSpacing.sm),
-              Text(title, style: Theme.of(context).textTheme.titleSmall),
+              Expanded(
+                child: Text(
+                  widget.title,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+              ),
+              if (!_editing)
+                TextButton.icon(
+                  key: Key('edit_student_section_${widget.section.name}'),
+                  onPressed: () => setState(() => _editing = true),
+                  icon: const Icon(Icons.edit_outlined, size: 17),
+                  label: const Text('Düzenle'),
+                ),
             ],
           ),
         ),
         const Divider(height: 1),
-        Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final columns = constraints.maxWidth >= 520 ? 2 : 1;
-              final spacing = AppSpacing.md;
-              final width =
-                  (constraints.maxWidth - spacing * (columns - 1)) / columns;
-              return Wrap(
-                spacing: spacing,
-                runSpacing: AppSpacing.sm,
-                children: [
-                  for (final (label, value) in fields)
-                    SizedBox(width: width, child: _ProfileValue(label, value)),
-                ],
-              );
-            },
+        if (_editing)
+          StudentInfoSectionEditor(
+            key: ValueKey('${widget.section.name}_${widget.student.id}'),
+            student: widget.student,
+            section: widget.section,
+            onSaved: () => setState(() => _editing = false),
+            onCancel: () => setState(() => _editing = false),
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final columns = constraints.maxWidth >= 520 ? 2 : 1;
+                final spacing = AppSpacing.md;
+                final width =
+                    (constraints.maxWidth - spacing * (columns - 1)) / columns;
+                return Wrap(
+                  spacing: spacing,
+                  runSpacing: AppSpacing.sm,
+                  children: [
+                    for (final (label, value) in widget.fields)
+                      SizedBox(
+                        width: width,
+                        child: _ProfileValue(label, value),
+                      ),
+                  ],
+                );
+              },
+            ),
           ),
-        ),
       ],
     ),
   );

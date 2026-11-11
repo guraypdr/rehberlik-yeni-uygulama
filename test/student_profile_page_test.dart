@@ -5,7 +5,6 @@ import 'package:rehberlik_app/core/providers/session_provider.dart';
 import 'package:rehberlik_app/features/students/domain/student.dart';
 import 'package:rehberlik_app/features/students/presentation/students_provider.dart';
 import 'package:rehberlik_app/features/students/presentation/widgets/student_profile_page.dart';
-import 'package:rehberlik_app/features/students/presentation/widgets/student_info_form_sheet.dart';
 import 'package:rehberlik_app/features/students/presentation/widgets/student_interviews_dialog.dart';
 
 void main() {
@@ -83,6 +82,17 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Anne Bilgileri'), findsOneWidget);
     expect(find.text('Fatma'), findsOneWidget);
+    final familyScrollable = find.descendant(
+      of: find.byKey(const Key('student_profile_tab_content_1')),
+      matching: find.byType(Scrollable),
+    );
+    await tester.scrollUntilVisible(
+      find.text('Hane Bilgileri'),
+      300,
+      scrollable: familyScrollable,
+    );
+    expect(find.text('Hane Bilgileri'), findsOneWidget);
+    expect(find.text('Kardeş Sayısı'), findsOneWidget);
 
     await tester.drag(
       find.byKey(const Key('student_profile_tab_bar')),
@@ -93,7 +103,7 @@ void main() {
       find.byKey(const Key('student_profile_tab_Sosyal Bilgiler')),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Kardeş Sayısı'), findsOneWidget);
+    expect(find.text('Yapmaktan Hoşlandığı Şeyler'), findsOneWidget);
 
     await tester.drag(
       find.byKey(const Key('student_profile_tab_bar')),
@@ -154,7 +164,14 @@ void main() {
     expect(find.text('202'), findsWidgets);
   });
 
-  testWidgets('bilgi formu ve görüşmeler detaydan ayrı açılır', (tester) async {
+  testWidgets('profil bölümleri yerinde düzenlenir ve kaydedilir', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 3000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     const student = Student(
       id: 1,
       classId: 2,
@@ -163,31 +180,46 @@ void main() {
       surname: 'Kaya',
       createdAt: '2026-11-06',
     );
+    final studentsNotifier = _ProfileStudentsNotifier([student]);
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [databaseProvider.overrideWithValue(null)],
+        overrides: [
+          databaseProvider.overrideWithValue(null),
+          studentsProvider.overrideWith(() => studentsNotifier),
+        ],
         child: const MaterialApp(home: _ProfileHost(student: student)),
       ),
     );
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('open_student_info_form')), findsOneWidget);
+    expect(find.byKey(const Key('open_student_info_form')), findsNothing);
     expect(find.byKey(const Key('open_student_interviews')), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('open_student_info_form')));
-    await tester.pumpAndSettle();
-    expect(find.byType(StudentInfoFormSheet), findsOneWidget);
-    expect(find.text('Öğrenci Bilgi Formu'), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byType(StudentInfoFormSheet),
-        matching: find.byType(TabBar),
-      ),
-      findsNothing,
+    await tester.drag(
+      find.byKey(const Key('student_profile_tab_bar')),
+      const Offset(-500, 0),
     );
-    await tester.tap(find.byTooltip('Kapat'));
     await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('student_profile_tab_Eğitim Bilgileri')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('edit_student_section_education')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('hasSpecialEducation_dropdown')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Evet').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('student_info_save_button')));
+    await tester.pumpAndSettle();
+
+    expect(studentsNotifier.updatedStudent?.hasSpecialEducation, isTrue);
+    expect(
+      find.byKey(const Key('edit_student_section_education')),
+      findsOneWidget,
+    );
 
     await tester.tap(find.byKey(const Key('open_student_interviews')));
     await tester.pumpAndSettle();
@@ -201,9 +233,16 @@ class _ProfileStudentsNotifier extends StudentsNotifier {
   _ProfileStudentsNotifier(this.students);
 
   final List<Student> students;
+  Student? updatedStudent;
 
   @override
   Future<List<Student>> build() async => students;
+
+  @override
+  Future<void> updateStudent(Student student) async {
+    updatedStudent = student;
+    state = AsyncValue.data([student]);
+  }
 }
 
 class _ProfileHost extends StatelessWidget {

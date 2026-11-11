@@ -168,6 +168,7 @@ void main() {
         'created_at',
       });
       expect(forms, hasLength(1));
+      expect(forms.single['has_special_education'], 0);
       expect(forms.single['birth_place'], 'Ankara');
       expect(forms.single['preschool_education'], 1);
       expect(forms.single['has_recent_move_or_school_change'], 1);

@@ -15,12 +15,12 @@ class QuickStudentDialog extends ConsumerStatefulWidget {
   });
 
   final int? initialClassId;
-  final void Function(Student student, bool openDetails)? onStudentCreated;
+  final void Function(Student student, bool openProfile)? onStudentCreated;
 
   static Future<void> show(
     BuildContext context, {
     int? initialClassId,
-    void Function(Student student, bool openDetails)? onStudentCreated,
+    void Function(Student student, bool openProfile)? onStudentCreated,
   }) {
     return showDialog<void>(
       context: context,
@@ -659,7 +659,10 @@ class _QuickStudentDialogState extends ConsumerState<QuickStudentDialog> {
                     color: AppColors.surface,
                     border: Border(top: BorderSide(color: AppColors.border)),
                   ),
-                  child: Row(
+                  child: Wrap(
+                    alignment: WrapAlignment.end,
+                    spacing: AppSpacing.sm,
+                    runSpacing: AppSpacing.sm,
                     children: [
                       TextButton(
                         onPressed: _saving
@@ -667,24 +670,22 @@ class _QuickStudentDialogState extends ConsumerState<QuickStudentDialog> {
                             : () => Navigator.of(context).pop(),
                         child: const Text('Vazgeç'),
                       ),
-                      const Spacer(),
                       OutlinedButton(
                         onPressed:
                             (_saving ||
                                 classes.isEmpty ||
                                 _selectedClassId == null)
                             ? null
-                            : () => _submit(openDetails: false),
+                            : () => _submit(openProfile: false),
                         child: const Text('Kaydet'),
                       ),
-                      const SizedBox(width: AppSpacing.sm),
                       FilledButton.icon(
                         onPressed:
                             (_saving ||
                                 classes.isEmpty ||
                                 _selectedClassId == null)
                             ? null
-                            : () => _submit(openDetails: true),
+                            : () => _submit(openProfile: true),
                         icon: _saving
                             ? const SizedBox(
                                 width: 14,
@@ -695,9 +696,7 @@ class _QuickStudentDialogState extends ConsumerState<QuickStudentDialog> {
                                 ),
                               )
                             : const Icon(Icons.arrow_forward_rounded, size: 16),
-                        label: const Text(
-                          'Kaydet ve Öğrenci Bilgi Formunu Doldur',
-                        ),
+                        label: const Text('Kaydet ve Profili Aç'),
                       ),
                     ],
                   ),
@@ -710,7 +709,7 @@ class _QuickStudentDialogState extends ConsumerState<QuickStudentDialog> {
     );
   }
 
-  Future<void> _submit({required bool openDetails}) async {
+  Future<void> _submit({required bool openProfile}) async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedClassId == null) {
       ScaffoldMessenger.of(
@@ -736,7 +735,7 @@ class _QuickStudentDialogState extends ConsumerState<QuickStudentDialog> {
       if (mounted) {
         Navigator.of(context).pop();
         if (student != null && widget.onStudentCreated != null) {
-          widget.onStudentCreated!(student, openDetails);
+          widget.onStudentCreated!(student, openProfile);
         }
       }
     } catch (error) {

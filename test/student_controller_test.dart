@@ -53,6 +53,7 @@ void main() {
         birthDate: '2010-01-01',
         address: 'Çankaya',
         preschoolEducation: true,
+        hasSpecialEducation: true,
         usesRegularMedication: false,
         hasChronicIllness: false,
         likesActivities: 'Kitap okumak',
@@ -116,6 +117,7 @@ void main() {
         address: 'Çankaya',
         birthDate: '2010-01-01',
         preschoolEducation: true,
+        hasSpecialEducation: true,
         likesActivities: 'Kitap okumak',
         hasRecentMoveOrSchoolChange: false,
         motherBirthPlace: 'Ankara',
@@ -159,6 +161,7 @@ void main() {
       expect(fromMap.birthPlace, 'Ankara');
       expect(fromMap.address, 'Çankaya');
       expect(fromMap.preschoolEducation, isTrue);
+      expect(fromMap.hasSpecialEducation, isTrue);
       expect(fromMap.likesActivities, 'Kitap okumak');
       expect(fromMap.motherBirthPlace, 'Ankara');
       expect(fromMap.motherBirthDate, '1980-01-01');

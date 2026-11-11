@@ -3,28 +3,41 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../classes/presentation/classes_provider.dart';
+import '../../../classes/domain/school_class.dart';
 import '../../domain/student.dart';
 import '../students_provider.dart';
 
-class StudentInfoFormSheet extends ConsumerStatefulWidget {
-  const StudentInfoFormSheet({super.key, required this.student});
-
-  final Student student;
-
-  static Future<void> show(BuildContext context, Student student) {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => StudentInfoFormSheet(student: student),
-    );
-  }
-
-  @override
-  ConsumerState<StudentInfoFormSheet> createState() =>
-      _StudentInfoFormSheetState();
+enum StudentInfoSection {
+  basic,
+  mother,
+  father,
+  household,
+  health,
+  education,
+  social,
 }
 
-class _StudentInfoFormSheetState extends ConsumerState<StudentInfoFormSheet> {
+class StudentInfoSectionEditor extends ConsumerStatefulWidget {
+  const StudentInfoSectionEditor({
+    super.key,
+    required this.student,
+    required this.section,
+    required this.onSaved,
+    required this.onCancel,
+  });
+
+  final Student student;
+  final StudentInfoSection section;
+  final VoidCallback onSaved;
+  final VoidCallback onCancel;
+
+  @override
+  ConsumerState<StudentInfoSectionEditor> createState() =>
+      _StudentInfoSectionEditorState();
+}
+
+class _StudentInfoSectionEditorState
+    extends ConsumerState<StudentInfoSectionEditor> {
   static const _educationOptions = [
     'Okuma yazma bilmiyor',
     'İlkokul',
@@ -46,6 +59,7 @@ class _StudentInfoFormSheetState extends ConsumerState<StudentInfoFormSheet> {
   late String _gender;
   late String _boardingStatus;
   late int _classId;
+  late final Student _student;
   bool _saving = false;
 
   static const _textInitializers = <String, String? Function(Student)>{
@@ -115,55 +129,56 @@ class _StudentInfoFormSheetState extends ConsumerState<StudentInfoFormSheet> {
         .valueOrNull
         ?.where((item) => item.id == widget.student.id)
         .firstOrNull;
-    final student =
+    _student =
         cachedStudent != null &&
             cachedStudent.studentInfoFormCompletion >=
                 widget.student.studentInfoFormCompletion
         ? cachedStudent
         : widget.student;
     for (final entry in _textInitializers.entries) {
-      final value = entry.value(student);
+      final value = entry.value(_student);
       _text[entry.key] = TextEditingController(
         text: _isDateField(entry.key) ? _displayDate(value) : value ?? '',
       );
     }
-    _name = TextEditingController(text: student.name);
-    _surname = TextEditingController(text: student.surname);
-    _number = TextEditingController(text: student.number);
+    _name = TextEditingController(text: _student.name);
+    _surname = TextEditingController(text: _student.surname);
+    _number = TextEditingController(text: _student.number);
     _siblingCount = TextEditingController(
-      text: student.siblingCount?.toString() ?? '',
+      text: _student.siblingCount?.toString() ?? '',
     );
     _childOrder = TextEditingController(
-      text: student.childOrder?.toString() ?? '',
+      text: _student.childOrder?.toString() ?? '',
     );
     _usageHours = TextEditingController(
-      text: student.technologyUsageMinutes == null
+      text: _student.technologyUsageMinutes == null
           ? ''
-          : (student.technologyUsageMinutes! ~/ 60).toString(),
+          : (_student.technologyUsageMinutes! ~/ 60).toString(),
     );
     _usageMinutes = TextEditingController(
-      text: student.technologyUsageMinutes == null
+      text: _student.technologyUsageMinutes == null
           ? ''
-          : (student.technologyUsageMinutes! % 60).toString(),
+          : (_student.technologyUsageMinutes! % 60).toString(),
     );
-    _gender = student.gender;
-    _boardingStatus = student.boardingStatus;
-    _classId = student.classId;
+    _gender = _student.gender;
+    _boardingStatus = _student.boardingStatus;
+    _classId = _student.classId;
     _answers.addAll({
-      'preschoolEducation': student.preschoolEducation ?? false,
-      'usesRegularMedication': student.usesRegularMedication ?? false,
-      'hasChronicIllness': student.hasChronicIllness ?? false,
+      'preschoolEducation': _student.preschoolEducation ?? false,
+      'hasSpecialEducation': _student.hasSpecialEducation ?? false,
+      'usesRegularMedication': _student.usesRegularMedication ?? false,
+      'hasChronicIllness': _student.hasChronicIllness ?? false,
       'hasRecentMoveOrSchoolChange':
-          student.hasRecentMoveOrSchoolChange ?? false,
-      'hasTechnologyDevice': student.hasTechnologyDevice,
-      'hasInfluentialEvent': student.hasInfluentialEvent ?? false,
-      'motherIsAlive': student.motherIsAlive ?? true,
-      'motherIsBiological': student.motherIsBiological ?? true,
-      'motherHasDisability': student.motherHasDisability ?? false,
-      'fatherIsAlive': student.fatherIsAlive ?? true,
-      'fatherIsBiological': student.fatherIsBiological ?? true,
-      'fatherHasDisability': student.fatherHasDisability ?? false,
-      'familyHasChronicIllness': student.familyHasChronicIllness ?? false,
+          _student.hasRecentMoveOrSchoolChange ?? false,
+      'hasTechnologyDevice': _student.hasTechnologyDevice,
+      'hasInfluentialEvent': _student.hasInfluentialEvent ?? false,
+      'motherIsAlive': _student.motherIsAlive ?? true,
+      'motherIsBiological': _student.motherIsBiological ?? true,
+      'motherHasDisability': _student.motherHasDisability ?? false,
+      'fatherIsAlive': _student.fatherIsAlive ?? true,
+      'fatherIsBiological': _student.fatherIsBiological ?? true,
+      'fatherHasDisability': _student.fatherHasDisability ?? false,
+      'familyHasChronicIllness': _student.familyHasChronicIllness ?? false,
     });
   }
 
@@ -184,301 +199,258 @@ class _StudentInfoFormSheetState extends ConsumerState<StudentInfoFormSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final screenSize = MediaQuery.sizeOf(context);
     final classes = ref.watch(classesProvider).valueOrNull?.classes ?? [];
     final classIds = classes.map((schoolClass) => schoolClass.id).toSet();
     final selectedClassId = classIds.contains(_classId)
         ? _classId
         : (classes.isEmpty ? null : classes.first.id);
 
-    return Dialog(
-      child: SizedBox(
-        width: screenSize.width < 780 ? screenSize.width - 40 : 720,
-        height: screenSize.height < 720
-            ? screenSize.height - 40
-            : screenSize.height * 0.88,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 8, 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Öğrenci Bilgi Formu · ${widget.student.fullName}',
-                      style: Theme.of(context).textTheme.titleLarge,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Kapat',
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: Form(
-                key: _formKey,
-                child: ListView(
-                  padding: const EdgeInsets.all(20),
-                  children: [
-                    _section('Temel Öğrenci Bilgileri'),
-                    if (MediaQuery.sizeOf(context).width < 600) ...[
-                      _basicField(_number, 'Öğrenci No', required: true),
-                      _basicField(_name, 'Adı', required: true),
-                      _basicField(_surname, 'Soyadı', required: true),
-                    ] else
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _basicField(
-                              _number,
-                              'Öğrenci No',
-                              required: true,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _basicField(_name, 'Adı', required: true),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _basicField(
-                              _surname,
-                              'Soyadı',
-                              required: true,
-                            ),
-                          ),
-                        ],
-                      ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<int>(
-                      initialValue: selectedClassId,
-                      decoration: const InputDecoration(
-                        labelText: 'Sınıf / Şube',
-                      ),
-                      items: [
-                        for (final schoolClass in classes)
-                          DropdownMenuItem(
-                            value: schoolClass.id,
-                            child: Text(schoolClass.displayName),
-                          ),
-                      ],
-                      onChanged: (value) {
-                        if (value != null) setState(() => _classId = value);
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: DropdownButtonFormField<String>(
-                            initialValue: _gender,
-                            decoration: const InputDecoration(
-                              labelText: 'Cinsiyeti',
-                            ),
-                            items: const [
-                              DropdownMenuItem(
-                                value: 'Kız',
-                                child: Text('Kız'),
-                              ),
-                              DropdownMenuItem(
-                                value: 'Erkek',
-                                child: Text('Erkek'),
-                              ),
-                            ],
-                            onChanged: (value) {
-                              if (value != null) {
-                                setState(() => _gender = value);
-                              }
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: DropdownButtonFormField<String>(
-                            initialValue: _boardingStatus,
-                            decoration: const InputDecoration(
-                              labelText: 'Pansiyon Durumu',
-                            ),
-                            items: const [
-                              DropdownMenuItem(
-                                value: 'Gündüzlü',
-                                child: Text('Gündüzlü'),
-                              ),
-                              DropdownMenuItem(
-                                value: 'Yatılı',
-                                child: Text('Yatılı'),
-                              ),
-                            ],
-                            onChanged: (value) {
-                              if (value != null) {
-                                setState(() => _boardingStatus = value);
-                              }
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    _section('Öğrenci Bilgileri'),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _dateField('birthDate', 'Doğum Tarihi'),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(child: _textField('birthPlace', 'Doğum Yeri')),
-                      ],
-                    ),
-                    _textField('address', 'Adresi', maxLines: 2),
-                    _answerField(
-                      'preschoolEducation',
-                      'Okul öncesi eğitim almış mı?',
-                    ),
-                    _answerField(
-                      'usesRegularMedication',
-                      'Sürekli kullandığı ilaç / tıbbi cihaz var mı?',
-                    ),
-                    if (_answers['usesRegularMedication'] == true)
-                      _textField(
-                        'medicationDetails',
-                        'İlaç / tıbbi cihaz açıklaması',
-                        maxLines: 2,
-                      ),
-                    _answerField(
-                      'hasChronicIllness',
-                      'Sürekli hastalığı var mı?',
-                    ),
-                    if (_answers['hasChronicIllness'] == true)
-                      _textField(
-                        'chronicIllnessDetails',
-                        'Sürekli hastalık açıklaması',
-                        maxLines: 2,
-                      ),
-                    _textField(
-                      'likesActivities',
-                      'Yapmaktan hoşlandığı şeyler',
-                      maxLines: 2,
-                    ),
-                    _answerField(
-                      'hasRecentMoveOrSchoolChange',
-                      'Yakın zamanda taşınmış mı / okul değiştirmiş mi?',
-                    ),
-                    if (_answers['hasRecentMoveOrSchoolChange'] == true)
-                      _textField(
-                        'moveOrSchoolChangeDetails',
-                        'Taşınma / okul değiştirme açıklaması',
-                        maxLines: 2,
-                      ),
-                    _textField(
-                      'extracurricularActivities',
-                      'Ders dışı faaliyetleri',
-                      maxLines: 2,
-                    ),
-                    _answerField(
-                      'hasTechnologyDevice',
-                      'Kendisine ait teknolojik cihaz var mı?',
-                    ),
-                    if (_answers['hasTechnologyDevice'] == true)
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _numberField(
-                              _usageHours,
-                              'Günlük kullanım (saat)',
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _numberField(_usageMinutes, 'Dakika (0–59)'),
-                          ),
-                        ],
-                      ),
-                    _answerField(
-                      'hasInfluentialEvent',
-                      'Hâlâ etkisinde olduğu bir olay yaşamış mı?',
-                    ),
-                    if (_answers['hasInfluentialEvent'] == true)
-                      _textField(
-                        'influentialEventDetails',
-                        'Etkileyen olay açıklaması',
-                        maxLines: 3,
-                      ),
-                    _section('Anne Bilgileri'),
-                    _parentFields('mother'),
-                    _section('Baba Bilgileri'),
-                    _parentFields('father'),
-                    _section('Kardeş ve Hane Bilgileri'),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _numberField(
-                            _siblingCount,
-                            'Öğrencinin kardeş sayısı',
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _numberField(
-                            _childOrder,
-                            'Öğrenci kaçıncı çocuk?',
-                          ),
-                        ),
-                      ],
-                    ),
-                    _answerField(
-                      'familyHasChronicIllness',
-                      'Ailesinde sürekli hastalığı olan biri var mı?',
-                    ),
-                    if (_answers['familyHasChronicIllness'] == true)
-                      _textField(
-                        'householdChronicIllnessDetails',
-                        'Aile üyeleri sürekli hastalık açıklaması',
-                        maxLines: 2,
-                      ),
-                    _textField(
-                      'householdMembers',
-                      'Evde kimler yaşıyor?',
-                      maxLines: 2,
-                    ),
-                  ],
+    return Form(
+      key: _formKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: _sectionFields(classes, selectedClassId),
+          ),
+          const Divider(height: 1),
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: Row(
+              children: [
+                TextButton(
+                  key: const Key('student_info_cancel_button'),
+                  onPressed: _saving ? null : widget.onCancel,
+                  child: const Text('İptal'),
                 ),
-              ),
+                const Spacer(),
+                FilledButton.icon(
+                  key: const Key('student_info_save_button'),
+                  onPressed:
+                      _saving ||
+                          (widget.section == StudentInfoSection.basic &&
+                              selectedClassId == null)
+                      ? null
+                      : _save,
+                  icon: _saving
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.save_outlined),
+                  label: const Text('Kaydet'),
+                ),
+              ],
             ),
-            const Divider(height: 1),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  TextButton(
-                    onPressed: _saving ? null : () => Navigator.pop(context),
-                    child: const Text('Kapat'),
-                  ),
-                  const Spacer(),
-                  FilledButton.icon(
-                    key: const Key('student_info_save_button'),
-                    onPressed: _saving || selectedClassId == null
-                        ? null
-                        : _save,
-                    icon: _saving
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.save_outlined),
-                    label: const Text('Bilgileri Kaydet'),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
+  }
+
+  Widget _sectionFields(List<SchoolClass> classes, int? selectedClassId) {
+    switch (widget.section) {
+      case StudentInfoSection.basic:
+        return Column(
+          children: [
+            if (MediaQuery.sizeOf(context).width < 600) ...[
+              _basicField(_number, 'Öğrenci No', required: true),
+              _basicField(_name, 'Adı', required: true),
+              _basicField(_surname, 'Soyadı', required: true),
+            ] else
+              Row(
+                children: [
+                  Expanded(
+                    child: _basicField(_number, 'Öğrenci No', required: true),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(child: _basicField(_name, 'Adı', required: true)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _basicField(_surname, 'Soyadı', required: true),
+                  ),
+                ],
+              ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<int>(
+              initialValue: selectedClassId,
+              decoration: const InputDecoration(labelText: 'Sınıf / Şube'),
+              items: [
+                for (final schoolClass in classes)
+                  DropdownMenuItem<int>(
+                    value: schoolClass.id,
+                    child: Text(schoolClass.displayName),
+                  ),
+              ],
+              onChanged: (value) {
+                if (value != null) setState(() => _classId = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    initialValue: _gender,
+                    decoration: const InputDecoration(labelText: 'Cinsiyeti'),
+                    items: const [
+                      DropdownMenuItem(value: 'Kız', child: Text('Kız')),
+                      DropdownMenuItem(value: 'Erkek', child: Text('Erkek')),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) setState(() => _gender = value);
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    initialValue: _boardingStatus,
+                    decoration: const InputDecoration(
+                      labelText: 'Pansiyon Durumu',
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'Gündüzlü',
+                        child: Text('Gündüzlü'),
+                      ),
+                      DropdownMenuItem(value: 'Yatılı', child: Text('Yatılı')),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => _boardingStatus = value);
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+            Row(
+              children: [
+                Expanded(child: _dateField('birthDate', 'Doğum Tarihi')),
+                const SizedBox(width: 12),
+                Expanded(child: _textField('birthPlace', 'Doğum Yeri')),
+              ],
+            ),
+            _textField('address', 'Adresi', maxLines: 2),
+          ],
+        );
+      case StudentInfoSection.mother:
+        return _parentFields('mother');
+      case StudentInfoSection.father:
+        return _parentFields('father');
+      case StudentInfoSection.household:
+        return Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: _numberField(
+                    _siblingCount,
+                    'Öğrencinin kardeş sayısı',
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _numberField(_childOrder, 'Öğrenci kaçıncı çocuk?'),
+                ),
+              ],
+            ),
+            _textField('householdMembers', 'Evde kimler yaşıyor?', maxLines: 2),
+          ],
+        );
+      case StudentInfoSection.health:
+        return Column(
+          children: [
+            _answerField(
+              'usesRegularMedication',
+              'Sürekli kullandığı ilaç / tıbbi cihaz var mı?',
+            ),
+            if (_answers['usesRegularMedication'] == true)
+              _textField(
+                'medicationDetails',
+                'İlaç / tıbbi cihaz açıklaması',
+                maxLines: 2,
+              ),
+            _answerField('hasChronicIllness', 'Sürekli hastalığı var mı?'),
+            if (_answers['hasChronicIllness'] == true)
+              _textField(
+                'chronicIllnessDetails',
+                'Sürekli hastalık açıklaması',
+                maxLines: 2,
+              ),
+            _answerField(
+              'familyHasChronicIllness',
+              'Ailesinde sürekli hastalığı olan biri var mı?',
+            ),
+            if (_answers['familyHasChronicIllness'] == true)
+              _textField(
+                'householdChronicIllnessDetails',
+                'Aile üyeleri sürekli hastalık açıklaması',
+                maxLines: 2,
+              ),
+          ],
+        );
+      case StudentInfoSection.education:
+        return Column(
+          children: [
+            _answerField('preschoolEducation', 'Okul öncesi eğitim almış mı?'),
+            _answerField('hasSpecialEducation', 'Özel eğitim öğrencisi mi?'),
+            _answerField(
+              'hasRecentMoveOrSchoolChange',
+              'Yakın zamanda taşınmış mı / okul değiştirmiş mi?',
+            ),
+            if (_answers['hasRecentMoveOrSchoolChange'] == true)
+              _textField(
+                'moveOrSchoolChangeDetails',
+                'Taşınma / okul değiştirme açıklaması',
+                maxLines: 2,
+              ),
+            _textField(
+              'extracurricularActivities',
+              'Ders dışı faaliyetleri',
+              maxLines: 2,
+            ),
+            _answerField(
+              'hasTechnologyDevice',
+              'Kendisine ait teknolojik cihaz var mı?',
+            ),
+            if (_answers['hasTechnologyDevice'] == true)
+              Row(
+                children: [
+                  Expanded(
+                    child: _numberField(_usageHours, 'Günlük kullanım (saat)'),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(child: _numberField(_usageMinutes, 'Dakika (0–59)')),
+                ],
+              ),
+          ],
+        );
+      case StudentInfoSection.social:
+        return Column(
+          children: [
+            _textField(
+              'likesActivities',
+              'Yapmaktan hoşlandığı şeyler',
+              maxLines: 2,
+            ),
+            _answerField(
+              'hasInfluentialEvent',
+              'Hâlâ etkisinde olduğu bir olay yaşamış mı?',
+            ),
+            if (_answers['hasInfluentialEvent'] == true)
+              _textField(
+                'influentialEventDetails',
+                'Etkileyen olay açıklaması',
+                maxLines: 3,
+              ),
+          ],
+        );
+    }
   }
 
   Widget _parentFields(String prefix) {
@@ -560,11 +532,6 @@ class _StudentInfoFormSheetState extends ConsumerState<StudentInfoFormSheet> {
     );
   }
 
-  Widget _section(String title) => Padding(
-    padding: const EdgeInsets.only(top: 24, bottom: 12),
-    child: Text(title, style: Theme.of(context).textTheme.titleMedium),
-  );
-
   Widget _basicField(
     TextEditingController controller,
     String label, {
@@ -621,6 +588,7 @@ class _StudentInfoFormSheetState extends ConsumerState<StudentInfoFormSheet> {
     padding: const EdgeInsets.only(top: 12),
     child: DropdownButtonFormField<bool?>(
       initialValue: _answers[key],
+      key: Key('${key}_dropdown'),
       decoration: InputDecoration(labelText: label),
       items: const [
         DropdownMenuItem<bool?>(value: null, child: Text('Seçiniz')),
@@ -658,83 +626,155 @@ class _StudentInfoFormSheetState extends ConsumerState<StudentInfoFormSheet> {
 
     setState(() => _saving = true);
     try {
+      final isBasic = widget.section == StudentInfoSection.basic;
+      final isMother = widget.section == StudentInfoSection.mother;
+      final isFather = widget.section == StudentInfoSection.father;
+      final isHousehold = widget.section == StudentInfoSection.household;
+      final isHealth = widget.section == StudentInfoSection.health;
+      final isEducation = widget.section == StudentInfoSection.education;
+      final isSocial = widget.section == StudentInfoSection.social;
       final updated = Student(
-        id: widget.student.id,
-        classId: _classId,
-        number: _number.text.trim(),
-        name: _name.text.trim(),
-        surname: _surname.text.trim(),
-        gender: _gender,
-        boardingStatus: _boardingStatus,
-        createdAt: widget.student.createdAt,
-        birthPlace: _value('birthPlace'),
-        birthDate: _storedDate('birthDate'),
-        address: _value('address'),
-        preschoolEducation: _answers['preschoolEducation'],
-        usesRegularMedication: _answers['usesRegularMedication'],
-        medicationDetails: _conditionalValue(
-          'usesRegularMedication',
-          'medicationDetails',
-        ),
-        hasChronicIllness: _answers['hasChronicIllness'],
-        chronicIllnessDetails: _conditionalValue(
-          'hasChronicIllness',
-          'chronicIllnessDetails',
-        ),
-        likesActivities: _value('likesActivities'),
-        hasRecentMoveOrSchoolChange: _answers['hasRecentMoveOrSchoolChange'],
-        moveOrSchoolChangeDetails: _conditionalValue(
-          'hasRecentMoveOrSchoolChange',
-          'moveOrSchoolChangeDetails',
-        ),
-        extracurricularActivities: _value('extracurricularActivities'),
-        hasTechnologyDevice: _answers['hasTechnologyDevice'],
-        technologyUsageMinutes: _answers['hasTechnologyDevice'] == true
-            ? (_intValue(_usageHours.text) ?? 0) * 60 + (minutes ?? 0)
-            : null,
-        hasInfluentialEvent: _answers['hasInfluentialEvent'],
-        influentialEventDetails: _conditionalValue(
-          'hasInfluentialEvent',
-          'influentialEventDetails',
-        ),
-        motherName: _value('motherName'),
-        motherSurname: _value('motherSurname'),
-        motherBirthPlace: _value('motherBirthPlace'),
-        motherBirthDate: _storedDate('motherBirthDate'),
-        motherIsAlive: _answers['motherIsAlive'],
-        motherIsBiological: _answers['motherIsBiological'],
-        motherHasDisability: _answers['motherHasDisability'],
-        motherDisabilityDetails: _conditionalValue(
-          'motherHasDisability',
-          'motherDisabilityDetails',
-        ),
-        motherEducation: _value('motherEducation'),
-        motherJob: _value('motherJob'),
-        fatherName: _value('fatherName'),
-        fatherSurname: _value('fatherSurname'),
-        fatherBirthPlace: _value('fatherBirthPlace'),
-        fatherBirthDate: _storedDate('fatherBirthDate'),
-        fatherIsAlive: _answers['fatherIsAlive'],
-        fatherIsBiological: _answers['fatherIsBiological'],
-        fatherHasDisability: _answers['fatherHasDisability'],
-        fatherDisabilityDetails: _conditionalValue(
-          'fatherHasDisability',
-          'fatherDisabilityDetails',
-        ),
-        fatherEducation: _value('fatherEducation'),
-        fatherJob: _value('fatherJob'),
-        siblingCount: _intValue(_siblingCount.text),
-        childOrder: _intValue(_childOrder.text),
-        familyHasChronicIllness: _answers['familyHasChronicIllness'],
-        householdChronicIllnessDetails: _conditionalValue(
-          'familyHasChronicIllness',
-          'householdChronicIllnessDetails',
-        ),
-        householdMembers: _value('householdMembers'),
+        id: _student.id,
+        classId: isBasic ? _classId : _student.classId,
+        number: isBasic ? _number.text.trim() : _student.number,
+        name: isBasic ? _name.text.trim() : _student.name,
+        surname: isBasic ? _surname.text.trim() : _student.surname,
+        gender: isBasic ? _gender : _student.gender,
+        boardingStatus: isBasic ? _boardingStatus : _student.boardingStatus,
+        createdAt: _student.createdAt,
+        birthPlace: isBasic ? _value('birthPlace') : _student.birthPlace,
+        birthDate: isBasic ? _storedDate('birthDate') : _student.birthDate,
+        address: isBasic ? _value('address') : _student.address,
+        preschoolEducation: isEducation
+            ? _answers['preschoolEducation']
+            : _student.preschoolEducation,
+        hasSpecialEducation: isEducation
+            ? _answers['hasSpecialEducation']
+            : _student.hasSpecialEducation,
+        usesRegularMedication: isHealth
+            ? _answers['usesRegularMedication']
+            : _student.usesRegularMedication,
+        medicationDetails: isHealth
+            ? _conditionalValue('usesRegularMedication', 'medicationDetails')
+            : _student.medicationDetails,
+        hasChronicIllness: isHealth
+            ? _answers['hasChronicIllness']
+            : _student.hasChronicIllness,
+        chronicIllnessDetails: isHealth
+            ? _conditionalValue('hasChronicIllness', 'chronicIllnessDetails')
+            : _student.chronicIllnessDetails,
+        likesActivities: isSocial
+            ? _value('likesActivities')
+            : _student.likesActivities,
+        hasRecentMoveOrSchoolChange: isEducation
+            ? _answers['hasRecentMoveOrSchoolChange']
+            : _student.hasRecentMoveOrSchoolChange,
+        moveOrSchoolChangeDetails: isEducation
+            ? _conditionalValue(
+                'hasRecentMoveOrSchoolChange',
+                'moveOrSchoolChangeDetails',
+              )
+            : _student.moveOrSchoolChangeDetails,
+        extracurricularActivities: isEducation
+            ? _value('extracurricularActivities')
+            : _student.extracurricularActivities,
+        hasTechnologyDevice: isEducation
+            ? _answers['hasTechnologyDevice']
+            : _student.hasTechnologyDevice,
+        technologyUsageMinutes: isEducation
+            ? _answers['hasTechnologyDevice'] == true
+                  ? (_intValue(_usageHours.text) ?? 0) * 60 + (minutes ?? 0)
+                  : null
+            : _student.technologyUsageMinutes,
+        hasInfluentialEvent: isSocial
+            ? _answers['hasInfluentialEvent']
+            : _student.hasInfluentialEvent,
+        influentialEventDetails: isSocial
+            ? _conditionalValue(
+                'hasInfluentialEvent',
+                'influentialEventDetails',
+              )
+            : _student.influentialEventDetails,
+        motherName: isMother ? _value('motherName') : _student.motherName,
+        motherSurname: isMother
+            ? _value('motherSurname')
+            : _student.motherSurname,
+        motherBirthPlace: isMother
+            ? _value('motherBirthPlace')
+            : _student.motherBirthPlace,
+        motherBirthDate: isMother
+            ? _storedDate('motherBirthDate')
+            : _student.motherBirthDate,
+        motherIsAlive: isMother
+            ? _answers['motherIsAlive']
+            : _student.motherIsAlive,
+        motherIsBiological: isMother
+            ? _answers['motherIsBiological']
+            : _student.motherIsBiological,
+        motherHasDisability: isMother
+            ? _answers['motherHasDisability']
+            : _student.motherHasDisability,
+        motherDisabilityDetails: isMother
+            ? _conditionalValue(
+                'motherHasDisability',
+                'motherDisabilityDetails',
+              )
+            : _student.motherDisabilityDetails,
+        motherEducation: isMother
+            ? _value('motherEducation')
+            : _student.motherEducation,
+        motherJob: isMother ? _value('motherJob') : _student.motherJob,
+        fatherName: isFather ? _value('fatherName') : _student.fatherName,
+        fatherSurname: isFather
+            ? _value('fatherSurname')
+            : _student.fatherSurname,
+        fatherBirthPlace: isFather
+            ? _value('fatherBirthPlace')
+            : _student.fatherBirthPlace,
+        fatherBirthDate: isFather
+            ? _storedDate('fatherBirthDate')
+            : _student.fatherBirthDate,
+        fatherIsAlive: isFather
+            ? _answers['fatherIsAlive']
+            : _student.fatherIsAlive,
+        fatherIsBiological: isFather
+            ? _answers['fatherIsBiological']
+            : _student.fatherIsBiological,
+        fatherHasDisability: isFather
+            ? _answers['fatherHasDisability']
+            : _student.fatherHasDisability,
+        fatherDisabilityDetails: isFather
+            ? _conditionalValue(
+                'fatherHasDisability',
+                'fatherDisabilityDetails',
+              )
+            : _student.fatherDisabilityDetails,
+        fatherEducation: isFather
+            ? _value('fatherEducation')
+            : _student.fatherEducation,
+        fatherJob: isFather ? _value('fatherJob') : _student.fatherJob,
+        siblingCount: isHousehold
+            ? _intValue(_siblingCount.text)
+            : _student.siblingCount,
+        childOrder: isHousehold
+            ? _intValue(_childOrder.text)
+            : _student.childOrder,
+        familyHasChronicIllness: isHealth
+            ? _answers['familyHasChronicIllness']
+            : _student.familyHasChronicIllness,
+        householdChronicIllnessDetails: isHealth
+            ? _conditionalValue(
+                'familyHasChronicIllness',
+                'householdChronicIllnessDetails',
+              )
+            : _student.householdChronicIllnessDetails,
+        householdMembers: isHousehold
+            ? _value('householdMembers')
+            : _student.householdMembers,
       );
       await ref.read(studentsProvider.notifier).updateStudent(updated);
       if (!mounted) return;
-      Navigator.of(context).pop();
+      widget.onSaved();
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

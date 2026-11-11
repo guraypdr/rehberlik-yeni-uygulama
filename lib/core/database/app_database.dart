@@ -15,7 +15,7 @@ class AppDatabase {
   /// Veritabanı bağlantısına doğrudan erişim (DAO'lar için).
   Database get db => _db;
 
-  static const int _currentVersion = 10;
+  static const int _currentVersion = 13;
 
   /// Verilen dosya yolunda veritabanını açar; yoksa oluşturur.
   static Future<AppDatabase> open(String path) async {
@@ -53,6 +53,7 @@ class AppDatabase {
     _createClassRiskResponsesTable(batch);
     _createClassRiskMapStatusTable(batch);
     _createInterviewsTable(batch);
+    _createBepMeetingTables(batch);
     await batch.commit(noResult: true);
   }
 
@@ -138,6 +139,21 @@ class AppDatabase {
     if (oldVersion < 10) {
       await _migrateTeacherContactFields(db);
     }
+    if (oldVersion < 11) {
+      await db.execute(
+        'ALTER TABLE student_info_forms ADD COLUMN has_special_education INTEGER NOT NULL DEFAULT 0',
+      );
+    }
+    if (oldVersion < 12) {
+      final batch = db.batch();
+      _createBepMeetingTables(batch);
+      await batch.commit(noResult: true);
+    }
+    if (oldVersion >= 12 && oldVersion < 13) {
+      await db.execute(
+        "ALTER TABLE bep_meetings ADD COLUMN decisions TEXT NOT NULL DEFAULT '[]'",
+      );
+    }
   }
 
   static void _createCoreTables(Batch batch) {
@@ -219,6 +235,7 @@ class AppDatabase {
         birth_date                         TEXT,
         address                            TEXT,
         preschool_education                INTEGER,
+        has_special_education              INTEGER NOT NULL DEFAULT 0,
         uses_regular_medication            INTEGER,
         medication_details                 TEXT,
         has_chronic_illness                INTEGER,
@@ -277,6 +294,26 @@ class AppDatabase {
       CREATE TABLE IF NOT EXISTS class_risk_map_status (
         class_id INTEGER PRIMARY KEY REFERENCES classes(id) ON DELETE CASCADE,
         completed_at TEXT NOT NULL
+      )
+    ''');
+  }
+
+  static void _createBepMeetingTables(Batch batch) {
+    batch.execute('''
+      CREATE TABLE IF NOT EXISTS bep_meetings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+        meeting_date TEXT NOT NULL,
+        agenda_items TEXT NOT NULL,
+        decisions TEXT NOT NULL DEFAULT '[]',
+        created_at TEXT NOT NULL
+      )
+    ''');
+    batch.execute('''
+      CREATE TABLE IF NOT EXISTS bep_meeting_teachers (
+        meeting_id INTEGER NOT NULL REFERENCES bep_meetings(id) ON DELETE CASCADE,
+        teacher_id INTEGER NOT NULL REFERENCES teachers(id) ON DELETE CASCADE,
+        PRIMARY KEY (meeting_id, teacher_id)
       )
     ''');
   }

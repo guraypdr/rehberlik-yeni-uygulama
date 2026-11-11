@@ -13,6 +13,7 @@ class Student {
     this.birthDate,
     this.address,
     this.preschoolEducation,
+    this.hasSpecialEducation,
     this.usesRegularMedication,
     this.medicationDetails,
     this.hasChronicIllness,
@@ -67,6 +68,7 @@ class Student {
   final String? birthDate;
   final String? address;
   final bool? preschoolEducation;
+  final bool? hasSpecialEducation;
   final bool? usesRegularMedication;
   final String? medicationDetails;
   final bool? hasChronicIllness;
@@ -139,6 +141,7 @@ class Student {
     final numericFields = [siblingCount, childOrder];
     final answers = [
       preschoolEducation,
+      hasSpecialEducation,
       usesRegularMedication,
       hasChronicIllness,
       hasRecentMoveOrSchoolChange,
@@ -207,6 +210,7 @@ class Student {
     birthDate: birthDate,
     address: address,
     preschoolEducation: preschoolEducation,
+    hasSpecialEducation: hasSpecialEducation,
     usesRegularMedication: usesRegularMedication,
     medicationDetails: medicationDetails,
     hasChronicIllness: hasChronicIllness,
@@ -264,6 +268,7 @@ class Student {
     'birth_date': birthDate,
     'address': address,
     'preschool_education': _boolToInt(preschoolEducation),
+    'has_special_education': _boolToInt(hasSpecialEducation ?? false),
     'uses_regular_medication': _boolToInt(usesRegularMedication),
     'medication_details': medicationDetails,
     'has_chronic_illness': _boolToInt(hasChronicIllness),
@@ -316,6 +321,7 @@ class Student {
     birthDate: map['birth_date'] as String?,
     address: map['address'] as String?,
     preschoolEducation: _intToBool(map['preschool_education']),
+    hasSpecialEducation: _intToBool(map['has_special_education']) ?? false,
     usesRegularMedication: _intToBool(map['uses_regular_medication']),
     medicationDetails: map['medication_details'] as String?,
     hasChronicIllness: _intToBool(map['has_chronic_illness']),

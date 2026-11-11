@@ -10,61 +10,74 @@ import 'package:rehberlik_app/features/students/presentation/students_provider.d
 import 'package:rehberlik_app/features/students/presentation/widgets/student_info_form_sheet.dart';
 
 void main() {
-  testWidgets('form stale öğrenci nesnesi yerine güncel kayıtla açılır', (
-    tester,
-  ) async {
-    const staleStudent = Student(
-      id: 1,
-      classId: 2,
-      number: '101',
-      name: 'Ayşe',
-      surname: 'Kaya',
-      createdAt: '2026-11-10',
-    );
-    const savedStudent = Student(
-      id: 1,
-      classId: 2,
-      number: '101',
-      name: 'Ayşe',
-      surname: 'Kaya',
-      createdAt: '2026-11-10',
-      birthPlace: 'Ankara',
-      motherName: 'Fatma',
-      motherIsAlive: true,
-    );
-    final studentsNotifier = _FormStudentsNotifier([savedStudent]);
+  testWidgets(
+    'bölüm düzenleyicisi stale öğrenci yerine güncel kaydı kullanır',
+    (tester) async {
+      const staleStudent = Student(
+        id: 1,
+        classId: 2,
+        number: '101',
+        name: 'Ayşe',
+        surname: 'Kaya',
+        createdAt: '2026-11-10',
+      );
+      const savedStudent = Student(
+        id: 1,
+        classId: 2,
+        number: '101',
+        name: 'Ayşe',
+        surname: 'Kaya',
+        createdAt: '2026-11-10',
+        birthPlace: 'Ankara',
+        motherName: 'Fatma',
+        motherIsAlive: true,
+      );
+      final studentsNotifier = _FormStudentsNotifier([savedStudent]);
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          databaseProvider.overrideWithValue(null),
-          studentsProvider.overrideWith(() => studentsNotifier),
-          classesProvider.overrideWith(
-            () => _FormClassesNotifier(
-              const SchoolClass(
-                id: 2,
-                gradeLevelId: 1,
-                gradeLevelLabel: '9. Sınıf',
-                branch: 'A',
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            databaseProvider.overrideWithValue(null),
+            studentsProvider.overrideWith(() => studentsNotifier),
+            classesProvider.overrideWith(
+              () => _FormClassesNotifier(
+                const SchoolClass(
+                  id: 2,
+                  gradeLevelId: 1,
+                  gradeLevelLabel: '9. Sınıf',
+                  branch: 'A',
+                ),
               ),
             ),
+          ],
+          child: MaterialApp(
+            home: _FormHost(
+              student: staleStudent,
+              section: StudentInfoSection.basic,
+            ),
           ),
-        ],
-        child: MaterialApp(home: _FormHost(staleStudent: staleStudent)),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('open_student_form')));
-    await tester.pumpAndSettle();
+        ),
+      );
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('student_info_save_button')));
-    await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<TextFormField>(
+              find.widgetWithText(TextFormField, 'Doğum Yeri'),
+            )
+            .controller
+            ?.text,
+        'Ankara',
+      );
+      await tester.tap(find.byKey(const Key('student_info_save_button')));
+      await tester.pumpAndSettle();
 
-    expect(studentsNotifier.updatedStudent?.birthPlace, 'Ankara');
-    expect(studentsNotifier.updatedStudent?.motherName, 'Fatma');
-  });
+      expect(studentsNotifier.updatedStudent?.birthPlace, 'Ankara');
+      expect(studentsNotifier.updatedStudent?.motherName, 'Fatma');
+    },
+  );
 
-  testWidgets('anne ve baba eğitim durumu verilen seçeneklerden seçilir', (
+  testWidgets('anne bilgi bölümü kaydedilir ve diğer bilgiler korunur', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1200, 3000);
@@ -98,11 +111,11 @@ void main() {
             ),
           ),
         ],
-        child: MaterialApp(home: _FormHost(staleStudent: student)),
+        child: MaterialApp(
+          home: _FormHost(student: student, section: StudentInfoSection.mother),
+        ),
       ),
     );
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('open_student_form')));
     await tester.pumpAndSettle();
 
     final motherEducation = find.byKey(const Key('motherEducation_dropdown'));
@@ -111,17 +124,105 @@ void main() {
     await tester.tap(find.text('Üniversite').last);
     await tester.pumpAndSettle();
 
+    await tester.tap(find.byKey(const Key('student_info_save_button')));
+    await tester.pumpAndSettle();
+
+    expect(studentsNotifier.updatedStudent?.motherEducation, 'Üniversite');
+    expect(studentsNotifier.updatedStudent?.fatherEducation, isNull);
+  });
+
+  testWidgets('baba bilgi bölümü kaydedilir', (tester) async {
+    tester.view.physicalSize = const Size(1200, 3000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    const student = Student(
+      id: 1,
+      classId: 2,
+      number: '101',
+      name: 'Ayşe',
+      surname: 'Kaya',
+      createdAt: '2026-11-10',
+    );
+    final studentsNotifier = _FormStudentsNotifier([student]);
+
+    await _pumpEditor(
+      tester,
+      student: student,
+      notifier: studentsNotifier,
+      section: StudentInfoSection.father,
+    );
+
     final fatherEducation = find.byKey(const Key('fatherEducation_dropdown'));
     await tester.tap(fatherEducation);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Lise').last);
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('student_info_save_button')));
+    await tester.pumpAndSettle();
+
+    expect(studentsNotifier.updatedStudent?.fatherEducation, 'Lise');
+  });
+
+  testWidgets('özel eğitim varsayılan olarak hayır gelir ve kaydedilir', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 3000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    const student = Student(
+      id: 1,
+      classId: 2,
+      number: '101',
+      name: 'Ayşe',
+      surname: 'Kaya',
+      createdAt: '2026-11-10',
+    );
+    final studentsNotifier = _FormStudentsNotifier([student]);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          databaseProvider.overrideWithValue(null),
+          studentsProvider.overrideWith(() => studentsNotifier),
+          classesProvider.overrideWith(
+            () => _FormClassesNotifier(
+              const SchoolClass(
+                id: 2,
+                gradeLevelId: 1,
+                gradeLevelLabel: '9. Sınıf',
+                branch: 'A',
+              ),
+            ),
+          ),
+        ],
+        child: MaterialApp(
+          home: _FormHost(
+            student: student,
+            section: StudentInfoSection.education,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final specialEducation = find.byKey(
+      const Key('hasSpecialEducation_dropdown'),
+    );
+    expect(
+      tester
+          .widget<DropdownButtonFormField<bool?>>(specialEducation)
+          .initialValue,
+      isFalse,
+    );
 
     await tester.tap(find.byKey(const Key('student_info_save_button')));
     await tester.pumpAndSettle();
 
-    expect(studentsNotifier.updatedStudent?.motherEducation, 'Üniversite');
-    expect(studentsNotifier.updatedStudent?.fatherEducation, 'Lise');
+    expect(studentsNotifier.updatedStudent?.hasSpecialEducation, isFalse);
   });
 }
 
@@ -141,19 +242,57 @@ class _FormStudentsNotifier extends StudentsNotifier {
   }
 }
 
-class _FormHost extends ConsumerWidget {
-  const _FormHost({required this.staleStudent});
+Future<void> _pumpEditor(
+  WidgetTester tester, {
+  required Student student,
+  required _FormStudentsNotifier notifier,
+  required StudentInfoSection section,
+}) async {
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        databaseProvider.overrideWithValue(null),
+        studentsProvider.overrideWith(() => notifier),
+        classesProvider.overrideWith(
+          () => _FormClassesNotifier(
+            const SchoolClass(
+              id: 2,
+              gradeLevelId: 1,
+              gradeLevelLabel: '9. Sınıf',
+              branch: 'A',
+            ),
+          ),
+        ),
+      ],
+      child: MaterialApp(
+        home: _FormHost(student: student, section: section),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
 
-  final Student staleStudent;
+class _FormHost extends ConsumerWidget {
+  const _FormHost({required this.student, required this.section});
+
+  final Student student;
+  final StudentInfoSection section;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(studentsProvider);
+    final students = ref.watch(studentsProvider);
     return Scaffold(
-      body: TextButton(
-        key: const Key('open_student_form'),
-        onPressed: () => StudentInfoFormSheet.show(context, staleStudent),
-        child: const Text('Formu Aç'),
+      body: SingleChildScrollView(
+        child: students.when(
+          loading: () => const CircularProgressIndicator(),
+          error: (error, stackTrace) => Text('$error'),
+          data: (_) => StudentInfoSectionEditor(
+            student: student,
+            section: section,
+            onSaved: () {},
+            onCancel: () {},
+          ),
+        ),
       ),
     );
   }

@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/student.dart';
-import 'student_form_menu.dart';
-import 'student_info_form_sheet.dart';
 import 'student_info_form_status.dart';
 import 'student_profile_page.dart';
 
@@ -44,7 +42,7 @@ class StudentCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Üst satır: Avatar + No + Adı + Menü
+            // Üst satır: Avatar + No + Adı
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -116,14 +114,6 @@ class StudentCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                ),
-                StudentFormMenu(
-                  onSelected: (action) {
-                    switch (action) {
-                      case StudentFormAction.studentInfo:
-                        StudentInfoFormSheet.show(context, student);
-                    }
-                  },
                 ),
                 IconButton(
                   tooltip: 'Öğrenciyi Sil',
