@@ -5,7 +5,6 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../students/presentation/students_provider.dart';
 import '../../../students/presentation/widgets/quick_student_dialog.dart';
 import '../../../students/presentation/widgets/student_import_dialog.dart';
-import '../../../students/presentation/widgets/student_info_form_sheet.dart';
 import '../../../students/presentation/widgets/student_info_form_status.dart';
 import '../../../students/presentation/widgets/student_profile_page.dart';
 import '../../domain/school_class.dart';
@@ -83,9 +82,9 @@ class ClassStudentsDialog extends ConsumerWidget {
                     onPressed: () => QuickStudentDialog.show(
                       context,
                       initialClassId: schoolClass.id,
-                      onStudentCreated: (student, openDetails) {
-                        if (openDetails) {
-                          StudentInfoFormSheet.show(context, student);
+                      onStudentCreated: (student, openProfile) {
+                        if (openProfile) {
+                          StudentProfilePage.show(context, student);
                         }
                       },
                     ),

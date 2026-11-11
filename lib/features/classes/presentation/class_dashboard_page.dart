@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../students/domain/student.dart';
 import '../../students/presentation/students_provider.dart';
+import '../../students/presentation/widgets/quick_student_dialog.dart';
+import '../../students/presentation/widgets/student_import_dialog.dart';
 import '../../students/presentation/widgets/student_profile_page.dart';
 import '../../teachers/domain/teacher.dart';
 import '../../teachers/presentation/teachers_provider.dart';
@@ -161,6 +163,30 @@ class ClassDashboardPage extends ConsumerWidget {
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                         FilledButton.icon(
+                          key: const Key('add_student_to_class'),
+                          onPressed: () => QuickStudentDialog.show(
+                            context,
+                            initialClassId: currentClass.id,
+                            onStudentCreated: (student, openProfile) {
+                              if (openProfile) {
+                                StudentProfilePage.show(context, student);
+                              }
+                            },
+                          ),
+                          icon: const Icon(Icons.person_add_outlined, size: 18),
+                          label: const Text('Sınıfa Öğrenci Ekle'),
+                        ),
+                        OutlinedButton.icon(
+                          key: const Key('bulk_add_students_to_class'),
+                          onPressed: () => StudentImportDialog.show(
+                            context,
+                            classId: currentClass.id,
+                            className: currentClass.displayName,
+                          ),
+                          icon: const Icon(Icons.file_upload_outlined, size: 18),
+                          label: const Text('Toplu Öğrenci Ekle'),
+                        ),
+                        FilledButton.icon(
                           key: const Key('open_class_risk_map'),
                           onPressed: () => Navigator.of(context).push(
                             MaterialPageRoute<void>(
@@ -197,18 +223,25 @@ class ClassDashboardPage extends ConsumerWidget {
                       Card(
                         elevation: 0,
                         clipBehavior: Clip.antiAlias,
-                        child: Column(
-                          children: [
-                            for (
-                              var index = 0;
-                              index < students.length;
-                              index++
-                            ) ...[
-                              if (index > 0)
-                                const Divider(height: 1, indent: 72),
-                              _StudentTile(student: students[index]),
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: DataTable(
+                            key: const Key('class_students_table'),
+                            showCheckboxColumn: false,
+                            columns: const [
+                              DataColumn(label: Text('Sıra')),
+                              DataColumn(label: Text('Öğrenci No')),
+                              DataColumn(label: Text('Ad Soyad')),
+                              DataColumn(label: Text('Cinsiyet')),
+                              DataColumn(label: Text('Pansiyon')),
                             ],
-                          ],
+                            rows: [
+                              for (var index = 0;
+                                  index < students.length;
+                                  index++)
+                                _studentRow(context, index, students[index]),
+                            ],
+                          ),
                         ),
                       ),
                   ],
@@ -220,6 +253,24 @@ class ClassDashboardPage extends ConsumerWidget {
       ),
     );
   }
+
+  DataRow _studentRow(BuildContext context, int index, Student student) =>
+      DataRow(
+    onSelectChanged: (_) => StudentProfilePage.show(context, student),
+    cells: [
+      DataCell(Text('${index + 1}')),
+      DataCell(Text(student.number)),
+      DataCell(
+        InkWell(
+          key: Key('class_student_${student.id}'),
+          onTap: () => StudentProfilePage.show(context, student),
+          child: Text(student.fullName),
+        ),
+      ),
+      DataCell(Text(student.gender)),
+      DataCell(Text(student.boardingStatus)),
+    ],
+  );
 }
 
 class _SummaryCard extends StatelessWidget {
@@ -424,22 +475,4 @@ class _AdvisorAssignmentDialogState extends State<_AdvisorAssignmentDialog> {
       ),
     );
   }
-}
-
-class _StudentTile extends StatelessWidget {
-  const _StudentTile({required this.student});
-
-  final Student student;
-
-  @override
-  Widget build(BuildContext context) => ListTile(
-    key: Key('class_student_${student.id}'),
-    leading: CircleAvatar(
-      child: Text(student.name.characters.firstOrNull ?? 'Ö'),
-    ),
-    title: Text('${student.number} · ${student.fullName}'),
-    subtitle: Text('${student.gender} · ${student.boardingStatus}'),
-    trailing: const Icon(Icons.chevron_right),
-    onTap: () => StudentProfilePage.show(context, student),
-  );
 }

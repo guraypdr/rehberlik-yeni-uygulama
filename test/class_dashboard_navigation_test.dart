@@ -9,6 +9,8 @@ import 'package:rehberlik_app/features/classes/presentation/student_risk_provide
 import 'package:rehberlik_app/features/classes/presentation/widgets/class_card.dart';
 import 'package:rehberlik_app/features/students/domain/student.dart';
 import 'package:rehberlik_app/features/students/presentation/students_provider.dart';
+import 'package:rehberlik_app/features/students/presentation/widgets/quick_student_dialog.dart';
+import 'package:rehberlik_app/features/students/presentation/widgets/student_import_dialog.dart';
 import 'package:rehberlik_app/features/teachers/domain/teacher.dart';
 import 'package:rehberlik_app/features/teachers/presentation/teachers_provider.dart';
 
@@ -80,11 +82,21 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Öğrenci Sayısı'), findsOneWidget);
-      expect(find.text('1'), findsNWidgets(2));
+      expect(find.text('1'), findsNWidgets(3));
       expect(find.text('Kız Öğrenci'), findsOneWidget);
       expect(find.text('Erkek Öğrenci'), findsOneWidget);
       expect(find.text('Fatma Yılmaz'), findsOneWidget);
-      expect(find.text('101 · Ayşe Kaya'), findsOneWidget);
+      expect(find.text('Sıra'), findsOneWidget);
+      expect(find.text('Öğrenci No'), findsOneWidget);
+      expect(find.text('Ad Soyad'), findsOneWidget);
+      expect(find.text('101'), findsOneWidget);
+      expect(find.text('Ayşe Kaya'), findsOneWidget);
+      expect(find.byKey(const Key('class_students_table')), findsOneWidget);
+      expect(find.byKey(const Key('add_student_to_class')), findsOneWidget);
+      expect(
+        find.byKey(const Key('bulk_add_students_to_class')),
+        findsOneWidget,
+      );
 
       await tester.tap(find.byKey(const Key('open_class_risk_map')));
       await tester.pumpAndSettle();
@@ -171,6 +183,74 @@ void main() {
     await tester.tap(find.byKey(const Key('class_advisor_edit_button')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('class_advisor_dropdown')), findsOneWidget);
+  });
+
+  testWidgets('sınıf profilinden toplu öğrenci ekleme açılabilir', (
+    tester,
+  ) async {
+    const schoolClass = SchoolClass(
+      id: 6,
+      gradeLevelId: 1,
+      gradeLevelLabel: '12. Sınıf',
+      branch: 'D',
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          databaseProvider.overrideWithValue(null),
+          studentsProvider.overrideWith(() => _FakeStudentsNotifier([])),
+          teachersProvider.overrideWith(() => _FakeTeachersNotifier([])),
+          classesProvider.overrideWith(
+            () => _FakeClassAssignmentsNotifier(schoolClass),
+          ),
+        ],
+        child: const MaterialApp(
+          home: ClassDashboardPage(schoolClass: schoolClass),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('bulk_add_students_to_class')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(StudentImportDialog), findsOneWidget);
+    expect(find.text('12/D - Toplu Öğrenci Ekle'), findsOneWidget);
+  });
+
+  testWidgets('sınıf profilinden öğrenci ekleme formu açılabilir', (
+    tester,
+  ) async {
+    const schoolClass = SchoolClass(
+      id: 5,
+      gradeLevelId: 1,
+      gradeLevelLabel: '11. Sınıf',
+      branch: 'C',
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          databaseProvider.overrideWithValue(null),
+          studentsProvider.overrideWith(() => _FakeStudentsNotifier([])),
+          teachersProvider.overrideWith(() => _FakeTeachersNotifier([])),
+          classesProvider.overrideWith(
+            () => _FakeClassAssignmentsNotifier(schoolClass),
+          ),
+        ],
+        child: const MaterialApp(
+          home: ClassDashboardPage(schoolClass: schoolClass),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('add_student_to_class')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(QuickStudentDialog), findsOneWidget);
+    expect(find.text('Yeni Öğrenci Ekle'), findsOneWidget);
   });
 
   test('aynı öğretmen ikinci sınıfa atanamaz', () async {
