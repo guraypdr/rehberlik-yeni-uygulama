@@ -7,6 +7,7 @@ import '../../students/presentation/students_provider.dart';
 import '../../students/presentation/widgets/student_profile_page.dart';
 import '../../teachers/presentation/teachers_provider.dart';
 import '../domain/bep_meeting.dart';
+import 'widgets/bep_meeting_preview_dialog.dart';
 import 'bep_meetings_provider.dart';
 import 'widgets/bep_meeting_dialog.dart';
 
@@ -148,6 +149,41 @@ class SpecialEducationPage extends ConsumerWidget {
                           AppSpacing.lg,
                         ),
                         children: [
+                          Wrap(
+                            alignment: WrapAlignment.end,
+                            spacing: AppSpacing.sm,
+                            children: [
+                              OutlinedButton.icon(
+                                key: Key('edit_bep_meeting_${meeting.id}'),
+                                onPressed: () => BepMeetingDialog.show(
+                                  context,
+                                  students: specialStudents ?? const [],
+                                  teachers:
+                                      teachersAsync.valueOrNull ?? const [],
+                                  initialMeeting: meeting,
+                                ),
+                                icon: const Icon(Icons.edit_outlined),
+                                label: const Text('Düzenle'),
+                              ),
+                              FilledButton.tonalIcon(
+                                key: Key('preview_bep_meeting_${meeting.id}'),
+                                onPressed: () => BepMeetingPreviewDialog.show(
+                                  context,
+                                  meeting: meeting,
+                                  meetingNumber: meetingNumbers[meeting.id]!,
+                                ),
+                                icon: const Icon(Icons.picture_as_pdf_outlined),
+                                label: const Text('Tutanağı Önizle / Yazdır'),
+                              ),
+                              TextButton.icon(
+                                key: Key('delete_bep_meeting_${meeting.id}'),
+                                onPressed: () =>
+                                    _confirmDelete(context, ref, meeting),
+                                icon: const Icon(Icons.delete_outline),
+                                label: const Text('Toplantıyı Sil'),
+                              ),
+                            ],
+                          ),
                           _MeetingDetail(
                             label: 'Katılan öğretmenler',
                             value: meeting.teacherNames.join(', '),
@@ -193,16 +229,6 @@ class SpecialEducationPage extends ConsumerWidget {
                                   ),
                                 ),
                               ),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton.icon(
-                              key: Key('delete_bep_meeting_${meeting.id}'),
-                              onPressed: () =>
-                                  _confirmDelete(context, ref, meeting),
-                              icon: const Icon(Icons.delete_outline),
-                              label: const Text('Toplantıyı Sil'),
-                            ),
-                          ),
                         ],
                       ),
                   ],

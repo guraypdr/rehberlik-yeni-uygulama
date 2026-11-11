@@ -5,9 +5,12 @@ class BepMeeting {
     required this.studentName,
     required this.studentNumber,
     required this.className,
+    required this.studentBirthDate,
+    required this.studentGender,
     required this.meetingDate,
     required this.agendaItems,
     required this.decisions,
+    required this.teacherIds,
     required this.teacherNames,
     required this.createdAt,
   });
@@ -17,9 +20,12 @@ class BepMeeting {
   final String studentName;
   final String studentNumber;
   final String className;
+  final String? studentBirthDate;
+  final String studentGender;
   final String meetingDate;
   final List<String> agendaItems;
   final List<String> decisions;
+  final List<int> teacherIds;
   final List<String> teacherNames;
   final String createdAt;
 }

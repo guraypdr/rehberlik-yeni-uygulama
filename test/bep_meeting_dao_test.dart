@@ -34,9 +34,17 @@ void main() {
           'surname': 'Kaya',
           'created_at': '2026-11-11',
         });
+        await database.db.insert('student_info_forms', {
+          'student_id': studentId,
+          'birth_date': '2010-01-02',
+        });
         final teacherId = await database.db.insert('teachers', {
           'name': 'Mehmet',
           'surname': 'Demir',
+        });
+        final secondTeacherId = await database.db.insert('teachers', {
+          'name': 'Zeynep',
+          'surname': 'Arı',
         });
         final agenda = [bepMeetingAgendaItems[0], bepMeetingAgendaItems[4]];
         final decisions = [bepMeetingDecisionItems[0], 'Ek karar'];
@@ -55,9 +63,28 @@ void main() {
         expect(meetings.single.studentName, 'Ayşe Kaya');
         expect(meetings.single.studentNumber, '101');
         expect(meetings.single.className, '9. Sınıf / A');
+        expect(meetings.single.studentBirthDate, '2010-01-02');
+        expect(meetings.single.studentGender, 'Erkek');
         expect(meetings.single.teacherNames, ['Mehmet Demir']);
+        expect(meetings.single.teacherIds, [teacherId]);
         expect(meetings.single.agendaItems, agenda);
         expect(meetings.single.decisions, decisions);
+        final updatedAgenda = [bepMeetingAgendaItems[1]];
+        final updatedDecisions = ['Güncellenen karar'];
+        await dao.update(
+          meetingId: meetings.single.id,
+          studentId: studentId,
+          teacherIds: [secondTeacherId],
+          meetingDate: '2026-11-12',
+          agendaItems: updatedAgenda,
+          decisions: updatedDecisions,
+        );
+        final updatedMeeting = (await dao.fetchAll()).single;
+        expect(updatedMeeting.meetingDate, '2026-11-12');
+        expect(updatedMeeting.teacherIds, [secondTeacherId]);
+        expect(updatedMeeting.teacherNames, ['Zeynep Arı']);
+        expect(updatedMeeting.agendaItems, updatedAgenda);
+        expect(updatedMeeting.decisions, updatedDecisions);
         await dao.delete(meetings.single.id);
         expect(await dao.fetchAll(), isEmpty);
         expect(await database.db.query('bep_meeting_teachers'), isEmpty);

@@ -44,6 +44,29 @@ class BepMeetingsNotifier extends AsyncNotifier<List<BepMeeting>> {
     await dao.delete(meetingId);
     state = AsyncValue.data(await dao.fetchAll());
   }
+
+  Future<void> updateMeeting({
+    required int meetingId,
+    required int studentId,
+    required List<int> teacherIds,
+    required String meetingDate,
+    required List<String> agendaItems,
+    required List<String> decisions,
+  }) async {
+    final dao = _dao;
+    if (dao == null) {
+      throw StateError('Açık bir veritabanı bulunamadı.');
+    }
+    await dao.update(
+      meetingId: meetingId,
+      studentId: studentId,
+      teacherIds: teacherIds,
+      meetingDate: meetingDate,
+      agendaItems: agendaItems,
+      decisions: decisions,
+    );
+    state = AsyncValue.data(await dao.fetchAll());
+  }
 }
 
 final bepMeetingsProvider =

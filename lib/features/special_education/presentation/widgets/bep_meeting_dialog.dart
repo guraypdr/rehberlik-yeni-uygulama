@@ -12,19 +12,26 @@ class BepMeetingDialog extends ConsumerStatefulWidget {
     super.key,
     required this.students,
     required this.teachers,
+    this.initialMeeting,
   });
 
   final List<Student> students;
   final List<Teacher> teachers;
+  final BepMeeting? initialMeeting;
 
   static Future<void> show(
     BuildContext context, {
     required List<Student> students,
     required List<Teacher> teachers,
+    BepMeeting? initialMeeting,
   }) => showDialog<void>(
     context: context,
     barrierDismissible: false,
-    builder: (_) => BepMeetingDialog(students: students, teachers: teachers),
+    builder: (_) => BepMeetingDialog(
+      students: students,
+      teachers: teachers,
+      initialMeeting: initialMeeting,
+    ),
   );
 
   @override
@@ -44,8 +51,32 @@ class _BepMeetingDialogState extends ConsumerState<BepMeetingDialog> {
   int _step = 0;
   bool _saving = false;
 
+  bool get _isEditing => widget.initialMeeting != null;
+
   Student? get _selectedStudent =>
       widget.students.where((student) => student.id == _studentId).firstOrNull;
+
+  @override
+  void initState() {
+    super.initState();
+    final meeting = widget.initialMeeting;
+    if (meeting == null) return;
+
+    _studentId = meeting.studentId;
+    _teacherIds.addAll(meeting.teacherIds);
+    _agendaItems.addAll(
+      meeting.agendaItems.where((item) => !_agendaItems.contains(item)),
+    );
+    _selectedAgendaItems
+      ..clear()
+      ..addAll(meeting.agendaItems);
+    _decisionItems.addAll(
+      meeting.decisions.where((item) => !_decisionItems.contains(item)),
+    );
+    _selectedDecisions.addAll(meeting.decisions);
+    _meetingDate = DateTime.tryParse(meeting.meetingDate) ?? DateTime.now();
+    _step = 1;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +84,9 @@ class _BepMeetingDialogState extends ConsumerState<BepMeetingDialog> {
 
     return AlertDialog(
       title: Text(
-        _step == 0
+        _isEditing
+            ? 'BEP Toplantısını Düzenle'
+            : _step == 0
             ? 'BEP Toplantısı · Öğrenci Seçimi'
             : 'BEP Toplantısı · Katılımcılar ve Gündem',
       ),
@@ -87,7 +120,13 @@ class _BepMeetingDialogState extends ConsumerState<BepMeetingDialog> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : Icon(_step == 0 ? Icons.arrow_forward : Icons.save_outlined),
-          label: Text(_step == 0 ? 'Devam Et' : 'Toplantıyı Kaydet'),
+          label: Text(
+            _isEditing
+                ? 'Değişiklikleri Kaydet'
+                : _step == 0
+                ? 'Devam Et'
+                : 'Toplantıyı Kaydet',
+          ),
         ),
       ],
     );
@@ -306,24 +345,42 @@ class _BepMeetingDialogState extends ConsumerState<BepMeetingDialog> {
 
     setState(() => _saving = true);
     try {
-      await ref
-          .read(bepMeetingsProvider.notifier)
-          .addMeeting(
-            studentId: student.id,
-            teacherIds: _teacherIds.toList(),
-            meetingDate:
-                '${_meetingDate.year.toString().padLeft(4, '0')}-'
-                '${_meetingDate.month.toString().padLeft(2, '0')}-'
-                '${_meetingDate.day.toString().padLeft(2, '0')}',
-            agendaItems: [
-              for (final item in _agendaItems)
-                if (_selectedAgendaItems.contains(item)) item,
-            ],
-            decisions: [
-              for (final item in _decisionItems)
-                if (_selectedDecisions.contains(item)) item,
-            ],
-          );
+      final notifier = ref.read(bepMeetingsProvider.notifier);
+      final arguments = (
+        studentId: student.id,
+        teacherIds: _teacherIds.toList(),
+        meetingDate:
+            '${_meetingDate.year.toString().padLeft(4, '0')}-'
+            '${_meetingDate.month.toString().padLeft(2, '0')}-'
+            '${_meetingDate.day.toString().padLeft(2, '0')}',
+        agendaItems: [
+          for (final item in _agendaItems)
+            if (_selectedAgendaItems.contains(item)) item,
+        ],
+        decisions: [
+          for (final item in _decisionItems)
+            if (_selectedDecisions.contains(item)) item,
+        ],
+      );
+      final meeting = widget.initialMeeting;
+      if (meeting == null) {
+        await notifier.addMeeting(
+          studentId: arguments.studentId,
+          teacherIds: arguments.teacherIds,
+          meetingDate: arguments.meetingDate,
+          agendaItems: arguments.agendaItems,
+          decisions: arguments.decisions,
+        );
+      } else {
+        await notifier.updateMeeting(
+          meetingId: meeting.id,
+          studentId: arguments.studentId,
+          teacherIds: arguments.teacherIds,
+          meetingDate: arguments.meetingDate,
+          agendaItems: arguments.agendaItems,
+          decisions: arguments.decisions,
+        );
+      }
       if (mounted) Navigator.of(context).pop();
     } catch (error) {
       if (mounted) {

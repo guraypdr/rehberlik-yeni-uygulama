@@ -16,6 +16,8 @@ class BepMeetingDao {
         s.name || ' ' || s.surname AS student_name,
         s.number AS student_number,
         g.label || ' / ' || c.branch AS class_name,
+        sif.birth_date AS student_birth_date,
+        s.gender AS student_gender,
         m.meeting_date,
         m.agenda_items,
         m.decisions,
@@ -23,9 +25,11 @@ class BepMeetingDao {
         COALESCE(
           GROUP_CONCAT(t.name || ' ' || t.surname, '|||'),
           ''
-        ) AS teacher_names
+        ) AS teacher_names,
+        COALESCE(GROUP_CONCAT(mt.teacher_id, ','), '') AS teacher_ids
       FROM bep_meetings m
       JOIN students s ON s.id = m.student_id
+      LEFT JOIN student_info_forms sif ON sif.student_id = s.id
       JOIN classes c ON c.id = s.class_id
       JOIN grade_levels g ON g.id = c.grade_level_id
       LEFT JOIN bep_meeting_teachers mt ON mt.meeting_id = m.id
@@ -69,6 +73,53 @@ class BepMeetingDao {
     });
   }
 
+  Future<void> update({
+    required int meetingId,
+    required int studentId,
+    required List<int> teacherIds,
+    required String meetingDate,
+    required List<String> agendaItems,
+    required List<String> decisions,
+  }) async {
+    if (teacherIds.isEmpty) {
+      throw ArgumentError('En az bir öğretmen toplantıya katılmalıdır.');
+    }
+    if (agendaItems.isEmpty) {
+      throw ArgumentError('En az bir gündem maddesi seçilmelidir.');
+    }
+
+    await _database.db.transaction((txn) async {
+      final updatedCount = await txn.update(
+        'bep_meetings',
+        {
+          'student_id': studentId,
+          'meeting_date': meetingDate,
+          'agenda_items': jsonEncode(agendaItems),
+          'decisions': jsonEncode(decisions),
+        },
+        where: 'id = ?',
+        whereArgs: [meetingId],
+      );
+      if (updatedCount == 0) {
+        throw StateError('Düzenlenecek BEP toplantısı bulunamadı.');
+      }
+
+      await txn.delete(
+        'bep_meeting_teachers',
+        where: 'meeting_id = ?',
+        whereArgs: [meetingId],
+      );
+      final batch = txn.batch();
+      for (final teacherId in teacherIds.toSet()) {
+        batch.insert('bep_meeting_teachers', {
+          'meeting_id': meetingId,
+          'teacher_id': teacherId,
+        });
+      }
+      await batch.commit(noResult: true);
+    });
+  }
+
   Future<void> delete(int meetingId) async {
     await _database.db.delete(
       'bep_meetings',
@@ -84,15 +135,23 @@ class BepMeetingDao {
         .split('|||')
         .where((name) => name.isNotEmpty)
         .toList();
+    final teacherIds = (row['teacher_ids']! as String)
+        .split(',')
+        .where((id) => id.isNotEmpty)
+        .map(int.parse)
+        .toList();
     return BepMeeting(
       id: row['id']! as int,
       studentId: row['student_id']! as int,
       studentName: row['student_name']! as String,
       studentNumber: row['student_number']! as String,
       className: row['class_name']! as String,
+      studentBirthDate: row['student_birth_date'] as String?,
+      studentGender: row['student_gender']! as String,
       meetingDate: row['meeting_date']! as String,
       agendaItems: agendaItems.cast<String>(),
       decisions: decisions.cast<String>(),
+      teacherIds: teacherIds,
       teacherNames: teacherNames,
       createdAt: row['created_at']! as String,
     );

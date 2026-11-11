@@ -280,6 +280,111 @@ void main() {
     expect(find.byKey(const Key('bep_meeting_2')), findsNothing);
     expect(find.text('1. Toplantı · Ayşe Kaya · 101'), findsOneWidget);
   });
+
+  testWidgets('toplantı tutanağı için PDF önizlemesi açılır', (tester) async {
+    tester.view.physicalSize = const Size(1200, 2000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final notifier = _MeetingsNotifier([
+      _meeting(id: 1, studentId: 1, meetingDate: '2026-11-11'),
+    ]);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          databaseProvider.overrideWithValue(null),
+          studentsProvider.overrideWith(() => _StudentsNotifier([])),
+          teachersProvider.overrideWith(() => _TeachersNotifier([])),
+          bepMeetingsProvider.overrideWith(() => notifier),
+        ],
+        child: const MaterialApp(home: Scaffold(body: SpecialEducationPage())),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('bep_meeting_1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('preview_bep_meeting_1')));
+    await tester.pump();
+
+    expect(find.text('BEP Toplantı Tutanağı Önizleme'), findsOneWidget);
+    expect(find.byKey(const Key('bep_meeting_pdf_preview')), findsOneWidget);
+  });
+
+  testWidgets('hazırlanmış BEP toplantısı mevcut değerleriyle düzenlenir', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 2000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final notifier = _MeetingsNotifier([
+      _meeting(
+        id: 8,
+        studentId: 1,
+        meetingDate: '2026-03-15',
+        teacherIds: [5],
+        agendaItems: [bepMeetingAgendaItems.first, 'Ek gündem'],
+        decisions: [bepMeetingDecisionItems.first, 'Ek karar'],
+      ),
+    ]);
+    const students = [
+      Student(
+        id: 1,
+        classId: 2,
+        number: '101',
+        name: 'Ayşe',
+        surname: 'Kaya',
+        createdAt: '2026-11-11',
+        hasSpecialEducation: true,
+        className: '9/A',
+      ),
+    ];
+    const teachers = [
+      Teacher(id: 5, name: 'Zeynep', surname: 'Arı', branch: 'Türkçe'),
+      Teacher(id: 6, name: 'Mehmet', surname: 'Yılmaz', branch: 'Matematik'),
+    ];
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          databaseProvider.overrideWithValue(null),
+          studentsProvider.overrideWith(() => _StudentsNotifier(students)),
+          teachersProvider.overrideWith(() => _TeachersNotifier(teachers)),
+          bepMeetingsProvider.overrideWith(() => notifier),
+        ],
+        child: const MaterialApp(home: Scaffold(body: SpecialEducationPage())),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('bep_meeting_8')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('edit_bep_meeting_8')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('BEP Toplantısını Düzenle'), findsOneWidget);
+    expect(find.text('Toplantı tarihi: 15.03.2026'), findsOneWidget);
+    expect(
+      tester
+          .widget<CheckboxListTile>(
+            find.byKey(const Key('bep_meeting_teacher_5')),
+          )
+          .value,
+      isTrue,
+    );
+    await tester.tap(find.byKey(const Key('bep_meeting_teacher_6')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('bep_meeting_save')));
+    await tester.pumpAndSettle();
+
+    expect(notifier.updatedMeetingId, 8);
+    expect(notifier.teacherIds, [5, 6]);
+    expect(notifier.meetingDate, '2026-03-15');
+    expect(notifier.agendaItems, [bepMeetingAgendaItems.first, 'Ek gündem']);
+    expect(notifier.decisions, [bepMeetingDecisionItems.first, 'Ek karar']);
+  });
 }
 
 class _StudentsNotifier extends StudentsNotifier {
@@ -308,6 +413,8 @@ class _MeetingsNotifier extends BepMeetingsNotifier {
   List<int> teacherIds = [];
   List<String> agendaItems = [];
   List<String> decisions = [];
+  int? updatedMeetingId;
+  String? meetingDate;
 
   @override
   Future<List<BepMeeting>> build() async => initialMeetings;
@@ -331,6 +438,7 @@ class _MeetingsNotifier extends BepMeetingsNotifier {
     this.teacherIds = teacherIds;
     this.agendaItems = agendaItems;
     this.decisions = decisions;
+    this.meetingDate = meetingDate;
     state = AsyncValue.data([
       BepMeeting(
         id: 1,
@@ -338,11 +446,41 @@ class _MeetingsNotifier extends BepMeetingsNotifier {
         studentName: 'Ayşe Kaya',
         studentNumber: '101',
         className: '9/A',
+        studentBirthDate: '2010-01-02',
+        studentGender: 'Kız',
         meetingDate: meetingDate,
         agendaItems: agendaItems,
         decisions: decisions,
+        teacherIds: teacherIds,
         teacherNames: ['Zeynep Arı'],
         createdAt: meetingDate,
+      ),
+    ]);
+  }
+
+  @override
+  Future<void> updateMeeting({
+    required int meetingId,
+    required int studentId,
+    required List<int> teacherIds,
+    required String meetingDate,
+    required List<String> agendaItems,
+    required List<String> decisions,
+  }) async {
+    updatedMeetingId = meetingId;
+    this.studentId = studentId;
+    this.teacherIds = teacherIds;
+    this.meetingDate = meetingDate;
+    this.agendaItems = agendaItems;
+    this.decisions = decisions;
+    state = AsyncValue.data([
+      _meeting(
+        id: meetingId,
+        studentId: studentId,
+        meetingDate: meetingDate,
+        teacherIds: teacherIds,
+        agendaItems: agendaItems,
+        decisions: decisions,
       ),
     ]);
   }
@@ -352,15 +490,21 @@ BepMeeting _meeting({
   required int id,
   required int studentId,
   required String meetingDate,
+  List<int> teacherIds = const [5],
+  List<String>? agendaItems,
+  List<String>? decisions,
 }) => BepMeeting(
   id: id,
   studentId: studentId,
   studentName: studentId == 1 ? 'Ayşe Kaya' : 'Ali Demir',
   studentNumber: studentId == 1 ? '101' : '102',
   className: '9/A',
+  studentBirthDate: '2010-01-02',
+  studentGender: studentId == 1 ? 'Kız' : 'Erkek',
   meetingDate: meetingDate,
-  agendaItems: [bepMeetingAgendaItems.first],
-  decisions: const [],
+  agendaItems: agendaItems ?? [bepMeetingAgendaItems.first],
+  decisions: decisions ?? const [],
+  teacherIds: teacherIds,
   teacherNames: const ['Zeynep Arı'],
   createdAt: meetingDate,
 );
