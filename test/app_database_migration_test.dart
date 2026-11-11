@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:rehberlik_app/core/database/app_database.dart';
+import 'package:rehberlik_app/features/setup/data/school_profile_dao.dart';
 import 'package:rehberlik_app/features/students/data/student_dao.dart';
 import 'package:rehberlik_app/features/students/domain/student.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -231,6 +232,56 @@ void main() {
       expect(added.fullName, 'Mehmet Demir');
     } finally {
       await database?.close();
+      await directory.delete(recursive: true);
+    }
+  });
+
+  test('v13 okul profiline psikolojik danışman alanlarını ekler', () async {
+    final directory = await Directory.systemTemp.createTemp();
+    final path = p.join(directory.path, 'school_profile_v13.db');
+    final legacyDatabase = await databaseFactoryFfi.openDatabase(
+      path,
+      options: OpenDatabaseOptions(
+        version: 13,
+        onCreate: (db, version) async {
+          await db.execute('''
+            CREATE TABLE school_profile (
+              id INTEGER PRIMARY KEY,
+              name TEXT NOT NULL,
+              school_type TEXT NOT NULL,
+              has_prep INTEGER NOT NULL DEFAULT 0,
+              fields TEXT,
+              created_at TEXT NOT NULL
+            )
+          ''');
+          await db.insert('school_profile', {
+            'id': 1,
+            'name': 'Ankara Anadolu Lisesi',
+            'school_type': 'lise',
+            'has_prep': 0,
+            'created_at': '2026-01-01',
+          });
+        },
+      ),
+    );
+    await legacyDatabase.close();
+
+    final database = await AppDatabase.open(path);
+    try {
+      final rows = await database.db.query('school_profile');
+      expect(rows, hasLength(1));
+      expect(rows.single['name'], 'Ankara Anadolu Lisesi');
+      expect(rows.single['counselor_name'], '');
+      expect(rows.single['counselor_surname'], '');
+      await database.db.update('school_profile', {
+        'counselor_name': 'Ayşe',
+        'counselor_surname': 'Yılmaz',
+      }, where: 'id = 1');
+      final profile = await SchoolProfileDao(database).fetchProfile();
+      expect(profile?.counselorName, 'Ayşe');
+      expect(profile?.counselorSurname, 'Yılmaz');
+    } finally {
+      await database.close();
       await directory.delete(recursive: true);
     }
   });

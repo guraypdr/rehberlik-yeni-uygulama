@@ -19,6 +19,8 @@ enum SchoolType {
 class SchoolProfile {
   const SchoolProfile({
     required this.name,
+    this.counselorName = '',
+    this.counselorSurname = '',
     required this.schoolType,
     this.hasPrep = false,
     this.fields = const [],
@@ -27,6 +29,10 @@ class SchoolProfile {
 
   /// Okul adı.
   final String name;
+
+  /// Psikolojik danışmanın adı ve soyadı.
+  final String counselorName;
+  final String counselorSurname;
 
   /// Okul türü.
   final SchoolType schoolType;
@@ -40,8 +46,14 @@ class SchoolProfile {
   /// Veritabanının oluşturulma tarihi.
   final DateTime createdAt;
 
-  SchoolProfile copyWith({List<String>? fields}) => SchoolProfile(
+  SchoolProfile copyWith({
+    List<String>? fields,
+    String? counselorName,
+    String? counselorSurname,
+  }) => SchoolProfile(
     name: name,
+    counselorName: counselorName ?? this.counselorName,
+    counselorSurname: counselorSurname ?? this.counselorSurname,
     schoolType: schoolType,
     hasPrep: hasPrep,
     fields: fields ?? this.fields,
@@ -71,6 +83,8 @@ class SchoolProfile {
   Map<String, Object?> toMap() => {
     'id': 1,
     'name': name,
+    'counselor_name': counselorName,
+    'counselor_surname': counselorSurname,
     'school_type': schoolType.name,
     'has_prep': hasPrep ? 1 : 0,
     'fields': fields.isEmpty ? null : jsonEncode(fields),
@@ -86,6 +100,8 @@ class SchoolProfile {
     }
     return SchoolProfile(
       name: map['name']! as String,
+      counselorName: map['counselor_name'] as String? ?? '',
+      counselorSurname: map['counselor_surname'] as String? ?? '',
       schoolType: SchoolType.fromString(map['school_type']! as String),
       hasPrep: (map['has_prep'] as int? ?? 0) == 1,
       fields: fields,

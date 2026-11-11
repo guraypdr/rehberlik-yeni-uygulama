@@ -23,6 +23,8 @@ class SetupPage extends ConsumerStatefulWidget {
 class _SetupPageState extends ConsumerState<SetupPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _counselorNameController = TextEditingController();
+  final _counselorSurnameController = TextEditingController();
 
   SchoolType _schoolType = SchoolType.lise;
   bool _hasPrep = false;
@@ -37,6 +39,8 @@ class _SetupPageState extends ConsumerState<SetupPage> {
   @override
   void dispose() {
     _nameController.dispose();
+    _counselorNameController.dispose();
+    _counselorSurnameController.dispose();
     super.dispose();
   }
 
@@ -110,6 +114,43 @@ class _SetupPageState extends ConsumerState<SetupPage> {
             },
           ),
           const SizedBox(height: AppSpacing.xl),
+          Text('Psikolojik Danışman', style: theme.textTheme.titleSmall),
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: TextFormField(
+                  key: const Key('counselor_name'),
+                  controller: _counselorNameController,
+                  maxLength: 80,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: const InputDecoration(
+                    labelText: 'Adı',
+                    hintText: 'Ad',
+                    counterText: '',
+                  ),
+                  validator: _validateCounselorName,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: TextFormField(
+                  key: const Key('counselor_surname'),
+                  controller: _counselorSurnameController,
+                  maxLength: 80,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: const InputDecoration(
+                    labelText: 'Soyadı',
+                    hintText: 'Soyadı',
+                    counterText: '',
+                  ),
+                  validator: _validateCounselorName,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xl),
 
           // Okul türü
           Text('Okul Türü', style: theme.textTheme.titleSmall),
@@ -165,6 +206,11 @@ class _SetupPageState extends ConsumerState<SetupPage> {
     );
   }
 
+  String? _validateCounselorName(String? value) =>
+      value == null || value.trim().isEmpty
+      ? 'Psikolojik danışman adı ve soyadı zorunludur.'
+      : null;
+
   void _goToPreview() {
     if (!_formKey.currentState!.validate()) return;
     if (_showFieldEditor && _fields.isEmpty) {
@@ -186,6 +232,8 @@ class _SetupPageState extends ConsumerState<SetupPage> {
   ) {
     final profile = SchoolProfile(
       name: _nameController.text.trim(),
+      counselorName: _counselorNameController.text.trim(),
+      counselorSurname: _counselorSurnameController.text.trim(),
       schoolType: _schoolType,
       hasPrep: _hasPrep,
       fields: _fields,
@@ -227,6 +275,8 @@ class _SetupPageState extends ConsumerState<SetupPage> {
   Future<void> _createDatabase() async {
     final profile = SchoolProfileDaoInput(
       name: _nameController.text.trim(),
+      counselorName: _counselorNameController.text.trim(),
+      counselorSurname: _counselorSurnameController.text.trim(),
       schoolType: _schoolType,
       hasPrep: _hasPrep,
       fields: _fields,
@@ -329,6 +379,12 @@ class _PreviewCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _row(theme, 'Okul Adı', profile.name),
+          const SizedBox(height: AppSpacing.md),
+          _row(
+            theme,
+            'Psikolojik Danışman',
+            '${profile.counselorName} ${profile.counselorSurname}',
+          ),
           const SizedBox(height: AppSpacing.md),
           _row(theme, 'Okul Türü', profile.schoolType.label),
           if (profile.schoolType == SchoolType.lise) ...[

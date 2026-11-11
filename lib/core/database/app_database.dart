@@ -15,7 +15,7 @@ class AppDatabase {
   /// Veritabanı bağlantısına doğrudan erişim (DAO'lar için).
   Database get db => _db;
 
-  static const int _currentVersion = 13;
+  static const int _currentVersion = 14;
 
   /// Verilen dosya yolunda veritabanını açar; yoksa oluşturur.
   static Future<AppDatabase> open(String path) async {
@@ -154,6 +154,9 @@ class AppDatabase {
         "ALTER TABLE bep_meetings ADD COLUMN decisions TEXT NOT NULL DEFAULT '[]'",
       );
     }
+    if (oldVersion < 14) {
+      await _migrateCounselorProfileFields(db);
+    }
   }
 
   static void _createCoreTables(Batch batch) {
@@ -162,6 +165,8 @@ class AppDatabase {
       CREATE TABLE IF NOT EXISTS school_profile (
         id           INTEGER PRIMARY KEY CHECK (id = 1),
         name         TEXT    NOT NULL,
+        counselor_name TEXT NOT NULL DEFAULT '',
+        counselor_surname TEXT NOT NULL DEFAULT '',
         school_type  TEXT    NOT NULL,
         has_prep     INTEGER NOT NULL DEFAULT 0,
         fields       TEXT,
@@ -210,6 +215,32 @@ class AppDatabase {
         created_at   TEXT    NOT NULL
       )
     ''');
+  }
+
+  static Future<void> _migrateCounselorProfileFields(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS school_profile (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        name TEXT NOT NULL,
+        school_type TEXT NOT NULL,
+        has_prep INTEGER NOT NULL DEFAULT 0,
+        fields TEXT,
+        created_at TEXT NOT NULL
+      )
+    ''');
+    final columns = (await db.rawQuery(
+      'PRAGMA table_info(school_profile)',
+    )).map((row) => row['name'] as String).toSet();
+    if (!columns.contains('counselor_name')) {
+      await db.execute(
+        "ALTER TABLE school_profile ADD COLUMN counselor_name TEXT NOT NULL DEFAULT ''",
+      );
+    }
+    if (!columns.contains('counselor_surname')) {
+      await db.execute(
+        "ALTER TABLE school_profile ADD COLUMN counselor_surname TEXT NOT NULL DEFAULT ''",
+      );
+    }
   }
 
   static void _createStudentsTable(Batch batch) {

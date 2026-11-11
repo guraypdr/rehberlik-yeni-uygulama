@@ -32,6 +32,14 @@ String _schoolNameTitleCase(String name) => name
     })
     .join(' ');
 
+String _counselorDisplayName(SchoolProfile profile) {
+  final counselorName = '${profile.counselorName} ${profile.counselorSurname}'
+      .trim();
+  return _schoolNameTitleCase(
+    counselorName.isEmpty ? profile.name : counselorName,
+  );
+}
+
 /// Ana Sayfa — Referans tasarıma uygun dashboard.
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -103,9 +111,7 @@ class _Header extends StatelessWidget {
               Text(_greet(now.hour), style: theme.textTheme.bodyMedium),
               const SizedBox(height: 2),
               Text(
-                profile == null
-                    ? 'Ana Sayfa'
-                    : _schoolNameTitleCase(profile!.name),
+                profile == null ? 'Ana Sayfa' : _counselorDisplayName(profile!),
                 style: theme.textTheme.headlineSmall,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -449,11 +455,11 @@ class _HeroCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.lg),
 
-          // Okul adı
+          // Psikolojik danışman adı
           Text(
             profile == null
                 ? 'Rehberlik Yönetim'
-                : _schoolNameTitleCase(profile!.name),
+                : _counselorDisplayName(profile!),
             style: t.titleLarge?.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.w700,
@@ -577,7 +583,7 @@ class _SchoolInfoCard extends ConsumerWidget {
     if (profile == null) return const SizedBox.shrink();
 
     return _DashCard(
-      title: 'Okul Bilgisi',
+      title: 'Psikolojik Danışman',
       actionLabel: 'Ayarlar',
       onAction: () => ref.read(navigationProvider.notifier).select('settings'),
       child: Column(
@@ -603,7 +609,7 @@ class _SchoolInfoCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _schoolNameTitleCase(profile!.name),
+                      _counselorDisplayName(profile!),
                       style: t.titleSmall,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

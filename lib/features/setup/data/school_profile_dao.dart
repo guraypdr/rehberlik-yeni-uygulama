@@ -5,18 +5,24 @@ import '../domain/school_profile.dart';
 class SchoolProfileDaoInput {
   const SchoolProfileDaoInput({
     required this.name,
+    required this.counselorName,
+    required this.counselorSurname,
     required this.schoolType,
     this.hasPrep = false,
     this.fields = const [],
   });
 
   final String name;
+  final String counselorName;
+  final String counselorSurname;
   final SchoolType schoolType;
   final bool hasPrep;
   final List<String> fields;
 
   SchoolProfile toProfile() => SchoolProfile(
     name: name,
+    counselorName: counselorName,
+    counselorSurname: counselorSurname,
     schoolType: schoolType,
     hasPrep: hasPrep,
     fields: fields,
