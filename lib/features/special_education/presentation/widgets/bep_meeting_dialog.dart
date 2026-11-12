@@ -10,6 +10,7 @@ import '../../domain/bep_meeting.dart';
 import '../../domain/student_subject_need.dart';
 import '../bep_meetings_provider.dart';
 import '../student_subject_needs_provider.dart';
+import 'bep_subject_decisions_section.dart';
 
 /// BEP toplantısı ekleme/düzenleme sihirbazı.
 ///
@@ -249,7 +250,7 @@ class _BepMeetingDialogState extends ConsumerState<BepMeetingDialog> {
     1 => _guardianStep(),
     2 => _teacherStep(studentSubjects),
     3 => _agendaStep(),
-    _ => _decisionStep(),
+    _ => _decisionStep(studentSubjects),
   };
 
   Widget _studentBanner() {
@@ -478,7 +479,7 @@ class _BepMeetingDialogState extends ConsumerState<BepMeetingDialog> {
     ],
   );
 
-  Widget _decisionStep() => ListView(
+  Widget _decisionStep(List<StudentSubjectNeed> studentSubjects) => ListView(
     key: const Key('bep_meeting_step_decisions'),
     children: [
       Text(
@@ -506,6 +507,10 @@ class _BepMeetingDialogState extends ConsumerState<BepMeetingDialog> {
         hintText: 'Yeni karar',
         onAdd: _addDecision,
       ),
+      if (studentSubjects.isNotEmpty) ...[
+        const Divider(height: AppSpacing.xl),
+        BepSubjectDecisionsSection(needs: studentSubjects),
+      ],
     ],
   );
 

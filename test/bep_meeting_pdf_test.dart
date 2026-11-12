@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rehberlik_app/features/special_education/data/bep_meeting_pdf.dart';
 import 'package:rehberlik_app/features/special_education/domain/bep_meeting.dart';
+import 'package:rehberlik_app/features/special_education/domain/student_subject_need.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -25,6 +26,18 @@ void main() {
     final bytes = await (await BepMeetingPdf.build(
       meeting: meeting,
       meetingNumber: 2,
+      subjectNeeds: const [
+        StudentSubjectNeed(
+          studentId: 1,
+          classSubjectId: 1,
+          subjectName: 'Matematik',
+          weeklyHours: 5,
+          requiresSupportEducation: true,
+          requiresBep: false,
+          isExempt: false,
+          teacherName: 'Zeynep Arı',
+        ),
+      ],
     )).save();
 
     expect(bytes, isNotEmpty);

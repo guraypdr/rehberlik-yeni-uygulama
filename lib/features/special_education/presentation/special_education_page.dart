@@ -9,9 +9,11 @@ import '../../students/presentation/students_provider.dart';
 import '../../teachers/presentation/teachers_provider.dart';
 import '../domain/bep_meeting.dart';
 import 'special_education_student_profile_page.dart';
+import 'student_subject_needs_provider.dart';
 import 'widgets/bep_meeting_preview_dialog.dart';
 import 'bep_meetings_provider.dart';
 import 'widgets/bep_meeting_dialog.dart';
+import 'widgets/bep_subject_decisions_section.dart';
 
 class SpecialEducationPage extends ConsumerWidget {
   const SpecialEducationPage({super.key});
@@ -214,6 +216,18 @@ class SpecialEducationPage extends ConsumerWidget {
                                   ),
                                 ),
                               ),
+                          const SizedBox(height: AppSpacing.sm),
+                          BepSubjectDecisionsSection(
+                            needs:
+                                ref
+                                    .watch(
+                                      studentSubjectNeedsProvider(
+                                        meeting.studentId,
+                                      ),
+                                    )
+                                    .valueOrNull ??
+                                const [],
+                          ),
                         ],
                       ),
                   ],

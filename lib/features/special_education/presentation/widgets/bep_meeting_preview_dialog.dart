@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 
 import '../../data/bep_meeting_pdf.dart';
 import '../../domain/bep_meeting.dart';
+import '../../domain/student_subject_need.dart';
+import '../student_subject_needs_provider.dart';
 
-class BepMeetingPreviewDialog extends StatelessWidget {
+class BepMeetingPreviewDialog extends ConsumerWidget {
   const BepMeetingPreviewDialog({
     super.key,
     required this.meeting,
@@ -25,8 +28,13 @@ class BepMeetingPreviewDialog extends StatelessWidget {
   );
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final size = MediaQuery.sizeOf(context);
+    // Kararlar güncel ders ihtiyaçlarından üretilir; veri değişince tutanak
+    // da yeniden oluşturulur.
+    final subjectNeeds =
+        ref.watch(studentSubjectNeedsProvider(meeting.studentId)).valueOrNull ??
+        const <StudentSubjectNeed>[];
     return Dialog(
       child: SizedBox(
         width: (size.width - 32).clamp(280.0, 900.0).toDouble(),
@@ -62,6 +70,7 @@ class BepMeetingPreviewDialog extends StatelessWidget {
                 build: (_) async => (await BepMeetingPdf.build(
                   meeting: meeting,
                   meetingNumber: meetingNumber,
+                  subjectNeeds: subjectNeeds,
                 )).save(),
               ),
             ),

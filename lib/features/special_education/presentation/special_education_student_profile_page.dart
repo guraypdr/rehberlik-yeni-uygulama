@@ -11,6 +11,7 @@ import 'bep_meetings_provider.dart';
 import 'student_subject_needs_provider.dart';
 import 'widgets/bep_meeting_dialog.dart';
 import 'widgets/bep_meeting_preview_dialog.dart';
+import 'widgets/bep_subject_decisions_section.dart';
 import 'widgets/student_subject_needs_dialog.dart';
 
 class SpecialEducationStudentProfilePage extends ConsumerWidget {
@@ -406,6 +407,13 @@ class _MeetingCard extends ConsumerWidget {
             ),
         ],
         const SizedBox(height: AppSpacing.sm),
+        BepSubjectDecisionsSection(
+          needs:
+              ref
+                  .watch(studentSubjectNeedsProvider(meeting.studentId))
+                  .valueOrNull ??
+              const [],
+        ),
         Wrap(
           alignment: WrapAlignment.end,
           spacing: AppSpacing.sm,

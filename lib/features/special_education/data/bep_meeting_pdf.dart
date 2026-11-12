@@ -3,6 +3,8 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import '../domain/bep_meeting.dart';
+import '../domain/bep_subject_decision.dart';
+import '../domain/student_subject_need.dart';
 
 class BepMeetingPdf {
   const BepMeetingPdf._();
@@ -10,6 +12,7 @@ class BepMeetingPdf {
   static Future<pw.Document> build({
     required BepMeeting meeting,
     required int meetingNumber,
+    List<StudentSubjectNeed> subjectNeeds = const [],
   }) async {
     final regularFont = pw.Font.ttf(
       await rootBundle.load('assets/fonts/Lato-Regular.ttf'),
@@ -20,6 +23,7 @@ class BepMeetingPdf {
     final document = pw.Document(
       theme: pw.ThemeData.withFont(base: regularFont, bold: boldFont),
     );
+    final subjectDecisions = buildBepSubjectDecisions(subjectNeeds);
     document.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
@@ -65,11 +69,22 @@ class BepMeetingPdf {
               _numberedItem(index, meeting.agendaItems[index]),
           pw.SizedBox(height: 14),
           _sectionTitle('ALINAN KARARLAR'),
-          if (meeting.decisions.isEmpty)
+          if (meeting.decisions.isEmpty && subjectNeeds.isEmpty)
             _emptyLine()
-          else
+          else ...[
             for (var index = 0; index < meeting.decisions.length; index++)
               _numberedItem(index, meeting.decisions[index]),
+            for (var index = 0; index < subjectDecisions.length; index++) ...[
+              _numberedItem(
+                meeting.decisions.length + index,
+                subjectDecisions[index].text,
+              ),
+              if (subjectDecisions[index].hasRows)
+                _subjectDecisionTable(subjectDecisions[index].rows)
+              else
+                _subjectDecisionNote(subjectDecisions[index].emptyText),
+            ],
+          ],
           pw.SizedBox(height: 20),
           _sectionTitle('KATILIMCILAR VE İMZALAR'),
           pw.SizedBox(height: 8),
@@ -151,6 +166,55 @@ class BepMeetingPdf {
   static pw.Widget _emptyLine() => pw.Padding(
     padding: const pw.EdgeInsets.only(left: 8, bottom: 5),
     child: pw.Text('-', style: const pw.TextStyle(fontSize: 9)),
+  );
+
+  /// Ders bulunmadığında kararın altına yazılan açıklama.
+  static pw.Widget _subjectDecisionNote(String text) => pw.Padding(
+    padding: const pw.EdgeInsets.only(left: 26, bottom: 6),
+    child: pw.Text(text, style: const pw.TextStyle(fontSize: 9)),
+  );
+
+  /// Karar altındaki ders tablosu (ders adı, öğretmen, ders saati).
+  static pw.Widget _subjectDecisionTable(List<BepSubjectDecisionRow> rows) =>
+      pw.Padding(
+        padding: const pw.EdgeInsets.only(left: 26, bottom: 8),
+        child: pw.Table(
+          border: pw.TableBorder.all(color: PdfColors.grey600, width: 0.5),
+          columnWidths: const {
+            0: pw.FlexColumnWidth(3),
+            1: pw.FlexColumnWidth(3),
+            2: pw.FlexColumnWidth(1.4),
+          },
+          children: [
+            pw.TableRow(
+              decoration: const pw.BoxDecoration(color: PdfColors.grey200),
+              children: [
+                _cell('Ders Adı', bold: true),
+                _cell('Dersi Verecek Öğretmen', bold: true),
+                _cell('Ders Saati', bold: true),
+              ],
+            ),
+            for (final row in rows)
+              pw.TableRow(
+                children: [
+                  _cell(row.subjectName),
+                  _cell(row.teacherName),
+                  _cell('${row.weeklyHours}'),
+                ],
+              ),
+          ],
+        ),
+      );
+
+  static pw.Widget _cell(String value, {bool bold = false}) => pw.Padding(
+    padding: const pw.EdgeInsets.all(5),
+    child: pw.Text(
+      value,
+      style: pw.TextStyle(
+        fontSize: 8.5,
+        fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
+      ),
+    ),
   );
 
   static pw.Widget _signatureTable(List<String> names) {
