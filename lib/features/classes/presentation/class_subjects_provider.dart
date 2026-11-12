@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers/session_provider.dart';
+import '../../special_education/presentation/student_subject_needs_provider.dart';
 import '../data/class_subject_dao.dart';
 import '../domain/class_subject.dart';
 
@@ -30,6 +31,7 @@ class ClassSubjectsNotifier
       teacherId: teacherId,
     );
     state = AsyncValue.data(_sort([...current, created]));
+    _invalidateStudentSubjectNeeds();
   }
 
   Future<void> saveSubject({
@@ -52,6 +54,7 @@ class ClassSubjectsNotifier
           if (item.id == updated.id) updated else item,
       ]),
     );
+    _invalidateStudentSubjectNeeds();
   }
 
   Future<void> addBatch({
@@ -65,12 +68,20 @@ class ClassSubjectsNotifier
     );
     final current = state.valueOrNull ?? <ClassSubject>[];
     state = AsyncValue.data(_sort([...current, ...inserted]));
+    _invalidateStudentSubjectNeeds();
   }
 
   Future<void> delete(int id) async {
     await _requireDao().delete(id);
     final current = state.valueOrNull ?? [];
     state = AsyncValue.data(current.where((item) => item.id != id).toList());
+    _invalidateStudentSubjectNeeds();
+  }
+
+  /// Dersler öğrenci bazlı ders ihtiyaçlarının kaynağıdır; sınıf dersleri
+  /// değiştiğinde (öğretmen/ders/saat) özel eğitim görünümü de yenilenmelidir.
+  void _invalidateStudentSubjectNeeds() {
+    ref.invalidate(studentSubjectNeedsProvider);
   }
 
   ClassSubjectDao _requireDao() {

@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rehberlik_app/core/providers/session_provider.dart';
+import 'package:rehberlik_app/features/settings/domain/school_staff.dart';
+import 'package:rehberlik_app/features/settings/presentation/school_staff_provider.dart';
 import 'package:rehberlik_app/features/special_education/domain/bep_meeting.dart';
+import 'package:rehberlik_app/features/special_education/domain/student_subject_need.dart';
 import 'package:rehberlik_app/features/special_education/presentation/bep_meetings_provider.dart';
 import 'package:rehberlik_app/features/special_education/presentation/special_education_page.dart';
 import 'package:rehberlik_app/features/special_education/presentation/special_education_student_profile_page.dart';
+import 'package:rehberlik_app/features/special_education/presentation/student_subject_needs_provider.dart';
 import 'package:rehberlik_app/features/students/domain/student.dart';
 import 'package:rehberlik_app/features/students/presentation/students_provider.dart';
 import 'package:rehberlik_app/features/teachers/domain/teacher.dart';
@@ -164,6 +168,10 @@ void main() {
           createdAt: '2026-11-11',
           hasSpecialEducation: true,
           className: '9/A',
+          motherName: 'Fatma',
+          motherSurname: 'Kaya',
+          fatherName: 'Hasan',
+          fatherSurname: 'Kaya',
         ),
         Student(
           id: 2,
@@ -189,6 +197,22 @@ void main() {
             studentsProvider.overrideWith(() => _StudentsNotifier(students)),
             teachersProvider.overrideWith(() => _TeachersNotifier(teachers)),
             bepMeetingsProvider.overrideWith(() => meetingsNotifier),
+            schoolStaffProvider.overrideWith(
+              () => _SchoolStaffNotifier(const [
+                SchoolStaff(
+                  id: 7,
+                  role: SchoolStaffRole.principal,
+                  name: 'Ahmet',
+                  surname: 'Yılmaz',
+                ),
+                SchoolStaff(
+                  id: 8,
+                  role: SchoolStaffRole.counselor,
+                  name: 'Elif',
+                  surname: 'Şahin',
+                ),
+              ]),
+            ),
           ],
           child: const MaterialApp(
             home: Scaffold(body: SpecialEducationPage()),
@@ -206,31 +230,55 @@ void main() {
       await tester.tap(addMeetingButton);
       await tester.pumpAndSettle();
 
+      // 1. Adım: Tarih ve otomatik toplantı numarası.
+      expect(find.byKey(const Key('bep_meeting_step_date')), findsOneWidget);
+      expect(find.byKey(const Key('bep_meeting_number')), findsOneWidget);
+      expect(find.text('Adım 1/5 · Tarih ve Toplantı No'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('bep_meeting_continue')));
+      await tester.pumpAndSettle();
+
+      // 2. Adım: Veli katılımı (anne ve baba).
+      expect(
+        find.byKey(const Key('bep_meeting_step_guardians')),
+        findsOneWidget,
+      );
+      expect(find.text('Anne · Fatma Kaya'), findsOneWidget);
+      expect(find.text('Baba · Hasan Kaya'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('bep_meeting_parent_mother')));
+      await tester.pumpAndSettle();
+      await _scrollToDialog(
+        tester,
+        'bep_meeting_step_guardians',
+        'bep_meeting_staff_8',
+      );
+      expect(find.text('Okul Müdürü · Ahmet Yılmaz'), findsOneWidget);
+      expect(find.text('Psikolojik Danışman · Elif Şahin'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('bep_meeting_staff_8')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('bep_meeting_continue')));
+      await tester.pumpAndSettle();
+
+      // 3. Adım: Öğretmen seçimi.
       expect(find.byKey(const Key('bep_meeting_teacher_5')), findsOneWidget);
       expect(find.byKey(const Key('bep_meeting_teacher_6')), findsOneWidget);
       await tester.tap(find.byKey(const Key('bep_meeting_teacher_5')));
-      await tester.scrollUntilVisible(
-        find.byKey(const Key('bep_meeting_agenda_5')),
-        300,
-        scrollable: find
-            .descendant(
-              of: find.byKey(const Key('bep_meeting_details')),
-              matching: find.byType(Scrollable),
-            )
-            .first,
-      );
       await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('bep_meeting_continue')));
+      await tester.pumpAndSettle();
+
+      // 4. Adım: Gündem maddeleri.
+      expect(find.byKey(const Key('bep_meeting_step_agenda')), findsOneWidget);
+      await _scrollToDialog(
+        tester,
+        'bep_meeting_step_agenda',
+        'bep_meeting_agenda_5',
+      );
       await tester.tap(find.byKey(const Key('bep_meeting_agenda_5')));
       await tester.pumpAndSettle();
-      await tester.scrollUntilVisible(
-        find.byKey(const Key('bep_meeting_agenda_input')),
-        300,
-        scrollable: find
-            .descendant(
-              of: find.byKey(const Key('bep_meeting_details')),
-              matching: find.byType(Scrollable),
-            )
-            .first,
+      await _scrollToDialog(
+        tester,
+        'bep_meeting_step_agenda',
+        'bep_meeting_agenda_input',
       );
       await tester.enterText(
         find.byKey(const Key('bep_meeting_agenda_input')),
@@ -238,26 +286,25 @@ void main() {
       );
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
-      await tester.scrollUntilVisible(
-        find.byKey(const Key('bep_meeting_decision_0')),
-        300,
-        scrollable: find
-            .descendant(
-              of: find.byKey(const Key('bep_meeting_details')),
-              matching: find.byType(Scrollable),
-            )
-            .first,
+      await tester.tap(find.byKey(const Key('bep_meeting_continue')));
+      await tester.pumpAndSettle();
+
+      // 5. Adım: Alınan kararlar.
+      expect(
+        find.byKey(const Key('bep_meeting_step_decisions')),
+        findsOneWidget,
+      );
+      await _scrollToDialog(
+        tester,
+        'bep_meeting_step_decisions',
+        'bep_meeting_decision_0',
       );
       await tester.tap(find.byKey(const Key('bep_meeting_decision_0')));
-      await tester.scrollUntilVisible(
-        find.byKey(const Key('bep_meeting_decision_input')),
-        300,
-        scrollable: find
-            .descendant(
-              of: find.byKey(const Key('bep_meeting_details')),
-              matching: find.byType(Scrollable),
-            )
-            .first,
+      await tester.pumpAndSettle();
+      await _scrollToDialog(
+        tester,
+        'bep_meeting_step_decisions',
+        'bep_meeting_decision_input',
       );
       await tester.enterText(
         find.byKey(const Key('bep_meeting_decision_input')),
@@ -270,6 +317,8 @@ void main() {
 
       expect(meetingsNotifier.studentId, 1);
       expect(meetingsNotifier.teacherIds, [5]);
+      expect(meetingsNotifier.parentAttendees, ['Fatma Kaya']);
+      expect(meetingsNotifier.staffAttendees, ['Elif Şahin']);
       expect(meetingsNotifier.agendaItems, hasLength(6));
       expect(meetingsNotifier.agendaItems, contains('Ek gündem maddesi'));
       expect(meetingsNotifier.decisions, [
@@ -409,6 +458,13 @@ void main() {
 
     expect(find.text('BEP Toplantısını Düzenle'), findsOneWidget);
     expect(find.text('Toplantı tarihi: 15.03.2026'), findsOneWidget);
+
+    // 1. Adım (tarih) → 2. Adım (veli) → 3. Adım (öğretmenler).
+    await tester.tap(find.byKey(const Key('bep_meeting_continue')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('bep_meeting_continue')));
+    await tester.pumpAndSettle();
+
     expect(
       tester
           .widget<CheckboxListTile>(
@@ -419,6 +475,12 @@ void main() {
     );
     await tester.tap(find.byKey(const Key('bep_meeting_teacher_6')));
     await tester.pumpAndSettle();
+
+    // 3. Adım → 4. Adım (gündem) → 5. Adım (kararlar).
+    await tester.tap(find.byKey(const Key('bep_meeting_continue')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('bep_meeting_continue')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('bep_meeting_save')));
     await tester.pumpAndSettle();
 
@@ -428,6 +490,90 @@ void main() {
     expect(notifier.agendaItems, [bepMeetingAgendaItems.first, 'Ek gündem']);
     expect(notifier.decisions, [bepMeetingDecisionItems.first, 'Ek karar']);
   });
+
+  testWidgets(
+    'öğretmen adımında öğretmenin girdiği dersler ve saatleri görünür',
+    (tester) async {
+      tester.view.physicalSize = const Size(1200, 2000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      const student = Student(
+        id: 1,
+        classId: 2,
+        number: '101',
+        name: 'Ayşe',
+        surname: 'Kaya',
+        createdAt: '2026-11-11',
+        hasSpecialEducation: true,
+        className: '9/A',
+      );
+      const teachers = [
+        Teacher(id: 5, name: 'Zeynep', surname: 'Arı', branch: 'Türkçe'),
+        Teacher(id: 6, name: 'Mehmet', surname: 'Yılmaz', branch: 'Matematik'),
+      ];
+      const subjects = [
+        StudentSubjectNeed(
+          studentId: 1,
+          classSubjectId: 11,
+          subjectName: 'Matematik',
+          weeklyHours: 4,
+          requiresSupportEducation: false,
+          requiresBep: true,
+          isExempt: false,
+          teacherName: 'Mehmet Yılmaz',
+        ),
+        StudentSubjectNeed(
+          studentId: 1,
+          classSubjectId: 12,
+          subjectName: 'Fizik',
+          weeklyHours: 2,
+          requiresSupportEducation: false,
+          requiresBep: true,
+          isExempt: false,
+          teacherName: 'Mehmet Yılmaz',
+        ),
+      ];
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            databaseProvider.overrideWithValue(null),
+            studentsProvider.overrideWith(() => _StudentsNotifier([student])),
+            teachersProvider.overrideWith(() => _TeachersNotifier(teachers)),
+            bepMeetingsProvider.overrideWith(() => _MeetingsNotifier()),
+            studentSubjectNeedsProvider.overrideWith(
+              () => _StudentSubjectNeedsNotifier(subjects),
+            ),
+          ],
+          child: const MaterialApp(
+            home: Scaffold(body: SpecialEducationPage()),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('special_education_student_1')));
+      await tester.pumpAndSettle();
+
+      final addMeetingButton = find.byKey(const Key('add_student_bep_meeting'));
+      await tester.ensureVisible(addMeetingButton);
+      await tester.tap(addMeetingButton);
+      await tester.pumpAndSettle();
+
+      // Tarih ve veli adımlarını geçip öğretmen adımına gel.
+      await tester.tap(find.byKey(const Key('bep_meeting_continue')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('bep_meeting_continue')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('bep_meeting_teacher_5')), findsOneWidget);
+      expect(find.byKey(const Key('bep_meeting_teacher_6')), findsOneWidget);
+      expect(find.text('Matematik (4 saat), Fizik (2 saat)'), findsOneWidget);
+      expect(find.text('Öğrencinin dersine girmiyor'), findsOneWidget);
+    },
+  );
 }
 
 class _StudentsNotifier extends StudentsNotifier {
@@ -448,6 +594,24 @@ class _TeachersNotifier extends TeachersNotifier {
   Future<List<Teacher>> build() async => teachers;
 }
 
+class _StudentSubjectNeedsNotifier extends StudentSubjectNeedsNotifier {
+  _StudentSubjectNeedsNotifier(this.subjects);
+
+  final List<StudentSubjectNeed> subjects;
+
+  @override
+  Future<List<StudentSubjectNeed>> build(int studentId) async => subjects;
+}
+
+class _SchoolStaffNotifier extends SchoolStaffNotifier {
+  _SchoolStaffNotifier(this.staff);
+
+  final List<SchoolStaff> staff;
+
+  @override
+  Future<List<SchoolStaff>> build() async => staff;
+}
+
 class _MeetingsNotifier extends BepMeetingsNotifier {
   _MeetingsNotifier([this.initialMeetings = const []]);
 
@@ -456,6 +620,8 @@ class _MeetingsNotifier extends BepMeetingsNotifier {
   List<int> teacherIds = [];
   List<String> agendaItems = [];
   List<String> decisions = [];
+  List<String> parentAttendees = [];
+  List<String> staffAttendees = [];
   int? updatedMeetingId;
   String? meetingDate;
 
@@ -476,11 +642,15 @@ class _MeetingsNotifier extends BepMeetingsNotifier {
     required String meetingDate,
     required List<String> agendaItems,
     required List<String> decisions,
+    List<String> parentAttendees = const [],
+    List<String> staffAttendees = const [],
   }) async {
     this.studentId = studentId;
     this.teacherIds = teacherIds;
     this.agendaItems = agendaItems;
     this.decisions = decisions;
+    this.parentAttendees = parentAttendees;
+    this.staffAttendees = staffAttendees;
     this.meetingDate = meetingDate;
     state = AsyncValue.data([
       BepMeeting(
@@ -496,6 +666,8 @@ class _MeetingsNotifier extends BepMeetingsNotifier {
         decisions: decisions,
         teacherIds: teacherIds,
         teacherNames: ['Zeynep Arı'],
+        parentAttendees: parentAttendees,
+        staffAttendees: staffAttendees,
         createdAt: meetingDate,
       ),
     ]);
@@ -509,6 +681,8 @@ class _MeetingsNotifier extends BepMeetingsNotifier {
     required String meetingDate,
     required List<String> agendaItems,
     required List<String> decisions,
+    List<String> parentAttendees = const [],
+    List<String> staffAttendees = const [],
   }) async {
     updatedMeetingId = meetingId;
     this.studentId = studentId;
@@ -516,6 +690,8 @@ class _MeetingsNotifier extends BepMeetingsNotifier {
     this.meetingDate = meetingDate;
     this.agendaItems = agendaItems;
     this.decisions = decisions;
+    this.parentAttendees = parentAttendees;
+    this.staffAttendees = staffAttendees;
     state = AsyncValue.data([
       _meeting(
         id: meetingId,
@@ -524,6 +700,8 @@ class _MeetingsNotifier extends BepMeetingsNotifier {
         teacherIds: teacherIds,
         agendaItems: agendaItems,
         decisions: decisions,
+        parentAttendees: parentAttendees,
+        staffAttendees: staffAttendees,
       ),
     ]);
   }
@@ -536,6 +714,8 @@ BepMeeting _meeting({
   List<int> teacherIds = const [5],
   List<String>? agendaItems,
   List<String>? decisions,
+  List<String> parentAttendees = const [],
+  List<String> staffAttendees = const [],
 }) => BepMeeting(
   id: id,
   studentId: studentId,
@@ -549,5 +729,26 @@ BepMeeting _meeting({
   decisions: decisions ?? const [],
   teacherIds: teacherIds,
   teacherNames: const ['Zeynep Arı'],
+  parentAttendees: parentAttendees,
+  staffAttendees: staffAttendees,
   createdAt: meetingDate,
 );
+
+/// Diyalog içindeki adım listesini hedefe kadar kaydırır.
+Future<void> _scrollToDialog(
+  WidgetTester tester,
+  String listKey,
+  String targetKey,
+) async {
+  await tester.scrollUntilVisible(
+    find.byKey(Key(targetKey)),
+    150,
+    scrollable: find
+        .descendant(
+          of: find.byKey(Key(listKey)),
+          matching: find.byType(Scrollable),
+        )
+        .first,
+  );
+  await tester.pumpAndSettle();
+}

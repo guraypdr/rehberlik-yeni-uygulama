@@ -21,6 +21,8 @@ class BepMeetingsNotifier extends AsyncNotifier<List<BepMeeting>> {
     required String meetingDate,
     required List<String> agendaItems,
     required List<String> decisions,
+    List<String> parentAttendees = const [],
+    List<String> staffAttendees = const [],
   }) async {
     final dao = _dao;
     if (dao == null) {
@@ -32,6 +34,8 @@ class BepMeetingsNotifier extends AsyncNotifier<List<BepMeeting>> {
       meetingDate: meetingDate,
       agendaItems: agendaItems,
       decisions: decisions,
+      parentAttendees: parentAttendees,
+      staffAttendees: staffAttendees,
     );
     state = AsyncValue.data(await dao.fetchAll());
   }
@@ -52,6 +56,8 @@ class BepMeetingsNotifier extends AsyncNotifier<List<BepMeeting>> {
     required String meetingDate,
     required List<String> agendaItems,
     required List<String> decisions,
+    List<String> parentAttendees = const [],
+    List<String> staffAttendees = const [],
   }) async {
     final dao = _dao;
     if (dao == null) {
@@ -64,6 +70,8 @@ class BepMeetingsNotifier extends AsyncNotifier<List<BepMeeting>> {
       meetingDate: meetingDate,
       agendaItems: agendaItems,
       decisions: decisions,
+      parentAttendees: parentAttendees,
+      staffAttendees: staffAttendees,
     );
     state = AsyncValue.data(await dao.fetchAll());
   }

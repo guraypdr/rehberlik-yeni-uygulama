@@ -6,6 +6,7 @@ import '../../../core/providers/theme_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/page_header.dart';
+import 'widgets/school_staff_section.dart';
 import 'widgets/theme_color_picker.dart';
 
 /// Ayarlar sayfası.
@@ -42,6 +43,12 @@ class SettingsPage extends ConsumerWidget {
                     _InfoRow('Oluşturulma', _formatDate(profile.createdAt)),
                   ],
                 ),
+                const SizedBox(height: AppSpacing.xl),
+              ],
+
+              // İdari kadro ve rehberlik
+              if (session?.database != null) ...[
+                const SchoolStaffSection(),
                 const SizedBox(height: AppSpacing.xl),
               ],
 

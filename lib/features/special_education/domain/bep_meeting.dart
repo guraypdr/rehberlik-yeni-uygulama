@@ -13,6 +13,8 @@ class BepMeeting {
     required this.teacherIds,
     required this.teacherNames,
     required this.createdAt,
+    this.parentAttendees = const [],
+    this.staffAttendees = const [],
   });
 
   final int id;
@@ -27,6 +29,12 @@ class BepMeeting {
   final List<String> decisions;
   final List<int> teacherIds;
   final List<String> teacherNames;
+
+  /// Toplantıya katılan veli adları (anne ve/veya baba).
+  final List<String> parentAttendees;
+
+  /// Toplantıya katılan idareci ve psikolojik danışman adları.
+  final List<String> staffAttendees;
   final String createdAt;
 }
 

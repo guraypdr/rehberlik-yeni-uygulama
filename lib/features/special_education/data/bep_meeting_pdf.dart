@@ -73,7 +73,11 @@ class BepMeetingPdf {
           pw.SizedBox(height: 20),
           _sectionTitle('KATILIMCILAR VE İMZALAR'),
           pw.SizedBox(height: 8),
-          _signatureTable(meeting.teacherNames),
+          _signatureTable([
+            ...meeting.staffAttendees,
+            ...meeting.parentAttendees,
+            ...meeting.teacherNames,
+          ]),
           pw.SizedBox(height: 24),
           pw.Text(
             'Bu tutanak toplantıda görüşülen gündem maddeleri ve alınan '

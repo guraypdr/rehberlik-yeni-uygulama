@@ -15,7 +15,7 @@ class AppDatabase {
   /// Veritabanı bağlantısına doğrudan erişim (DAO'lar için).
   Database get db => _db;
 
-  static const int _currentVersion = 18;
+  static const int _currentVersion = 20;
 
   /// Verilen dosya yolunda veritabanını açar; yoksa oluşturur.
   static Future<AppDatabase> open(String path) async {
@@ -48,6 +48,7 @@ class AppDatabase {
   static Future<void> _onCreate(Database db, int version) async {
     final batch = db.batch();
     _createCoreTables(batch);
+    _createSchoolStaffTable(batch);
     _createStudentsTable(batch);
     _createStudentSubjectNeedsTable(batch);
     _createStudentInfoFormsTable(batch);
@@ -174,6 +175,69 @@ class AppDatabase {
     if (oldVersion < 18) {
       await _migrateStudentSubjectNeedExempt(db);
     }
+    if (oldVersion < 19) {
+      await _migrateBepMeetingParentAttendees(db);
+    }
+    if (oldVersion < 20) {
+      await _migrateSchoolStaff(db);
+    }
+  }
+
+  /// Okul personeli (idareci ve psikolojik danışman) tablosunu ve BEP
+  /// toplantılarındaki personel katılımcı sütununu ekler.
+  static Future<void> _migrateSchoolStaff(Database db) async {
+    final batch = db.batch();
+    _createSchoolStaffTable(batch);
+    await batch.commit(noResult: true);
+
+    final meetingColumns = (await db.rawQuery(
+      'PRAGMA table_info(bep_meetings)',
+    )).map((row) => row['name'] as String).toSet();
+    if (meetingColumns.isNotEmpty &&
+        !meetingColumns.contains('staff_attendees')) {
+      await db.execute(
+        "ALTER TABLE bep_meetings ADD COLUMN staff_attendees TEXT NOT NULL DEFAULT '[]'",
+      );
+    }
+
+    // Kurulum sırasında girilen tek psikolojik danışmanı yeni tabloya taşı.
+    final profileColumns = (await db.rawQuery(
+      'PRAGMA table_info(school_profile)',
+    )).map((row) => row['name'] as String).toSet();
+    if (!profileColumns.contains('counselor_name')) return;
+
+    final existing = await db.query(
+      'school_staff',
+      where: 'role = ?',
+      whereArgs: ['counselor'],
+      limit: 1,
+    );
+    if (existing.isNotEmpty) return;
+
+    final rows = await db.query('school_profile', where: 'id = 1', limit: 1);
+    if (rows.isEmpty) return;
+    final name = (rows.first['counselor_name'] as String? ?? '').trim();
+    final surname = (rows.first['counselor_surname'] as String? ?? '').trim();
+    if (name.isEmpty && surname.isEmpty) return;
+
+    await db.insert('school_staff', {
+      'role': 'counselor',
+      'name': name.isEmpty ? surname : name,
+      'surname': name.isEmpty ? '' : surname,
+    });
+  }
+
+  static Future<void> _migrateBepMeetingParentAttendees(Database db) async {
+    final columns = (await db.rawQuery(
+      'PRAGMA table_info(bep_meetings)',
+    )).map((row) => row['name'] as String).toSet();
+    // Kısmi şemalarda (tablo henüz oluşturulmamışsa) ekleme yapılmaz.
+    if (columns.isEmpty) return;
+    if (!columns.contains('parent_attendees')) {
+      await db.execute(
+        "ALTER TABLE bep_meetings ADD COLUMN parent_attendees TEXT NOT NULL DEFAULT '[]'",
+      );
+    }
   }
 
   static void _createCoreTables(Batch batch) {
@@ -232,6 +296,17 @@ class AppDatabase {
         title        TEXT    NOT NULL,
         is_completed INTEGER NOT NULL DEFAULT 0,
         created_at   TEXT    NOT NULL
+      )
+    ''');
+  }
+
+  static void _createSchoolStaffTable(Batch batch) {
+    batch.execute('''
+      CREATE TABLE IF NOT EXISTS school_staff (
+        id      INTEGER PRIMARY KEY AUTOINCREMENT,
+        role    TEXT    NOT NULL CHECK (role IN ('principal', 'vice_principal', 'counselor')),
+        name    TEXT    NOT NULL,
+        surname TEXT    NOT NULL
       )
     ''');
   }
@@ -404,6 +479,8 @@ class AppDatabase {
         meeting_date TEXT NOT NULL,
         agenda_items TEXT NOT NULL,
         decisions TEXT NOT NULL DEFAULT '[]',
+        parent_attendees TEXT NOT NULL DEFAULT '[]',
+        staff_attendees TEXT NOT NULL DEFAULT '[]',
         created_at TEXT NOT NULL
       )
     ''');

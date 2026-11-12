@@ -21,6 +21,8 @@ class BepMeetingDao {
         m.meeting_date,
         m.agenda_items,
         m.decisions,
+        m.parent_attendees,
+        m.staff_attendees,
         m.created_at,
         COALESCE(
           GROUP_CONCAT(t.name || ' ' || t.surname, '|||'),
@@ -46,6 +48,8 @@ class BepMeetingDao {
     required String meetingDate,
     required List<String> agendaItems,
     required List<String> decisions,
+    List<String> parentAttendees = const [],
+    List<String> staffAttendees = const [],
   }) async {
     if (teacherIds.isEmpty) {
       throw ArgumentError('En az bir öğretmen toplantıya katılmalıdır.');
@@ -60,6 +64,8 @@ class BepMeetingDao {
         'meeting_date': meetingDate,
         'agenda_items': jsonEncode(agendaItems),
         'decisions': jsonEncode(decisions),
+        'parent_attendees': jsonEncode(parentAttendees),
+        'staff_attendees': jsonEncode(staffAttendees),
         'created_at': DateTime.now().toIso8601String(),
       });
       final batch = txn.batch();
@@ -80,6 +86,8 @@ class BepMeetingDao {
     required String meetingDate,
     required List<String> agendaItems,
     required List<String> decisions,
+    List<String> parentAttendees = const [],
+    List<String> staffAttendees = const [],
   }) async {
     if (teacherIds.isEmpty) {
       throw ArgumentError('En az bir öğretmen toplantıya katılmalıdır.');
@@ -96,6 +104,8 @@ class BepMeetingDao {
           'meeting_date': meetingDate,
           'agenda_items': jsonEncode(agendaItems),
           'decisions': jsonEncode(decisions),
+          'parent_attendees': jsonEncode(parentAttendees),
+          'staff_attendees': jsonEncode(staffAttendees),
         },
         where: 'id = ?',
         whereArgs: [meetingId],
@@ -131,6 +141,10 @@ class BepMeetingDao {
   BepMeeting _fromRow(Map<String, Object?> row) {
     final agendaItems = jsonDecode(row['agenda_items']! as String) as List;
     final decisions = jsonDecode(row['decisions']! as String) as List;
+    final parentAttendees =
+        jsonDecode(row['parent_attendees'] as String? ?? '[]') as List;
+    final staffAttendees =
+        jsonDecode(row['staff_attendees'] as String? ?? '[]') as List;
     final teacherNames = (row['teacher_names']! as String)
         .split('|||')
         .where((name) => name.isNotEmpty)
@@ -153,6 +167,8 @@ class BepMeetingDao {
       decisions: decisions.cast<String>(),
       teacherIds: teacherIds,
       teacherNames: teacherNames,
+      parentAttendees: parentAttendees.cast<String>(),
+      staffAttendees: staffAttendees.cast<String>(),
       createdAt: row['created_at']! as String,
     );
   }

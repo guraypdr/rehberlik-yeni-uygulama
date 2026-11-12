@@ -285,4 +285,70 @@ void main() {
       await directory.delete(recursive: true);
     }
   });
+
+  test(
+    'v20 okul personeli tablosunu ve BEP personel katılımcılarını ekler',
+    () async {
+      final directory = await Directory.systemTemp.createTemp();
+      final path = p.join(directory.path, 'school_staff_v20.db');
+      final legacyDatabase = await databaseFactoryFfi.openDatabase(
+        path,
+        options: OpenDatabaseOptions(
+          version: 19,
+          onCreate: (db, version) async {
+            await db.execute('''
+            CREATE TABLE school_profile (
+              id INTEGER PRIMARY KEY,
+              name TEXT NOT NULL,
+              counselor_name TEXT NOT NULL DEFAULT '',
+              counselor_surname TEXT NOT NULL DEFAULT '',
+              school_type TEXT NOT NULL,
+              has_prep INTEGER NOT NULL DEFAULT 0,
+              fields TEXT,
+              created_at TEXT NOT NULL
+            )
+          ''');
+            await db.insert('school_profile', {
+              'id': 1,
+              'name': 'Ankara Anadolu Lisesi',
+              'counselor_name': 'Elif',
+              'counselor_surname': 'Şahin',
+              'school_type': 'lise',
+              'created_at': '2026-01-01',
+            });
+            await db.execute('''
+            CREATE TABLE bep_meetings (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              student_id INTEGER NOT NULL,
+              meeting_date TEXT NOT NULL,
+              agenda_items TEXT NOT NULL,
+              decisions TEXT NOT NULL DEFAULT '[]',
+              parent_attendees TEXT NOT NULL DEFAULT '[]',
+              created_at TEXT NOT NULL
+            )
+          ''');
+          },
+        ),
+      );
+      await legacyDatabase.close();
+
+      final database = await AppDatabase.open(path);
+      try {
+        // Kurulumdaki tek psikolojik danışman yeni tabloya taşınır.
+        final staff = await database.db.query('school_staff');
+        expect(staff, hasLength(1));
+        expect(staff.single['role'], 'counselor');
+        expect(staff.single['name'], 'Elif');
+        expect(staff.single['surname'], 'Şahin');
+
+        final meetingColumns = (await database.db.rawQuery(
+          'PRAGMA table_info(bep_meetings)',
+        )).map((row) => row['name']).toSet();
+        expect(meetingColumns, contains('staff_attendees'));
+      } finally {
+        await database.close();
+        await directory.delete(recursive: true);
+      }
+    },
+  );
 }
