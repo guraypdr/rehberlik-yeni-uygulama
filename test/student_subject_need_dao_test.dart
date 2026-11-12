@@ -89,6 +89,7 @@ void main() {
         expect(mathNeed.teacherName, 'Ayşe Yılmaz');
         expect(mathNeed.requiresSupportEducation, isTrue);
         expect(mathNeed.requiresBep, isFalse);
+        expect(mathNeed.isExempt, isFalse);
         expect(
           needs
               .singleWhere((need) => need.classSubjectId == otherSubjectId)
@@ -141,6 +142,19 @@ void main() {
           requiresBep: true,
         );
 
+        await dao.setNeeds(
+          studentId: studentId,
+          classSubjectId: otherSubjectId,
+          isExempt: true,
+          requiresBep: false,
+        );
+        final exemptNeed = (await dao.fetchForStudent(
+          studentId,
+        )).singleWhere((need) => need.classSubjectId == otherSubjectId);
+        expect(exemptNeed.isExempt, isTrue);
+        expect(exemptNeed.requiresBep, isFalse);
+        expect(exemptNeed.isNormalProgram, isFalse);
+
         await database.db.delete(
           'students',
           where: 'id = ?',
@@ -191,6 +205,46 @@ void main() {
         "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'student_subject_needs'",
       );
       expect(tables, hasLength(1));
+    } finally {
+      await database.close();
+      await directory.delete(recursive: true);
+    }
+  });
+
+  test('v17 veritabanına muafiyet sütununu ekler', () async {
+    final directory = await Directory.systemTemp.createTemp();
+    final path = p.join(directory.path, 'student_subject_needs_v17.db');
+    final oldDatabase = await databaseFactoryFfi.openDatabase(
+      path,
+      options: OpenDatabaseOptions(
+        version: 17,
+        onCreate: (db, version) async {
+          await db.execute(
+            'CREATE TABLE students (id INTEGER PRIMARY KEY, class_id INTEGER NOT NULL)',
+          );
+          await db.execute(
+            'CREATE TABLE class_subjects (id INTEGER PRIMARY KEY)',
+          );
+          await db.execute('''
+            CREATE TABLE student_subject_needs (
+              student_id INTEGER NOT NULL,
+              class_subject_id INTEGER NOT NULL,
+              requires_support_education INTEGER NOT NULL DEFAULT 0,
+              requires_bep INTEGER NOT NULL DEFAULT 0,
+              PRIMARY KEY (student_id, class_subject_id)
+            )
+          ''');
+        },
+      ),
+    );
+    await oldDatabase.close();
+
+    final database = await AppDatabase.open(path);
+    try {
+      final columns = (await database.db.rawQuery(
+        'PRAGMA table_info(student_subject_needs)',
+      )).map((row) => row['name'] as String).toSet();
+      expect(columns, contains('is_exempt'));
     } finally {
       await database.close();
       await directory.delete(recursive: true);

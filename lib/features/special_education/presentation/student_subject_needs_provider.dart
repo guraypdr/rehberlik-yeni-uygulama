@@ -20,6 +20,7 @@ class StudentSubjectNeedsNotifier
     required StudentSubjectNeed need,
     bool? requiresSupportEducation,
     bool? requiresBep,
+    bool? isExempt,
   }) async {
     final dao = _dao;
     if (dao == null) {
@@ -30,6 +31,7 @@ class StudentSubjectNeedsNotifier
       classSubjectId: need.classSubjectId,
       requiresSupportEducation: requiresSupportEducation,
       requiresBep: requiresBep,
+      isExempt: isExempt,
     );
     state = AsyncValue.data(await dao.fetchForStudent(need.studentId));
   }

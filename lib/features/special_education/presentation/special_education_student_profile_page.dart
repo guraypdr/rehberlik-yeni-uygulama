@@ -11,6 +11,7 @@ import 'bep_meetings_provider.dart';
 import 'student_subject_needs_provider.dart';
 import 'widgets/bep_meeting_dialog.dart';
 import 'widgets/bep_meeting_preview_dialog.dart';
+import 'widgets/student_subject_needs_dialog.dart';
 
 class SpecialEducationStudentProfilePage extends ConsumerWidget {
   const SpecialEducationStudentProfilePage({super.key, required this.student});
@@ -49,11 +50,27 @@ class SpecialEducationStudentProfilePage extends ConsumerWidget {
             children: [
               _StudentSummary(student: student),
               const SizedBox(height: AppSpacing.xl),
-              _sectionTitle(
-                context,
-                title: 'Ders Destekleri ve BEP Planı',
-                subtitle:
-                    'Öğrencinin sınıfında okutulan derslerden ihtiyaç duyduklarını seçin.',
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: AppSpacing.md,
+                runSpacing: AppSpacing.sm,
+                children: [
+                  _sectionTitle(
+                    context,
+                    title: 'Ders Durumu',
+                    subtitle:
+                        'Öğrencinin dersleri: destek eğitim, BEP, muafiyet ve '
+                        'normal eğitim programı.',
+                  ),
+                  OutlinedButton.icon(
+                    key: const Key('student_subject_needs'),
+                    onPressed: () =>
+                        StudentSubjectNeedsDialog.show(context, student),
+                    icon: const Icon(Icons.checklist_rtl_outlined, size: 18),
+                    label: const Text('Ders İhtiyaçları'),
+                  ),
+                ],
               ),
               const SizedBox(height: AppSpacing.sm),
               subjectsAsync.when(
@@ -71,7 +88,7 @@ class SpecialEducationStudentProfilePage extends ConsumerWidget {
                           'Bu öğrencinin sınıfına henüz ders eklenmemiş.',
                         ),
                       )
-                    : _SubjectNeedsList(student: student, subjects: subjects),
+                    : _SubjectCategoryTabs(subjects: subjects),
               ),
               const SizedBox(height: AppSpacing.xl),
               Wrap(
@@ -214,91 +231,136 @@ class _SummaryItem extends StatelessWidget {
   );
 }
 
-class _SubjectNeedsList extends ConsumerWidget {
-  const _SubjectNeedsList({required this.student, required this.subjects});
+/// Öğrencinin derslerini dört kategoriye ayıran sekmeli görünüm.
+class _SubjectCategoryTabs extends StatelessWidget {
+  const _SubjectCategoryTabs({required this.subjects});
 
-  final Student student;
   final List<StudentSubjectNeed> subjects;
 
-  Future<void> _save(
-    BuildContext context,
-    WidgetRef ref,
-    StudentSubjectNeed need, {
-    bool? requiresSupportEducation,
-    bool? requiresBep,
-  }) async {
-    try {
-      await ref
-          .read(studentSubjectNeedsProvider(student.id).notifier)
-          .setNeeds(
-            need: need,
-            requiresSupportEducation: requiresSupportEducation,
-            requiresBep: requiresBep,
-          );
-    } catch (error) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ders ihtiyacı kaydedilemedi: $error')),
-      );
-    }
-  }
-
   @override
-  Widget build(BuildContext context, WidgetRef ref) => AppCard(
-    padding: EdgeInsets.zero,
-    clipBehavior: Clip.antiAlias,
-    child: Column(
-      children: [
-        for (final subject in subjects) ...[
-          ListTile(
-            key: Key('profile_subject_${subject.classSubjectId}'),
-            title: Text(subject.subjectName),
-            subtitle: Text(
-              '${subject.weeklyHours} saat/hafta'
-              '${subject.teacherName == null ? '' : ' · ${subject.teacherName}'}',
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: AppSpacing.xs,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.md,
-              0,
-              AppSpacing.md,
-              AppSpacing.md,
-            ),
-            child: Wrap(
-              spacing: AppSpacing.xs,
-              runSpacing: AppSpacing.xs,
-              children: [
-                FilterChip(
-                  key: Key('profile_support_${subject.classSubjectId}'),
-                  selected: subject.requiresSupportEducation,
-                  label: const Text('Destek Eğitim'),
-                  onSelected: (selected) => _save(
-                    context,
-                    ref,
-                    subject,
-                    requiresSupportEducation: selected,
-                  ),
-                ),
-                FilterChip(
-                  key: Key('profile_bep_${subject.classSubjectId}'),
-                  selected: subject.requiresBep,
-                  label: const Text('BEP planı'),
-                  onSelected: (selected) =>
-                      _save(context, ref, subject, requiresBep: selected),
-                ),
+  Widget build(BuildContext context) {
+    final categories = [
+      _SubjectCategory(
+        keyName: 'profile_tab_support',
+        label: 'Destek Eğitim',
+        icon: Icons.support_outlined,
+        items: subjects.where((s) => s.requiresSupportEducation).toList(),
+        emptyMessage: 'Destek eğitime ihtiyaç duyulan ders yok.',
+      ),
+      _SubjectCategory(
+        keyName: 'profile_tab_bep',
+        label: 'BEP Planı',
+        icon: Icons.assignment_outlined,
+        items: subjects.where((s) => s.requiresBep).toList(),
+        emptyMessage: 'BEP hazırlanan ders yok.',
+      ),
+      _SubjectCategory(
+        keyName: 'profile_tab_exempt',
+        label: 'Muaf',
+        icon: Icons.block_outlined,
+        items: subjects.where((s) => s.isExempt).toList(),
+        emptyMessage: 'Muaf olunan ders yok.',
+      ),
+      _SubjectCategory(
+        keyName: 'profile_tab_normal',
+        label: 'Normal Program',
+        icon: Icons.school_outlined,
+        items: subjects.where((s) => s.isNormalProgram).toList(),
+        emptyMessage: 'Normal eğitim programına devam edilen ders yok.',
+      ),
+    ];
+
+    return DefaultTabController(
+      length: categories.length,
+      child: AppCard(
+        padding: EdgeInsets.zero,
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          children: [
+            TabBar(
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              tabs: [
+                for (final category in categories)
+                  Tab(text: '${category.label} (${category.items.length})'),
               ],
             ),
+            const Divider(height: 1),
+            SizedBox(
+              height: 300,
+              child: TabBarView(
+                children: [
+                  for (final category in categories)
+                    _SubjectList(category: category),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SubjectCategory {
+  const _SubjectCategory({
+    required this.keyName,
+    required this.label,
+    required this.icon,
+    required this.items,
+    required this.emptyMessage,
+  });
+
+  final String keyName;
+  final String label;
+  final IconData icon;
+  final List<StudentSubjectNeed> items;
+  final String emptyMessage;
+}
+
+class _SubjectList extends StatelessWidget {
+  const _SubjectList({required this.category});
+
+  final _SubjectCategory category;
+
+  @override
+  Widget build(BuildContext context) {
+    if (category.items.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Text(
+            category.emptyMessage,
+            key: Key('${category.keyName}_empty'),
+            textAlign: TextAlign.center,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.textMuted),
           ),
-          const Divider(height: 1),
-        ],
-      ],
-    ),
-  );
+        ),
+      );
+    }
+
+    return ListView.separated(
+      key: Key(category.keyName),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+      itemCount: category.items.length,
+      separatorBuilder: (context, index) => const Divider(height: 1),
+      itemBuilder: (context, index) {
+        final subject = category.items[index];
+        final teacherSuffix = subject.teacherName == null
+            ? ''
+            : ' · ${subject.teacherName}';
+        return ListTile(
+          key: Key('${category.keyName}_${subject.classSubjectId}'),
+          dense: true,
+          leading: Icon(category.icon, size: 18, color: AppColors.textMuted),
+          title: Text(subject.subjectName),
+          subtitle: Text('${subject.weeklyHours} saat/hafta$teacherSuffix'),
+        );
+      },
+    );
+  }
 }
 
 class _MeetingCard extends ConsumerWidget {

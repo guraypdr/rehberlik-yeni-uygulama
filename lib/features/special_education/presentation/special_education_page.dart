@@ -10,7 +10,6 @@ import '../../teachers/presentation/teachers_provider.dart';
 import '../domain/bep_meeting.dart';
 import 'special_education_student_profile_page.dart';
 import 'widgets/bep_meeting_preview_dialog.dart';
-import 'widgets/student_subject_needs_dialog.dart';
 import 'bep_meetings_provider.dart';
 import 'widgets/bep_meeting_dialog.dart';
 
@@ -34,21 +33,9 @@ class SpecialEducationPage extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          PageHeader(
+          const PageHeader(
             title: 'Özel Eğitim',
             subtitle: 'Özel eğitim öğrencisi olarak işaretlenen öğrenciler.',
-            actions: FilledButton.icon(
-              key: const Key('add_bep_meeting'),
-              onPressed: studentsAsync.hasValue && teachersAsync.hasValue
-                  ? () => BepMeetingDialog.show(
-                      context,
-                      students: specialStudents ?? const [],
-                      teachers: teachersAsync.valueOrNull ?? const [],
-                    )
-                  : null,
-              icon: const Icon(Icons.event_available_outlined),
-              label: const Text('BEP Toplantısı Ekle'),
-            ),
           ),
           if (teachersAsync.hasError)
             Padding(
@@ -96,7 +83,6 @@ class SpecialEducationPage extends ConsumerWidget {
                       DataColumn(label: Text('Ad Soyad')),
                       DataColumn(label: Text('Sınıf / Şube')),
                       DataColumn(label: Text('Cinsiyet')),
-                      DataColumn(label: Text('Ders İhtiyaçları')),
                     ],
                     rows: [
                       for (var index = 0; index < students.length; index++)
@@ -328,15 +314,6 @@ class SpecialEducationPage extends ConsumerWidget {
           ),
           DataCell(Text(student.displayClass)),
           DataCell(Text(student.gender)),
-          DataCell(
-            OutlinedButton.icon(
-              key: Key('student_subject_needs_${student.id}'),
-              onPressed: () =>
-                  StudentSubjectNeedsDialog.show(context, student),
-              icon: const Icon(Icons.checklist_rtl_outlined, size: 18),
-              label: const Text('Ders İhtiyaçları'),
-            ),
-          ),
         ],
       );
 }

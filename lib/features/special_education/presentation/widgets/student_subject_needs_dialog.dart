@@ -25,6 +25,7 @@ class StudentSubjectNeedsDialog extends ConsumerWidget {
     StudentSubjectNeed need, {
     bool? requiresSupportEducation,
     bool? requiresBep,
+    bool? isExempt,
   }) async {
     try {
       await ref
@@ -33,6 +34,7 @@ class StudentSubjectNeedsDialog extends ConsumerWidget {
             need: need,
             requiresSupportEducation: requiresSupportEducation,
             requiresBep: requiresBep,
+            isExempt: isExempt,
           );
     } catch (error) {
       if (!context.mounted) return;
@@ -66,7 +68,9 @@ class StudentSubjectNeedsDialog extends ConsumerWidget {
                   children: [
                     Text(
                       '${student.displayClass} dersleri için ihtiyaçları seçin. '
-                      'Destek Eğitim ve BEP seçimleri birbirinden bağımsızdır.',
+                      'Destek Eğitim, BEP ve Muaf seçeneklerinden biri '
+                      'işaretlenebilir; hiçbiri seçilmezse ders normal eğitim '
+                      'programına devam eder.',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.textMuted,
                       ),
@@ -106,6 +110,8 @@ class StudentSubjectNeedsDialog extends ConsumerWidget {
                                     ref,
                                     need,
                                     requiresSupportEducation: selected,
+                                    requiresBep: selected ? false : null,
+                                    isExempt: selected ? false : null,
                                   ),
                                 ),
                                 FilterChip(
@@ -117,6 +123,27 @@ class StudentSubjectNeedsDialog extends ConsumerWidget {
                                     ref,
                                     need,
                                     requiresBep: selected,
+                                    requiresSupportEducation: selected
+                                        ? false
+                                        : null,
+                                    isExempt: selected ? false : null,
+                                  ),
+                                ),
+                                FilterChip(
+                                  key: Key(
+                                    'exempt_need_${need.classSubjectId}',
+                                  ),
+                                  selected: need.isExempt,
+                                  label: const Text('Muaf'),
+                                  onSelected: (selected) => _updateNeed(
+                                    context,
+                                    ref,
+                                    need,
+                                    isExempt: selected,
+                                    requiresSupportEducation: selected
+                                        ? false
+                                        : null,
+                                    requiresBep: selected ? false : null,
                                   ),
                                 ),
                               ],

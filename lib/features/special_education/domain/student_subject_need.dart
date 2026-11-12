@@ -6,6 +6,7 @@ class StudentSubjectNeed {
     required this.weeklyHours,
     required this.requiresSupportEducation,
     required this.requiresBep,
+    required this.isExempt,
     this.teacherName,
   });
 
@@ -15,7 +16,12 @@ class StudentSubjectNeed {
   final int weeklyHours;
   final bool requiresSupportEducation;
   final bool requiresBep;
+  final bool isExempt;
   final String? teacherName;
+
+  /// Ders normal eğitim programına devam ediyor (hiçbir özel durum yok).
+  bool get isNormalProgram =>
+      !requiresSupportEducation && !requiresBep && !isExempt;
 
   static StudentSubjectNeed fromMap(Map<String, Object?> map) =>
       StudentSubjectNeed(
@@ -26,6 +32,7 @@ class StudentSubjectNeed {
         requiresSupportEducation:
             (map['requires_support_education']! as int) == 1,
         requiresBep: (map['requires_bep']! as int) == 1,
+        isExempt: (map['is_exempt']! as int) == 1,
         teacherName: map['teacher_name'] as String?,
       );
 }

@@ -15,7 +15,7 @@ class AppDatabase {
   /// Veritabanı bağlantısına doğrudan erişim (DAO'lar için).
   Database get db => _db;
 
-  static const int _currentVersion = 17;
+  static const int _currentVersion = 18;
 
   /// Verilen dosya yolunda veritabanını açar; yoksa oluşturur.
   static Future<AppDatabase> open(String path) async {
@@ -171,6 +171,9 @@ class AppDatabase {
       _createStudentSubjectNeedsTable(batch);
       await batch.commit(noResult: true);
     }
+    if (oldVersion < 18) {
+      await _migrateStudentSubjectNeedExempt(db);
+    }
   }
 
   static void _createCoreTables(Batch batch) {
@@ -253,9 +256,21 @@ class AppDatabase {
         class_subject_id            INTEGER NOT NULL REFERENCES class_subjects(id) ON DELETE CASCADE,
         requires_support_education  INTEGER NOT NULL DEFAULT 0 CHECK (requires_support_education IN (0, 1)),
         requires_bep                INTEGER NOT NULL DEFAULT 0 CHECK (requires_bep IN (0, 1)),
+        is_exempt                   INTEGER NOT NULL DEFAULT 0 CHECK (is_exempt IN (0, 1)),
         PRIMARY KEY (student_id, class_subject_id)
       )
     ''');
+  }
+
+  static Future<void> _migrateStudentSubjectNeedExempt(Database db) async {
+    final columns = (await db.rawQuery(
+      'PRAGMA table_info(student_subject_needs)',
+    )).map((row) => row['name'] as String).toSet();
+    if (!columns.contains('is_exempt')) {
+      await db.execute(
+        'ALTER TABLE student_subject_needs ADD COLUMN is_exempt INTEGER NOT NULL DEFAULT 0 CHECK (is_exempt IN (0, 1))',
+      );
+    }
   }
 
   static Future<void> _migrateClassSubjectHours(Database db) async {

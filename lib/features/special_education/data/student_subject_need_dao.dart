@@ -18,6 +18,8 @@ class StudentSubjectNeedDao {
           ELSE n.requires_support_education END AS requires_support_education,
         CASE WHEN n.requires_bep IS NULL THEN 0
           ELSE n.requires_bep END AS requires_bep,
+        CASE WHEN n.is_exempt IS NULL THEN 0
+          ELSE n.is_exempt END AS is_exempt,
         t.name || ' ' || t.surname AS teacher_name
       FROM students s
       JOIN class_subjects cs ON cs.class_id = s.class_id
@@ -37,6 +39,7 @@ class StudentSubjectNeedDao {
     required int classSubjectId,
     bool? requiresSupportEducation,
     bool? requiresBep,
+    bool? isExempt,
   }) async {
     await _database.db.transaction((txn) async {
       final validSubject = await txn.rawQuery(
@@ -54,7 +57,7 @@ class StudentSubjectNeedDao {
 
       final currentRows = await txn.query(
         'student_subject_needs',
-        columns: ['requires_support_education', 'requires_bep'],
+        columns: ['requires_support_education', 'requires_bep', 'is_exempt'],
         where: 'student_id = ? AND class_subject_id = ?',
         whereArgs: [studentId, classSubjectId],
       );
@@ -64,8 +67,10 @@ class StudentSubjectNeedDao {
           (current?['requires_support_education'] as int? ?? 0) == 1;
       final nextRequiresBep =
           requiresBep ?? (current?['requires_bep'] as int? ?? 0) == 1;
+      final nextIsExempt =
+          isExempt ?? (current?['is_exempt'] as int? ?? 0) == 1;
 
-      if (!nextRequiresSupportEducation && !nextRequiresBep) {
+      if (!nextRequiresSupportEducation && !nextRequiresBep && !nextIsExempt) {
         await txn.delete(
           'student_subject_needs',
           where: 'student_id = ? AND class_subject_id = ?',
@@ -77,17 +82,20 @@ class StudentSubjectNeedDao {
       await txn.rawInsert(
         '''
         INSERT INTO student_subject_needs (
-          student_id, class_subject_id, requires_support_education, requires_bep
-        ) VALUES (?, ?, ?, ?)
+          student_id, class_subject_id, requires_support_education,
+          requires_bep, is_exempt
+        ) VALUES (?, ?, ?, ?, ?)
         ON CONFLICT(student_id, class_subject_id) DO UPDATE SET
           requires_support_education = excluded.requires_support_education,
-          requires_bep = excluded.requires_bep
+          requires_bep = excluded.requires_bep,
+          is_exempt = excluded.is_exempt
         ''',
         [
           studentId,
           classSubjectId,
           nextRequiresSupportEducation ? 1 : 0,
           nextRequiresBep ? 1 : 0,
+          nextIsExempt ? 1 : 0,
         ],
       );
     });
