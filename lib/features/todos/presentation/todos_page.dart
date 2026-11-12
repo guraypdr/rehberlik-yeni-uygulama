@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/page_header.dart';
 import '../domain/todo_item.dart';
 import 'todos_provider.dart';
@@ -23,7 +25,19 @@ class TodosPage extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           PageHeader(title: 'Yapılacaklar', subtitle: state.summary),
-          const TodoComposer(),
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Yeni Görev',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                const TodoComposer(),
+              ],
+            ),
+          ),
           const SizedBox(height: AppSpacing.xl),
           Expanded(child: _TodoList(state: state)),
         ],
@@ -92,12 +106,9 @@ class _TodoGroup extends StatelessWidget {
           ),
           child: Text(title.toUpperCase(), style: theme.textTheme.labelMedium),
         ),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: AppColors.border),
-          ),
+        AppCard(
+          padding: EdgeInsets.zero,
+          clipBehavior: Clip.antiAlias,
           child: Column(
             children: [
               for (var i = 0; i < items.length; i++) ...[
@@ -127,28 +138,10 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: AppSpacing.xxxl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.inbox_outlined,
-              color: AppColors.textMuted,
-              size: 30,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Text('Listeniz boş', style: theme.textTheme.titleSmall),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              'Yukarıdaki alandan yeni bir görev ekleyebilirsiniz.',
-              style: theme.textTheme.bodySmall,
-            ),
-          ],
-        ),
-      ),
+    return const EmptyState(
+      icon: Icons.inbox_outlined,
+      title: 'Listeniz boş',
+      message: 'Yukarıdaki alandan yeni bir görev ekleyebilirsiniz.',
     );
   }
 }

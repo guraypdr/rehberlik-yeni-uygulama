@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/page_header.dart';
 import '../domain/teacher.dart';
 import 'teachers_provider.dart';
@@ -28,7 +30,19 @@ class TeachersPage extends ConsumerWidget {
                 ? 'Henüz öğretmen eklenmedi'
                 : '${teachers.length} öğretmen',
           ),
-          const TeacherComposer(),
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Yeni Öğretmen',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                const TeacherComposer(),
+              ],
+            ),
+          ),
           const SizedBox(height: AppSpacing.xl),
           Expanded(child: _TeacherList(teachers: teachers)),
         ],
@@ -52,12 +66,9 @@ class _TeacherList extends ConsumerWidget {
       key: const Key('teacher_list'),
       padding: const EdgeInsets.only(bottom: AppSpacing.xxl),
       children: [
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: AppColors.border),
-          ),
+        AppCard(
+          padding: EdgeInsets.zero,
+          clipBehavior: Clip.antiAlias,
           child: Column(
             children: [
               for (var i = 0; i < teachers.length; i++) ...[
@@ -86,28 +97,10 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: AppSpacing.xxxl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.person_off_outlined,
-              color: AppColors.textMuted,
-              size: 30,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Text('Henüz öğretmen yok', style: theme.textTheme.titleSmall),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              'Yukarıdaki alandan yeni bir öğretmen ekleyebilirsiniz.',
-              style: theme.textTheme.bodySmall,
-            ),
-          ],
-        ),
-      ),
+    return const EmptyState(
+      icon: Icons.person_off_outlined,
+      title: 'Henüz öğretmen yok',
+      message: 'Yukarıdaki alandan yeni bir öğretmen ekleyebilirsiniz.',
     );
   }
 }

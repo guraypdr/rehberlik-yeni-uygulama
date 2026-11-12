@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/page_header.dart';
 import '../../students/domain/student.dart';
 import '../../students/presentation/students_provider.dart';
-import '../../students/presentation/widgets/student_profile_page.dart';
 import '../../teachers/presentation/teachers_provider.dart';
 import '../domain/bep_meeting.dart';
+import 'special_education_student_profile_page.dart';
 import 'widgets/bep_meeting_preview_dialog.dart';
+import 'widgets/student_subject_needs_dialog.dart';
 import 'bep_meetings_provider.dart';
 import 'widgets/bep_meeting_dialog.dart';
 
@@ -31,16 +34,10 @@ class SpecialEducationPage extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Özel Eğitim', style: textTheme.headlineSmall),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            'Özel eğitim öğrencisi olarak işaretlenen öğrenciler.',
-            style: textTheme.bodySmall?.copyWith(color: AppColors.textMuted),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: FilledButton.icon(
+          PageHeader(
+            title: 'Özel Eğitim',
+            subtitle: 'Özel eğitim öğrencisi olarak işaretlenen öğrenciler.',
+            actions: FilledButton.icon(
               key: const Key('add_bep_meeting'),
               onPressed: studentsAsync.hasValue && teachersAsync.hasValue
                   ? () => BepMeetingDialog.show(
@@ -85,8 +82,8 @@ class SpecialEducationPage extends ConsumerWidget {
                 );
               }
 
-              return Card(
-                elevation: 0,
+              return AppCard(
+                padding: EdgeInsets.zero,
                 clipBehavior: Clip.antiAlias,
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
@@ -99,6 +96,7 @@ class SpecialEducationPage extends ConsumerWidget {
                       DataColumn(label: Text('Ad Soyad')),
                       DataColumn(label: Text('Sınıf / Şube')),
                       DataColumn(label: Text('Cinsiyet')),
+                      DataColumn(label: Text('Ders İhtiyaçları')),
                     ],
                     rows: [
                       for (var index = 0; index < students.length; index++)
@@ -110,7 +108,7 @@ class SpecialEducationPage extends ConsumerWidget {
             },
           ),
           const SizedBox(height: AppSpacing.xl),
-          Text('BEP Toplantıları', style: textTheme.titleLarge),
+          Text('BEP Toplantıları', style: textTheme.titleMedium),
           const SizedBox(height: AppSpacing.sm),
           meetingsAsync.when(
             loading: () => const Padding(
@@ -127,8 +125,9 @@ class SpecialEducationPage extends ConsumerWidget {
                 );
               }
               final meetingNumbers = _meetingNumbers(meetings);
-              return Card(
-                elevation: 0,
+              return AppCard(
+                padding: EdgeInsets.zero,
+                clipBehavior: Clip.antiAlias,
                 child: Column(
                   children: [
                     for (final meeting in meetings)
@@ -314,27 +313,30 @@ class SpecialEducationPage extends ConsumerWidget {
 
   DataRow _studentRow(BuildContext context, int index, Student student) =>
       DataRow(
-        onSelectChanged: (_) => StudentProfilePage.show(
-          context,
-          student,
-          sourceDestinationId: 'special_education',
-        ),
+        onSelectChanged: (_) =>
+            SpecialEducationStudentProfilePage.show(context, student),
         cells: [
           DataCell(Text('${index + 1}')),
           DataCell(Text(student.number)),
           DataCell(
             InkWell(
               key: Key('special_education_student_${student.id}'),
-              onTap: () => StudentProfilePage.show(
-                context,
-                student,
-                sourceDestinationId: 'special_education',
-              ),
+              onTap: () =>
+                  SpecialEducationStudentProfilePage.show(context, student),
               child: Text(student.fullName),
             ),
           ),
           DataCell(Text(student.displayClass)),
           DataCell(Text(student.gender)),
+          DataCell(
+            OutlinedButton.icon(
+              key: Key('student_subject_needs_${student.id}'),
+              onPressed: () =>
+                  StudentSubjectNeedsDialog.show(context, student),
+              icon: const Icon(Icons.checklist_rtl_outlined, size: 18),
+              label: const Text('Ders İhtiyaçları'),
+            ),
+          ),
         ],
       );
 }

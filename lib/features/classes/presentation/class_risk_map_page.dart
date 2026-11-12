@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers/session_provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/app_card.dart';
 import '../../students/domain/student.dart';
 import '../../students/presentation/students_provider.dart';
 import '../data/student_risk_dao.dart';
@@ -173,55 +174,46 @@ class _ClassRiskMapPageState extends ConsumerState<ClassRiskMapPage> {
                 borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
               const SizedBox(height: AppSpacing.md),
-              Card(
-                elevation: 0,
-                color: AppColors.surface,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  side: const BorderSide(color: AppColors.border),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                        ),
-                        child: Icon(
-                          question.fromStudentForm
-                              ? Icons.assignment_ind_outlined
-                              : Icons.fact_check_outlined,
-                          color: theme.colorScheme.primary,
-                        ),
+              AppCard(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              question.label,
-                              style: theme.textTheme.titleLarge,
-                            ),
-                            const SizedBox(height: AppSpacing.xs),
-                            Text(
-                              question.fromStudentForm
-                                  ? 'Öğrenci bilgi formundan alınır; '
-                                        'değiştirmek için öğrenci formunu düzenleyin.'
-                                  : 'Evet olan öğrencileri işaretleyin. '
-                                        'Değişiklikler otomatik kaydedilir.',
-                              style: theme.textTheme.bodySmall,
-                            ),
-                          ],
-                        ),
+                      child: Icon(
+                        question.fromStudentForm
+                            ? Icons.assignment_ind_outlined
+                            : Icons.fact_check_outlined,
+                        color: theme.colorScheme.primary,
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            question.label,
+                            style: theme.textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            question.fromStudentForm
+                                ? 'Öğrenci bilgi formundan alınır; '
+                                      'değiştirmek için öğrenci formunu düzenleyin.'
+                                : 'Evet olan öğrencileri işaretleyin. '
+                                      'Değişiklikler otomatik kaydedilir.',
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: AppSpacing.sm),
@@ -259,8 +251,8 @@ class _ClassRiskMapPageState extends ConsumerState<ClassRiskMapPage> {
               ),
               const SizedBox(height: AppSpacing.sm),
               Expanded(
-                child: Card(
-                  elevation: 0,
+                child: AppCard(
+                  padding: EdgeInsets.zero,
                   clipBehavior: Clip.antiAlias,
                   child: ListView.separated(
                     key: const Key('risk_map_student_list'),

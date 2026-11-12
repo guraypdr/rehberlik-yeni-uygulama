@@ -13,17 +13,20 @@ class BepMeetingDialog extends ConsumerStatefulWidget {
     required this.students,
     required this.teachers,
     this.initialMeeting,
+    this.initialStudentId,
   });
 
   final List<Student> students;
   final List<Teacher> teachers;
   final BepMeeting? initialMeeting;
+  final int? initialStudentId;
 
   static Future<void> show(
     BuildContext context, {
     required List<Student> students,
     required List<Teacher> teachers,
     BepMeeting? initialMeeting,
+    int? initialStudentId,
   }) => showDialog<void>(
     context: context,
     barrierDismissible: false,
@@ -31,6 +34,7 @@ class BepMeetingDialog extends ConsumerStatefulWidget {
       students: students,
       teachers: teachers,
       initialMeeting: initialMeeting,
+      initialStudentId: initialStudentId,
     ),
   );
 
@@ -60,7 +64,16 @@ class _BepMeetingDialogState extends ConsumerState<BepMeetingDialog> {
   void initState() {
     super.initState();
     final meeting = widget.initialMeeting;
-    if (meeting == null) return;
+    if (meeting == null) {
+      if (widget.initialStudentId != null &&
+          widget.students.any(
+            (student) => student.id == widget.initialStudentId,
+          )) {
+        _studentId = widget.initialStudentId;
+        _step = 1;
+      }
+      return;
+    }
 
     _studentId = meeting.studentId;
     _teacherIds.addAll(meeting.teacherIds);

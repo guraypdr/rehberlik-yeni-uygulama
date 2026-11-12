@@ -15,7 +15,7 @@ class AppDatabase {
   /// Veritabanı bağlantısına doğrudan erişim (DAO'lar için).
   Database get db => _db;
 
-  static const int _currentVersion = 14;
+  static const int _currentVersion = 17;
 
   /// Verilen dosya yolunda veritabanını açar; yoksa oluşturur.
   static Future<AppDatabase> open(String path) async {
@@ -49,6 +49,7 @@ class AppDatabase {
     final batch = db.batch();
     _createCoreTables(batch);
     _createStudentsTable(batch);
+    _createStudentSubjectNeedsTable(batch);
     _createStudentInfoFormsTable(batch);
     _createClassRiskResponsesTable(batch);
     _createClassRiskMapStatusTable(batch);
@@ -157,6 +158,19 @@ class AppDatabase {
     if (oldVersion < 14) {
       await _migrateCounselorProfileFields(db);
     }
+    if (oldVersion < 15) {
+      final batch = db.batch();
+      _createClassSubjectsTable(batch);
+      await batch.commit(noResult: true);
+    }
+    if (oldVersion < 16) {
+      await _migrateClassSubjectHours(db);
+    }
+    if (oldVersion < 17) {
+      final batch = db.batch();
+      _createStudentSubjectNeedsTable(batch);
+      await batch.commit(noResult: true);
+    }
   }
 
   static void _createCoreTables(Batch batch) {
@@ -206,6 +220,8 @@ class AppDatabase {
       )
     ''');
 
+    _createClassSubjectsTable(batch);
+
     // Yapılacaklar
     batch.execute('''
       CREATE TABLE IF NOT EXISTS todos (
@@ -215,6 +231,42 @@ class AppDatabase {
         created_at   TEXT    NOT NULL
       )
     ''');
+  }
+
+  static void _createClassSubjectsTable(Batch batch) {
+    batch.execute('''
+      CREATE TABLE IF NOT EXISTS class_subjects (
+        id           INTEGER PRIMARY KEY AUTOINCREMENT,
+        class_id     INTEGER NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
+        subject_name TEXT    NOT NULL COLLATE NOCASE,
+        weekly_hours INTEGER NOT NULL DEFAULT 1 CHECK (weekly_hours BETWEEN 1 AND 40),
+        teacher_id   INTEGER REFERENCES teachers(id) ON DELETE SET NULL,
+        UNIQUE (class_id, subject_name)
+      )
+    ''');
+  }
+
+  static void _createStudentSubjectNeedsTable(Batch batch) {
+    batch.execute('''
+      CREATE TABLE IF NOT EXISTS student_subject_needs (
+        student_id                  INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+        class_subject_id            INTEGER NOT NULL REFERENCES class_subjects(id) ON DELETE CASCADE,
+        requires_support_education  INTEGER NOT NULL DEFAULT 0 CHECK (requires_support_education IN (0, 1)),
+        requires_bep                INTEGER NOT NULL DEFAULT 0 CHECK (requires_bep IN (0, 1)),
+        PRIMARY KEY (student_id, class_subject_id)
+      )
+    ''');
+  }
+
+  static Future<void> _migrateClassSubjectHours(Database db) async {
+    final columns = (await db.rawQuery(
+      'PRAGMA table_info(class_subjects)',
+    )).map((row) => row['name'] as String).toSet();
+    if (!columns.contains('weekly_hours')) {
+      await db.execute(
+        'ALTER TABLE class_subjects ADD COLUMN weekly_hours INTEGER NOT NULL DEFAULT 1 CHECK (weekly_hours BETWEEN 1 AND 40)',
+      );
+    }
   }
 
   static Future<void> _migrateCounselorProfileFields(Database db) async {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/app_card.dart';
 import '../../students/domain/student.dart';
 import '../../students/presentation/students_provider.dart';
 import '../domain/school_class.dart';
@@ -85,11 +86,7 @@ class _ClassRiskMapOverviewPageState
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (error, _) =>
                 Center(child: Text('Risk cevapları yüklenemedi: $error')),
-            data: (answers) => _buildOverview(
-              context,
-              students,
-              answers,
-            ),
+            data: (answers) => _buildOverview(context, students, answers),
           );
         },
       ),
@@ -107,13 +104,9 @@ class _ClassRiskMapOverviewPageState
         constraints: const BoxConstraints(maxWidth: 1800),
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Card(
-            elevation: 0,
+          child: AppCard(
+            padding: EdgeInsets.zero,
             clipBehavior: Clip.antiAlias,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              side: const BorderSide(color: AppColors.border),
-            ),
             child: Scrollbar(
               controller: _verticalScrollController,
               thumbVisibility: true,
@@ -135,12 +128,14 @@ class _ClassRiskMapOverviewPageState
                     ),
                     Expanded(
                       child: Scrollbar(
-                          controller: _horizontalScrollController,
-                          thumbVisibility: true,
+                        controller: _horizontalScrollController,
+                        thumbVisibility: true,
                         notificationPredicate: (notification) =>
                             notification.depth == 0,
                         child: SingleChildScrollView(
-                          key: const Key('class_risk_overview_horizontal_scroll'),
+                          key: const Key(
+                            'class_risk_overview_horizontal_scroll',
+                          ),
                           controller: _horizontalScrollController,
                           scrollDirection: Axis.horizontal,
                           child: SizedBox(

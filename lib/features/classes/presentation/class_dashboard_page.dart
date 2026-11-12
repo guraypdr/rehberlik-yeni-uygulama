@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/empty_state.dart';
+import '../../../shared/widgets/stat_tile.dart';
 import '../../students/domain/student.dart';
 import '../../students/presentation/students_provider.dart';
 import '../../students/presentation/widgets/quick_student_dialog.dart';
@@ -13,6 +16,7 @@ import '../domain/school_class.dart';
 import 'class_risk_map_page.dart';
 import 'class_risk_map_overview_page.dart';
 import 'classes_provider.dart';
+import 'widgets/class_subjects_section.dart';
 import 'student_risk_provider.dart';
 
 class ClassDashboardPage extends ConsumerWidget {
@@ -71,83 +75,97 @@ class ClassDashboardPage extends ConsumerWidget {
                       spacing: AppSpacing.md,
                       runSpacing: AppSpacing.md,
                       children: [
-                        _SummaryCard(
-                          label: 'Öğrenci Sayısı',
-                          value: '${students.length}',
-                          icon: Icons.people_outline,
+                        SizedBox(
+                          width: 230,
+                          child: StatTile(
+                            label: 'Öğrenci Sayısı',
+                            value: '${students.length}',
+                            icon: Icons.people_outline,
+                          ),
                         ),
-                        _SummaryCard(
-                          label: 'Kız Öğrenci',
-                          value: '$femaleCount',
-                          icon: Icons.girl_outlined,
+                        SizedBox(
+                          width: 230,
+                          child: StatTile(
+                            label: 'Kız Öğrenci',
+                            value: '$femaleCount',
+                            icon: Icons.girl_outlined,
+                          ),
                         ),
-                        _SummaryCard(
-                          label: 'Erkek Öğrenci',
-                          value: '$maleCount',
-                          icon: Icons.boy_outlined,
+                        SizedBox(
+                          width: 230,
+                          child: StatTile(
+                            label: 'Erkek Öğrenci',
+                            value: '$maleCount',
+                            icon: Icons.boy_outlined,
+                          ),
                         ),
-                        _AdvisorCard(
-                          teacher: teacher,
-                          onEdit: () async {
-                            final classState = ref
-                                .read(classesProvider)
-                                .valueOrNull;
-                            if (classState == null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Sınıf bilgileri yüklenmeden atama yapılamaz.',
-                                  ),
-                                ),
-                              );
-                              return;
-                            }
-                            final teacherId = await showDialog<int>(
-                              context: context,
-                              builder: (context) => _AdvisorAssignmentDialog(
-                                schoolClass: currentClass,
-                                classes: classState.classes,
-                                teachers: teachers,
-                              ),
-                            );
-                            if (teacherId == null || !context.mounted) return;
-                            final assignedTeacherId = teacherId == -1
-                                ? null
-                                : teacherId;
-                            try {
-                              await ref
-                                  .read(classesProvider.notifier)
-                                  .updateClass(
-                                    currentClass.copyWith(
-                                      teacherId: assignedTeacherId,
-                                      clearTeacher: assignedTeacherId == null,
+                        SizedBox(
+                          width: 230,
+                          child: _AdvisorCard(
+                            teacher: teacher,
+                            onEdit: () async {
+                              final classState = ref
+                                  .read(classesProvider)
+                                  .valueOrNull;
+                              if (classState == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Sınıf bilgileri yüklenmeden atama yapılamaz.',
                                     ),
-                                  );
-                              if (!context.mounted) return;
-                              final assignedTeacher = teachers
-                                  .where((item) => item.id == assignedTeacherId)
-                                  .firstOrNull;
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    assignedTeacherId == null
-                                        ? 'Rehber öğretmen ataması kaldırıldı.'
-                                        : '${assignedTeacher?.fullName ?? 'Öğretmen'}, '
-                                              '${currentClass.displayName} sınıfına atandı.',
                                   ),
+                                );
+                                return;
+                              }
+                              final teacherId = await showDialog<int>(
+                                context: context,
+                                builder: (context) => _AdvisorAssignmentDialog(
+                                  schoolClass: currentClass,
+                                  classes: classState.classes,
+                                  teachers: teachers,
                                 ),
                               );
-                            } catch (error) {
-                              if (!context.mounted) return;
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Rehber öğretmen atanamadı: $error',
+                              if (teacherId == null || !context.mounted) return;
+                              final assignedTeacherId = teacherId == -1
+                                  ? null
+                                  : teacherId;
+                              try {
+                                await ref
+                                    .read(classesProvider.notifier)
+                                    .updateClass(
+                                      currentClass.copyWith(
+                                        teacherId: assignedTeacherId,
+                                        clearTeacher: assignedTeacherId == null,
+                                      ),
+                                    );
+                                if (!context.mounted) return;
+                                final assignedTeacher = teachers
+                                    .where(
+                                      (item) => item.id == assignedTeacherId,
+                                    )
+                                    .firstOrNull;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      assignedTeacherId == null
+                                          ? 'Rehber öğretmen ataması kaldırıldı.'
+                                          : '${assignedTeacher?.fullName ?? 'Öğretmen'}, '
+                                                '${currentClass.displayName} sınıfına atandı.',
+                                    ),
                                   ),
-                                ),
-                              );
-                            }
-                          },
+                                );
+                              } catch (error) {
+                                if (!context.mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Rehber öğretmen atanamadı: $error',
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
                         ),
                       ],
                     ),
@@ -183,7 +201,10 @@ class ClassDashboardPage extends ConsumerWidget {
                             classId: currentClass.id,
                             className: currentClass.displayName,
                           ),
-                          icon: const Icon(Icons.file_upload_outlined, size: 18),
+                          icon: const Icon(
+                            Icons.file_upload_outlined,
+                            size: 18,
+                          ),
                           label: const Text('Toplu Öğrenci Ekle'),
                         ),
                         FilledButton.icon(
@@ -213,15 +234,15 @@ class ClassDashboardPage extends ConsumerWidget {
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     if (students.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
-                        child: Center(
-                          child: Text('Bu sınıfta henüz öğrenci yok.'),
-                        ),
+                      const EmptyState(
+                        icon: Icons.people_outline,
+                        title: 'Bu sınıfta henüz öğrenci yok',
+                        message:
+                            'Yukarıdaki seçeneklerle sınıfa öğrenci ekleyebilirsiniz.',
                       )
                     else
-                      Card(
-                        elevation: 0,
+                      AppCard(
+                        padding: EdgeInsets.zero,
                         clipBehavior: Clip.antiAlias,
                         child: SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
@@ -236,14 +257,21 @@ class ClassDashboardPage extends ConsumerWidget {
                               DataColumn(label: Text('Pansiyon')),
                             ],
                             rows: [
-                              for (var index = 0;
-                                  index < students.length;
-                                  index++)
+                              for (
+                                var index = 0;
+                                index < students.length;
+                                index++
+                              )
                                 _studentRow(context, index, students[index]),
                             ],
                           ),
                         ),
                       ),
+                    const SizedBox(height: AppSpacing.xl),
+                    ClassSubjectsSection(
+                      classId: currentClass.id,
+                      teachers: teachers,
+                    ),
                   ],
                 ),
               ),
@@ -256,75 +284,21 @@ class ClassDashboardPage extends ConsumerWidget {
 
   DataRow _studentRow(BuildContext context, int index, Student student) =>
       DataRow(
-    onSelectChanged: (_) => StudentProfilePage.show(context, student),
-    cells: [
-      DataCell(Text('${index + 1}')),
-      DataCell(Text(student.number)),
-      DataCell(
-        InkWell(
-          key: Key('class_student_${student.id}'),
-          onTap: () => StudentProfilePage.show(context, student),
-          child: Text(student.fullName),
-        ),
-      ),
-      DataCell(Text(student.gender)),
-      DataCell(Text(student.boardingStatus)),
-    ],
-  );
-}
-
-class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({
-    required this.label,
-    required this.value,
-    required this.icon,
-  });
-
-  final String label;
-  final String value;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return SizedBox(
-      width: 230,
-      child: Card(
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          side: const BorderSide(color: AppColors.border),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Row(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-                child: Icon(icon, color: theme.colorScheme.primary),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(label, style: theme.textTheme.bodySmall),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(value, style: theme.textTheme.titleMedium),
-                  ],
-                ),
-              ),
-            ],
+        onSelectChanged: (_) => StudentProfilePage.show(context, student),
+        cells: [
+          DataCell(Text('${index + 1}')),
+          DataCell(Text(student.number)),
+          DataCell(
+            InkWell(
+              key: Key('class_student_${student.id}'),
+              onTap: () => StudentProfilePage.show(context, student),
+              child: Text(student.fullName),
+            ),
           ),
-        ),
-      ),
-    );
-  }
+          DataCell(Text(student.gender)),
+          DataCell(Text(student.boardingStatus)),
+        ],
+      );
 }
 
 class _AdvisorCard extends StatelessWidget {
@@ -336,59 +310,48 @@ class _AdvisorCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return SizedBox(
-      width: 230,
-      child: Card(
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          side: const BorderSide(color: AppColors.border),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Row(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-                child: Icon(
-                  Icons.assignment_ind_outlined,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Sınıf Rehber Öğretmeni',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      teacher?.fullName ?? 'Atanmamış',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleMedium,
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                key: const Key('class_advisor_edit_button'),
-                tooltip: 'Rehber öğretmeni ata veya düzenle',
-                onPressed: onEdit,
-                visualDensity: VisualDensity.compact,
-                icon: const Icon(Icons.edit_outlined),
-              ),
-            ],
+    return AppCard(
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Icon(
+              Icons.assignment_ind_outlined,
+              color: theme.colorScheme.primary,
+            ),
           ),
-        ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Sınıf Rehber Öğretmeni',
+                  style: theme.textTheme.bodySmall,
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  teacher?.fullName ?? 'Atanmamış',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleMedium,
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            key: const Key('class_advisor_edit_button'),
+            tooltip: 'Rehber öğretmeni ata veya düzenle',
+            onPressed: onEdit,
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.edit_outlined),
+          ),
+        ],
       ),
     );
   }

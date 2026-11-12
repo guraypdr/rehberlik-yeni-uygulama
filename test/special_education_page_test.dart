@@ -5,9 +5,9 @@ import 'package:rehberlik_app/core/providers/session_provider.dart';
 import 'package:rehberlik_app/features/special_education/domain/bep_meeting.dart';
 import 'package:rehberlik_app/features/special_education/presentation/bep_meetings_provider.dart';
 import 'package:rehberlik_app/features/special_education/presentation/special_education_page.dart';
+import 'package:rehberlik_app/features/special_education/presentation/special_education_student_profile_page.dart';
 import 'package:rehberlik_app/features/students/domain/student.dart';
 import 'package:rehberlik_app/features/students/presentation/students_provider.dart';
-import 'package:rehberlik_app/features/students/presentation/widgets/student_profile_page.dart';
 import 'package:rehberlik_app/features/teachers/domain/teacher.dart';
 import 'package:rehberlik_app/features/teachers/presentation/teachers_provider.dart';
 
@@ -70,8 +70,11 @@ void main() {
     await tester.tap(find.byKey(const Key('special_education_student_3')));
     await tester.pumpAndSettle();
 
-    expect(find.byType(StudentProfilePage), findsOneWidget);
-    expect(find.text('Özel Eğitim'), findsOneWidget);
+    expect(
+      find.byType(SpecialEducationStudentProfilePage),
+      findsOneWidget,
+    );
+    expect(find.text('Özel Eğitim · Ayşe Arı'), findsOneWidget);
   });
 
   testWidgets('özel eğitim öğrencisi yoksa boş durum mesajı gösterilir', (
@@ -102,6 +105,43 @@ void main() {
     expect(
       find.byKey(const Key('special_education_students_table')),
       findsNothing,
+    );
+  });
+
+  testWidgets('öğrenci için sınıf derslerinin ihtiyaç seçimi açılır', (
+    tester,
+  ) async {
+    const student = Student(
+      id: 21,
+      classId: 2,
+      number: '121',
+      name: 'Ece',
+      surname: 'Yıldız',
+      createdAt: '2026-11-11',
+      hasSpecialEducation: true,
+      className: '9/A',
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          databaseProvider.overrideWithValue(null),
+          studentsProvider.overrideWith(() => _StudentsNotifier([student])),
+        ],
+        child: const MaterialApp(home: Scaffold(body: SpecialEducationPage())),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final needsButton = find.byKey(const Key('student_subject_needs_21'));
+    await tester.ensureVisible(needsButton);
+    await tester.tap(needsButton);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ece Yıldız · Ders ihtiyaçları'), findsOneWidget);
+    expect(
+      find.text('Bu öğrencinin sınıfına henüz ders eklenmemiş.'),
+      findsOneWidget,
     );
   });
 

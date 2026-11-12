@@ -10,6 +10,8 @@ import '../../../features/teachers/presentation/teachers_provider.dart';
 import '../../../features/todos/domain/todo_item.dart';
 import '../../../features/todos/presentation/todos_provider.dart';
 import '../../../shared/navigation/app_navigation.dart';
+import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/stat_tile.dart';
 
 String _schoolNameTitleCase(String name) => name
     .trim()
@@ -204,28 +206,28 @@ class _StatsRow extends ConsumerWidget {
     final cs = Theme.of(context).colorScheme;
 
     final cards = [
-      _StatCard(
+      StatTile(
         value: '$studentCount',
         label: 'Öğrenci',
         icon: Icons.people_outline,
         color: cs.primary,
         onTap: () => ref.read(navigationProvider.notifier).select('students'),
       ),
-      _StatCard(
+      StatTile(
         value: '$classCount',
         label: 'Şube',
         icon: Icons.meeting_room_outlined,
         color: const Color(0xFF7C5CBF),
         onTap: () => ref.read(navigationProvider.notifier).select('classes'),
       ),
-      _StatCard(
+      StatTile(
         value: '$teacherCount',
         label: 'Öğretmen',
         icon: Icons.person_outline_rounded,
         color: const Color(0xFF2A8A5E),
         onTap: () => ref.read(navigationProvider.notifier).select('teachers'),
       ),
-      _StatCard(
+      StatTile(
         value: '$pendingCount',
         label: 'Açık Görev',
         icon: Icons.checklist_rtl_outlined,
@@ -252,85 +254,6 @@ class _StatsRow extends ConsumerWidget {
       crossAxisSpacing: AppSpacing.md,
       childAspectRatio: 2.4,
       children: cards,
-    );
-  }
-}
-
-class _StatCard extends StatelessWidget {
-  const _StatCard({
-    required this.value,
-    required this.label,
-    required this.icon,
-    required this.color,
-    this.onTap,
-  });
-
-  final String value, label;
-  final IconData icon;
-  final Color color;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = Theme.of(context).textTheme;
-
-    return MouseRegion(
-      cursor: onTap != null
-          ? SystemMouseCursors.click
-          : SystemMouseCursors.basic,
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.md,
-          ),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: const BorderRadius.all(Radius.circular(AppRadius.lg)),
-            border: Border.all(color: AppColors.border),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x07000000),
-                blurRadius: 6,
-                offset: Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.10),
-                  borderRadius: const BorderRadius.all(
-                    Radius.circular(AppRadius.md),
-                  ),
-                ),
-                child: Icon(icon, color: color, size: 20),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      value,
-                      style: t.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    Text(label, style: t.bodySmall),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }
@@ -582,10 +505,12 @@ class _SchoolInfoCard extends ConsumerWidget {
 
     if (profile == null) return const SizedBox.shrink();
 
-    return _DashCard(
+    return SectionCard(
       title: 'Psikolojik Danışman',
-      actionLabel: 'Ayarlar',
-      onAction: () => ref.read(navigationProvider.notifier).select('settings'),
+      trailing: _HeaderPill(
+        label: 'Ayarlar',
+        onTap: () => ref.read(navigationProvider.notifier).select('settings'),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -719,9 +644,9 @@ class _QuickAccessCard extends ConsumerWidget {
       ),
     ];
 
-    return _DashCard(
+    return SectionCard(
       title: 'Hızlı Erişim',
-      trailingIcon: Icons.grid_view_rounded,
+      icon: Icons.grid_view_rounded,
       child: Column(
         children: [
           for (var i = 0; i < items.length; i++) ...[
@@ -846,10 +771,12 @@ class _TodoSummaryCard extends ConsumerWidget {
     final ratio = total == 0 ? 0.0 : todos.completedCount / total;
     final recent = todos.items.where((i) => !i.isCompleted).take(4).toList();
 
-    return _DashCard(
+    return SectionCard(
       title: 'Yapılacaklar',
-      actionLabel: '${todos.pendingCount} açık',
-      onAction: () => ref.read(navigationProvider.notifier).select('todos'),
+      trailing: _HeaderPill(
+        label: '${todos.pendingCount} açık',
+        onTap: () => ref.read(navigationProvider.notifier).select('todos'),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -944,93 +871,42 @@ class _TodoLine extends StatelessWidget {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// Ortak kart çerçevesi
+// Kart başlığı aksiyon etiketi
 // ────────────────────────────────────────────────────────────────────────────
 
-class _DashCard extends StatelessWidget {
-  const _DashCard({
-    required this.title,
-    required this.child,
-    this.actionLabel,
-    this.onAction,
-    this.trailingIcon,
-  });
+class _HeaderPill extends StatelessWidget {
+  const _HeaderPill({required this.label, this.onTap});
 
-  final String title;
-  final Widget child;
-  final String? actionLabel;
-  final VoidCallback? onAction;
-  final IconData? trailingIcon;
+  final String label;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
 
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: const BorderRadius.all(Radius.circular(AppRadius.lg)),
-        border: Border.all(color: AppColors.border),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x07000000),
-            blurRadius: 8,
-            offset: Offset(0, 2),
+    return MouseRegion(
+      cursor: onTap != null
+          ? SystemMouseCursors.click
+          : SystemMouseCursors.basic,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm,
+            vertical: 2,
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Kart başlığı
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              AppSpacing.lg,
-              AppSpacing.lg,
-              AppSpacing.sm,
-            ),
-            child: Row(
-              children: [
-                Text(title, style: t.titleSmall),
-                const Spacer(),
-                if (actionLabel != null)
-                  MouseRegion(
-                    cursor: onAction != null
-                        ? SystemMouseCursors.click
-                        : SystemMouseCursors.basic,
-                    child: GestureDetector(
-                      onTap: onAction,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.sm,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: cs.primaryContainer,
-                          borderRadius: const BorderRadius.all(
-                            Radius.circular(AppRadius.pill),
-                          ),
-                        ),
-                        child: Text(
-                          actionLabel!,
-                          style: t.labelMedium?.copyWith(color: cs.primary),
-                        ),
-                      ),
-                    ),
-                  ),
-                if (trailingIcon != null)
-                  Icon(trailingIcon, size: 16, color: AppColors.textMuted),
-              ],
+          decoration: BoxDecoration(
+            color: cs.primaryContainer,
+            borderRadius: const BorderRadius.all(
+              Radius.circular(AppRadius.pill),
             ),
           ),
-          const Divider(height: 1),
-
-          // İçerik
-          Padding(padding: const EdgeInsets.all(AppSpacing.lg), child: child),
-        ],
+          child: Text(
+            label,
+            style: t.labelMedium?.copyWith(color: cs.primary),
+          ),
+        ),
       ),
     );
   }

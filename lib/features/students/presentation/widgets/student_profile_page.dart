@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/layout/app_top_bar.dart';
 import '../../../../shared/navigation/app_navigation.dart';
+import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/empty_state.dart';
 import '../../domain/student.dart';
 import '../../domain/student_interview.dart';
 import '../students_provider.dart';
@@ -320,124 +322,114 @@ class _StudentProfileHeader extends StatelessWidget {
   final Color genderColor;
 
   @override
-  Widget build(BuildContext context) => Card(
-    elevation: 0,
-    margin: EdgeInsets.zero,
-    color: AppColors.surface,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      side: const BorderSide(color: AppColors.border),
-    ),
-    child: Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final compact = constraints.maxWidth < 620;
-          final identity = Row(
-            children: [
-              CircleAvatar(
-                radius: 38,
-                backgroundColor: genderColor.withValues(alpha: 0.12),
-                child: Text(
-                  student.name.characters.firstOrNull?.toUpperCase() ?? 'Ö',
-                  style: TextStyle(
-                    color: genderColor,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+  Widget build(BuildContext context) => AppCard(
+    child: LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 620;
+        final identity = Row(
+          children: [
+            CircleAvatar(
+              radius: 38,
+              backgroundColor: genderColor.withValues(alpha: 0.12),
+              child: Text(
+                student.name.characters.firstOrNull?.toUpperCase() ?? 'Ö',
+                style: TextStyle(
+                  color: genderColor,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      student.fullName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.school_outlined,
-                          size: 18,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        const SizedBox(width: AppSpacing.xs),
-                        Flexible(
-                          child: Text(
-                            student.displayClass,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          );
-          final summary = Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
-            children: [
-              _HeaderFact(
-                icon: Icons.badge_outlined,
-                label: 'Öğrenci No',
-                value: student.number,
-              ),
-              _HeaderFact(
-                icon: Icons.cake_outlined,
-                label: 'Doğum Tarihi',
-                value: _formatDate(student.birthDate),
-              ),
-              _HeaderFact(
-                icon: Icons.calendar_today_outlined,
-                label: 'Kayıt Tarihi',
-                value: _formatDate(student.createdAt),
-              ),
-            ],
-          );
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (compact) ...[
-                identity,
-                const SizedBox(height: AppSpacing.md),
-                summary,
-              ] else
-                Row(
-                  children: [
-                    Expanded(child: identity),
-                    const SizedBox(width: AppSpacing.lg),
-                    Expanded(flex: 2, child: summary),
-                  ],
-                ),
-              const SizedBox(height: AppSpacing.md),
-              Row(
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: StudentInfoFormStatus(
-                      student: student,
-                      showProgressBar: true,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
                   Text(
-                    '${student.studentInfoFormCompletion}%',
-                    style: Theme.of(context).textTheme.labelMedium,
+                    student.fullName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.school_outlined,
+                        size: 18,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      Flexible(
+                        child: Text(
+                          student.displayClass,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          );
-        },
-      ),
+            ),
+          ],
+        );
+        final summary = Wrap(
+          spacing: AppSpacing.sm,
+          runSpacing: AppSpacing.sm,
+          children: [
+            _HeaderFact(
+              icon: Icons.badge_outlined,
+              label: 'Öğrenci No',
+              value: student.number,
+            ),
+            _HeaderFact(
+              icon: Icons.cake_outlined,
+              label: 'Doğum Tarihi',
+              value: _formatDate(student.birthDate),
+            ),
+            _HeaderFact(
+              icon: Icons.calendar_today_outlined,
+              label: 'Kayıt Tarihi',
+              value: _formatDate(student.createdAt),
+            ),
+          ],
+        );
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (compact) ...[
+              identity,
+              const SizedBox(height: AppSpacing.md),
+              summary,
+            ] else
+              Row(
+                children: [
+                  Expanded(child: identity),
+                  const SizedBox(width: AppSpacing.lg),
+                  Expanded(flex: 2, child: summary),
+                ],
+              ),
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              children: [
+                Expanded(
+                  child: StudentInfoFormStatus(
+                    student: student,
+                    showProgressBar: true,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Text(
+                  '${student.studentInfoFormCompletion}%',
+                  style: Theme.of(context).textTheme.labelMedium,
+                ),
+              ],
+            ),
+          ],
+        );
+      },
     ),
   );
 }
@@ -558,57 +550,48 @@ class _StudentSummaryPanel extends StatelessWidget {
       student.motherSurname,
     ].whereType<String>().where((name) => name.trim().isNotEmpty).join(' ');
 
-    return Card(
-      elevation: 0,
-      margin: EdgeInsets.zero,
-      color: AppColors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        side: const BorderSide(color: AppColors.border),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: compact
-            ? Wrap(
-                spacing: AppSpacing.lg,
-                runSpacing: AppSpacing.xs,
-                children: [
-                  for (final (icon, label, value) in facts)
-                    _SummaryFact(icon: icon, label: label, value: value),
-                ],
-              )
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Özet Bilgiler',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  for (final (icon, label, value) in facts)
-                    _SummaryFact(icon: icon, label: label, value: value),
-                  const Divider(height: AppSpacing.lg),
-                  Text(
-                    'Veli Bilgileri',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  _SummaryFact(
-                    icon: Icons.person_outline,
-                    label: 'Anne',
-                    value: parent.isEmpty ? 'Belirtilmedi' : parent,
-                  ),
-                  _SummaryFact(
-                    icon: Icons.person_outline,
-                    label: 'Baba',
-                    value: [student.fatherName, student.fatherSurname]
-                        .whereType<String>()
-                        .where((name) => name.trim().isNotEmpty)
-                        .join(' '),
-                  ),
-                ],
-              ),
-      ),
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: compact
+          ? Wrap(
+              spacing: AppSpacing.lg,
+              runSpacing: AppSpacing.xs,
+              children: [
+                for (final (icon, label, value) in facts)
+                  _SummaryFact(icon: icon, label: label, value: value),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Özet Bilgiler',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                for (final (icon, label, value) in facts)
+                  _SummaryFact(icon: icon, label: label, value: value),
+                const Divider(height: AppSpacing.lg),
+                Text(
+                  'Veli Bilgileri',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                _SummaryFact(
+                  icon: Icons.person_outline,
+                  label: 'Anne',
+                  value: parent.isEmpty ? 'Belirtilmedi' : parent,
+                ),
+                _SummaryFact(
+                  icon: Icons.person_outline,
+                  label: 'Baba',
+                  value: [student.fatherName, student.fatherSurname]
+                      .whereType<String>()
+                      .where((name) => name.trim().isNotEmpty)
+                      .join(' '),
+                ),
+              ],
+            ),
     );
   }
 }
@@ -690,14 +673,8 @@ class _StudentProfileTabsState extends State<_StudentProfileTabs>
 
     return Column(
       children: [
-        Card(
-          elevation: 0,
-          margin: EdgeInsets.zero,
-          color: AppColors.surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            side: const BorderSide(color: AppColors.border),
-          ),
+        AppCard(
+          padding: EdgeInsets.zero,
           child: TabBar(
             key: const Key('student_profile_tab_bar'),
             controller: _controller,
@@ -946,79 +923,78 @@ class _InfoPanelState extends State<_InfoPanel> {
   bool _editing = false;
 
   @override
-  Widget build(BuildContext context) => Card(
-    elevation: 0,
-    margin: const EdgeInsets.only(bottom: AppSpacing.md),
-    color: AppColors.surface,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      side: const BorderSide(color: AppColors.border),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.sm,
-          ),
-          child: Row(
-            children: [
-              Icon(
-                widget.icon,
-                size: 19,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Text(
-                  widget.title,
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-              ),
-              if (!_editing)
-                TextButton.icon(
-                  key: Key('edit_student_section_${widget.section.name}'),
-                  onPressed: () => setState(() => _editing = true),
-                  icon: const Icon(Icons.edit_outlined, size: 17),
-                  label: const Text('Düzenle'),
-                ),
-            ],
-          ),
-        ),
-        const Divider(height: 1),
-        if (_editing)
-          StudentInfoSectionEditor(
-            key: ValueKey('${widget.section.name}_${widget.student.id}'),
-            student: widget.student,
-            section: widget.section,
-            onSaved: () => setState(() => _editing = false),
-            onCancel: () => setState(() => _editing = false),
-          )
-        else
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: AppSpacing.md),
+    child: AppCard(
+      padding: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
           Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final columns = constraints.maxWidth >= 520 ? 2 : 1;
-                final spacing = AppSpacing.md;
-                final width =
-                    (constraints.maxWidth - spacing * (columns - 1)) / columns;
-                return Wrap(
-                  spacing: spacing,
-                  runSpacing: AppSpacing.sm,
-                  children: [
-                    for (final (label, value) in widget.fields)
-                      SizedBox(
-                        width: width,
-                        child: _ProfileValue(label, value),
-                      ),
-                  ],
-                );
-              },
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  widget.icon,
+                  size: 19,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    widget.title,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ),
+                if (!_editing)
+                  TextButton.icon(
+                    key: Key('edit_student_section_${widget.section.name}'),
+                    onPressed: () => setState(() => _editing = true),
+                    icon: const Icon(Icons.edit_outlined, size: 17),
+                    label: const Text('Düzenle'),
+                  ),
+              ],
             ),
           ),
-      ],
+          const Divider(height: 1),
+          if (_editing)
+            StudentInfoSectionEditor(
+              key: ValueKey('${widget.section.name}_${widget.student.id}'),
+              student: widget.student,
+              section: widget.section,
+              onSaved: () => setState(() => _editing = false),
+              onCancel: () => setState(() => _editing = false),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final columns = constraints.maxWidth >= 520 ? 2 : 1;
+                  final spacing = AppSpacing.md;
+                  final width =
+                      (constraints.maxWidth - spacing * (columns - 1)) /
+                      columns;
+                  return Wrap(
+                    spacing: spacing,
+                    runSpacing: AppSpacing.sm,
+                    children: [
+                      for (final (label, value) in widget.fields)
+                        SizedBox(
+                          width: width,
+                          child: _ProfileValue(label, value),
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
     ),
   );
 }
@@ -1033,59 +1009,50 @@ class _InterviewPanel extends StatelessWidget {
   final VoidCallback onAddInterview;
 
   @override
-  Widget build(BuildContext context) => Card(
-    elevation: 0,
-    margin: EdgeInsets.zero,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      side: const BorderSide(color: AppColors.border),
-    ),
-    child: Padding(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Görüşme Kayıtları',
-                  style: Theme.of(context).textTheme.titleSmall,
+  Widget build(BuildContext context) => AppCard(
+    padding: const EdgeInsets.all(AppSpacing.md),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Görüşme Kayıtları',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+            ),
+            FilledButton.tonalIcon(
+              onPressed: onAddInterview,
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('Görüşme Ekle'),
+            ),
+          ],
+        ),
+        const Divider(height: AppSpacing.lg),
+        interviews.when(
+          loading: () => const Padding(
+            padding: EdgeInsets.all(AppSpacing.lg),
+            child: Center(child: CircularProgressIndicator()),
+          ),
+          error: (error, _) => Text(
+            'Görüşmeler yüklenemedi: $error',
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
+          data: (items) => items.isEmpty
+              ? const EmptyState(
+                  icon: Icons.forum_outlined,
+                  title: 'Henüz görüşme kaydı yok',
+                  message: 'Bu öğrenci için henüz görüşme kaydı bulunmuyor.',
+                )
+              : Column(
+                  children: [
+                    for (final interview in items)
+                      _InterviewEntry(interview: interview),
+                  ],
                 ),
-              ),
-              FilledButton.tonalIcon(
-                onPressed: onAddInterview,
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('Görüşme Ekle'),
-              ),
-            ],
-          ),
-          const Divider(height: AppSpacing.lg),
-          interviews.when(
-            loading: () => const Padding(
-              padding: EdgeInsets.all(AppSpacing.lg),
-              child: Center(child: CircularProgressIndicator()),
-            ),
-            error: (error, _) => Text(
-              'Görüşmeler yüklenemedi: $error',
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
-            data: (items) => items.isEmpty
-                ? const Padding(
-                    padding: EdgeInsets.all(AppSpacing.lg),
-                    child: Center(
-                      child: Text('Henüz görüşme kaydı bulunmuyor.'),
-                    ),
-                  )
-                : Column(
-                    children: [
-                      for (final interview in items)
-                        _InterviewEntry(interview: interview),
-                    ],
-                  ),
-          ),
-        ],
-      ),
+        ),
+      ],
     ),
   );
 }

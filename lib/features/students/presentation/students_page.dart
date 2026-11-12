@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../features/classes/presentation/classes_provider.dart';
+import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/empty_state.dart';
+import '../../../shared/widgets/page_header.dart';
+import '../../../shared/widgets/stat_tile.dart';
 import '../domain/student.dart';
 import 'students_provider.dart';
 import 'widgets/student_card.dart';
@@ -30,7 +34,6 @@ class _StudentsPageState extends ConsumerState<StudentsPage> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final t = Theme.of(context).textTheme;
 
     final studentsAsync = ref.watch(studentsProvider);
     final classesState = ref.watch(classesProvider).valueOrNull;
@@ -44,18 +47,12 @@ class _StudentsPageState extends ConsumerState<StudentsPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // ── 1. Başlık ──────────────────────────────────────────────
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Öğrenciler', style: t.headlineSmall),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Öğrenci profilleri ve görüşme takibi. Yeni öğrenci eklemek için Sınıflar bölümünden bir sınıf açın.',
-                    style: t.bodySmall?.copyWith(color: AppColors.textMuted),
-                  ),
-                ],
+              const PageHeader(
+                title: 'Öğrenciler',
+                subtitle:
+                    'Öğrenci profilleri ve görüşme takibi. Yeni öğrenci eklemek '
+                    'için Sınıflar bölümünden bir sınıf açın.',
               ),
-              const SizedBox(height: AppSpacing.lg),
 
               // ── 2. İstatistik Sayaçları ─────────────────────────────────
               studentsAsync.when(
@@ -71,34 +68,55 @@ class _StudentsPageState extends ConsumerState<StudentsPage> {
                       .where((s) => s.studentInfoFormCompletion == 100)
                       .length;
 
-                  return Row(
+                  final columns = constraints.maxWidth >= 900
+                      ? 4
+                      : constraints.maxWidth >= 560
+                      ? 2
+                      : 1;
+                  const spacing = AppSpacing.md;
+                  final tileWidth =
+                      (constraints.maxWidth - spacing * (columns - 1)) /
+                      columns;
+
+                  return Wrap(
+                    spacing: spacing,
+                    runSpacing: spacing,
                     children: [
-                      _StatChip(
-                        icon: Icons.people_outline,
-                        label: 'Toplam Öğrenci',
-                        value: '$total',
-                        color: cs.primary,
+                      SizedBox(
+                        width: tileWidth,
+                        child: StatTile(
+                          icon: Icons.people_outline,
+                          label: 'Toplam Öğrenci',
+                          value: '$total',
+                          color: cs.primary,
+                        ),
                       ),
-                      const SizedBox(width: AppSpacing.md),
-                      _StatChip(
-                        icon: Icons.female,
-                        label: 'Kız',
-                        value: '$femaleCount',
-                        color: const Color(0xFFE91E63),
+                      SizedBox(
+                        width: tileWidth,
+                        child: StatTile(
+                          icon: Icons.female,
+                          label: 'Kız',
+                          value: '$femaleCount',
+                          color: const Color(0xFFE91E63),
+                        ),
                       ),
-                      const SizedBox(width: AppSpacing.md),
-                      _StatChip(
-                        icon: Icons.male,
-                        label: 'Erkek',
-                        value: '$maleCount',
-                        color: const Color(0xFF1976D2),
+                      SizedBox(
+                        width: tileWidth,
+                        child: StatTile(
+                          icon: Icons.male,
+                          label: 'Erkek',
+                          value: '$maleCount',
+                          color: const Color(0xFF1976D2),
+                        ),
                       ),
-                      const SizedBox(width: AppSpacing.md),
-                      _StatChip(
-                        icon: Icons.check_circle_outline,
-                        label: 'Formu Tamamlanan',
-                        value: '$completedForms',
-                        color: AppColors.success,
+                      SizedBox(
+                        width: tileWidth,
+                        child: StatTile(
+                          icon: Icons.check_circle_outline,
+                          label: 'Formu Tamamlanan',
+                          value: '$completedForms',
+                          color: AppColors.success,
+                        ),
                       ),
                     ],
                   );
@@ -109,13 +127,8 @@ class _StudentsPageState extends ConsumerState<StudentsPage> {
               const SizedBox(height: AppSpacing.lg),
 
               // ── 3. Arama ve Filtreleme Araç Çubuğu ───────────────────────
-              Container(
+              AppCard(
                 padding: const EdgeInsets.all(AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  border: Border.all(color: AppColors.border),
-                ),
                 child: Row(
                   children: [
                     // Arama kutusu
@@ -224,38 +237,30 @@ class _StudentsPageState extends ConsumerState<StudentsPage> {
                   final filtered = _filterStudents(allStudents);
 
                   if (allStudents.isEmpty) {
-                    return const _EmptyStudentsView();
+                    return const EmptyState(
+                      icon: Icons.people_outline,
+                      title: 'Henüz Öğrenci Kaydı Bulunmuyor',
+                      message:
+                          'Öğrencileri eklemek için Sınıflar bölümünden bir '
+                          'sınıf açın. Buradan tek tek veya Excel listenizden '
+                          'toplu ekleme yapabilirsiniz.',
+                    );
                   }
 
                   if (filtered.isEmpty) {
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(40),
-                        child: Column(
-                          children: [
-                            const Icon(
-                              Icons.search_off_rounded,
-                              size: 48,
-                              color: AppColors.textMuted,
-                            ),
-                            const SizedBox(height: AppSpacing.sm),
-                            const Text(
-                              'Arama kriterlerine uygun öğrenci bulunamadı.',
-                              style: TextStyle(color: AppColors.textMuted),
-                            ),
-                            const SizedBox(height: AppSpacing.sm),
-                            TextButton(
-                              onPressed: () {
-                                setState(() {
-                                  _searchCtrl.clear();
-                                  _selectedClassFilter = null;
-                                  _selectedGenderFilter = 'all';
-                                });
-                              },
-                              child: const Text('Filtreleri Temizle'),
-                            ),
-                          ],
-                        ),
+                    return EmptyState(
+                      icon: Icons.search_off_rounded,
+                      title: 'Sonuç bulunamadı',
+                      message: 'Arama kriterlerine uygun öğrenci bulunamadı.',
+                      action: TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _searchCtrl.clear();
+                            _selectedClassFilter = null;
+                            _selectedGenderFilter = 'all';
+                          });
+                        },
+                        child: const Text('Filtreleri Temizle'),
                       ),
                     );
                   }
@@ -340,130 +345,5 @@ class _StudentsPageState extends ConsumerState<StudentsPage> {
     if (ok == true) {
       await ref.read(studentsProvider.notifier).deleteStudent(student.id);
     }
-  }
-}
-
-// ────────────────────────────────────────────────────────────────────────────
-// İstatistik Çipi
-// ────────────────────────────────────────────────────────────────────────────
-
-class _StatChip extends StatelessWidget {
-  const _StatChip({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.color,
-  });
-
-  final IconData icon;
-  final String label, value;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.sm,
-        ),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.xs + 2),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-              ),
-              child: Icon(icon, color: color, size: 16),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: AppColors.textMuted,
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ────────────────────────────────────────────────────────────────────────────
-// Boş Durum Görünümü
-// ────────────────────────────────────────────────────────────────────────────
-
-class _EmptyStudentsView extends StatelessWidget {
-  const _EmptyStudentsView();
-
-  @override
-  Widget build(BuildContext context) {
-    final t = Theme.of(context).textTheme;
-
-    return Center(
-      child: Container(
-        margin: const EdgeInsets.only(top: 40),
-        padding: const EdgeInsets.all(AppSpacing.xxl),
-        constraints: const BoxConstraints(maxWidth: 480),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.people_outline,
-                size: 36,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            Text(
-              'Henüz Öğrenci Kaydı Bulunmuyor',
-              style: t.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              'Öğrencileri eklemek için Sınıflar bölümünden bir sınıf açın. '
-              'Buradan tek tek veya Excel listenizden toplu ekleme yapabilirsiniz.',
-              textAlign: TextAlign.center,
-              style: t.bodySmall?.copyWith(
-                color: AppColors.textMuted,
-                height: 1.5,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

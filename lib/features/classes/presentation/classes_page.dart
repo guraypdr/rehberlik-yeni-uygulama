@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers/session_provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/page_header.dart';
 import '../../setup/domain/school_profile.dart';
 import '../../setup/presentation/widgets/field_chip_editor.dart';
@@ -54,34 +56,37 @@ class _ClassesPageState extends ConsumerState<ClassesPage> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: PageHeader(title: 'Sınıflar', subtitle: subtitle)),
-                Padding(
-                  padding: const EdgeInsets.only(top: AppSpacing.xs),
-                  child: OutlinedButton.icon(
-                    key: const Key('open_school_risk_map'),
-                    onPressed: () {
-                      ref.invalidate(schoolRiskCountsProvider);
-                      Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const SchoolRiskMapPage(),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.view_column_outlined, size: 18),
-                    label: const Text('Okul Risk Haritası'),
-                  ),
-                ),
-              ],
+            PageHeader(
+              title: 'Sınıflar',
+              subtitle: subtitle,
+              actions: OutlinedButton.icon(
+                key: const Key('open_school_risk_map'),
+                onPressed: () {
+                  ref.invalidate(schoolRiskCountsProvider);
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const SchoolRiskMapPage(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.view_column_outlined, size: 18),
+                label: const Text('Okul Risk Haritası'),
+              ),
             ),
-            if (supportsFields) ...[
-              Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'Yeni Şube',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  ClassComposer(fields: fields, requiresField: supportsFields),
+                  if (supportsFields) ...[
+                    const SizedBox(height: AppSpacing.lg),
+                    const Divider(height: 1),
+                    const SizedBox(height: AppSpacing.lg),
                     Text(
                       'Okul Alanları',
                       style: Theme.of(context).textTheme.titleSmall,
@@ -94,10 +99,9 @@ class _ClassesPageState extends ConsumerState<ClassesPage> {
                     const SizedBox(height: AppSpacing.sm),
                     FieldChipEditor(fields: fields, onChanged: _saveFields),
                   ],
-                ),
+                ],
               ),
-            ],
-            ClassComposer(fields: fields, requiresField: supportsFields),
+            ),
             const SizedBox(height: AppSpacing.xl),
             Expanded(
               child: state.classes.isEmpty
@@ -179,9 +183,10 @@ class _ClassList extends StatelessWidget {
           ),
         LayoutBuilder(
           builder: (context, constraints) {
-            final columnCount = constraints.maxWidth >= 900
+            // Kompakt kartlar; geniş ekranda daha fazla sütun.
+            final columnCount = constraints.maxWidth >= 1280
                 ? 3
-                : constraints.maxWidth >= 560
+                : constraints.maxWidth >= 880
                 ? 2
                 : 1;
             const spacing = AppSpacing.md;
@@ -216,28 +221,10 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: AppSpacing.xxxl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.meeting_room_outlined,
-              color: AppColors.textMuted,
-              size: 30,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Text('Henüz sınıf yok', style: theme.textTheme.titleSmall),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              'Yukarıdaki alandan yeni bir sınıf ekleyebilirsiniz.',
-              style: theme.textTheme.bodySmall,
-            ),
-          ],
-        ),
-      ),
+    return const EmptyState(
+      icon: Icons.meeting_room_outlined,
+      title: 'Henüz sınıf yok',
+      message: 'Yukarıdaki alandan yeni bir sınıf ekleyebilirsiniz.',
     );
   }
 }

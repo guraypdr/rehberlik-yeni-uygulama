@@ -4,6 +4,7 @@ import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/app_card.dart';
 import '../data/school_risk_dao.dart';
 import '../data/school_risk_pdf.dart';
 import '../domain/school_class.dart';
@@ -131,13 +132,9 @@ class _SchoolRiskMapPageState extends ConsumerState<SchoolRiskMapPage> {
 
             return Padding(
               padding: const EdgeInsets.all(AppSpacing.lg),
-              child: Card(
-                elevation: 0,
+              child: AppCard(
+                padding: EdgeInsets.zero,
                 clipBehavior: Clip.antiAlias,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  side: const BorderSide(color: AppColors.border),
-                ),
                 child: Scrollbar(
                   key: const Key('school_risk_vertical_scrollbar'),
                   controller: _verticalScrollController,
@@ -241,8 +238,10 @@ class _SchoolRiskMapPageState extends ConsumerState<SchoolRiskMapPage> {
       await Printing.layoutPdf(
         name: 'Okul Risk Haritasi',
         format: PdfPageFormat.a4.landscape,
-        onLayout: (_) async =>
-            (await SchoolRiskPdf.build(classes: classes, counts: counts)).save(),
+        onLayout: (_) async => (await SchoolRiskPdf.build(
+          classes: classes,
+          counts: counts,
+        )).save(),
       );
     } catch (error) {
       if (!mounted) return;
