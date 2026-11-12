@@ -13,6 +13,7 @@ class BepMeetingPdf {
     required BepMeeting meeting,
     required int meetingNumber,
     List<StudentSubjectNeed> subjectNeeds = const [],
+    String? schoolName,
   }) async {
     final regularFont = pw.Font.ttf(
       await rootBundle.load('assets/fonts/Lato-Regular.ttf'),
@@ -24,18 +25,39 @@ class BepMeetingPdf {
       theme: pw.ThemeData.withFont(base: regularFont, bold: boldFont),
     );
     final subjectDecisions = buildBepSubjectDecisions(subjectNeeds);
+    final school = schoolName?.trim() ?? '';
     document.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(36),
         build: (context) => [
-          pw.Center(
-            child: pw.Text(
-              'BEP TOPLANTI TUTANAĞI',
-              style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
+          if (school.isNotEmpty)
+            pw.Center(
+              child: pw.Text(
+                school.toUpperCase(),
+                style: pw.TextStyle(fontSize: 10, letterSpacing: 0.8),
+              ),
+            ),
+          pw.SizedBox(height: 8),
+          pw.Container(
+            width: double.infinity,
+            padding: const pw.EdgeInsets.symmetric(vertical: 9),
+            decoration: pw.BoxDecoration(
+              color: PdfColors.grey300,
+              borderRadius: pw.BorderRadius.circular(4),
+            ),
+            child: pw.Center(
+              child: pw.Text(
+                'BEP TOPLANTI TUTANAĞI',
+                style: pw.TextStyle(
+                  fontSize: 15,
+                  fontWeight: pw.FontWeight.bold,
+                  letterSpacing: 0.8,
+                ),
+              ),
             ),
           ),
-          pw.SizedBox(height: 20),
+          pw.SizedBox(height: 16),
           pw.Table(
             border: pw.TableBorder.all(color: PdfColors.grey600, width: 0.6),
             columnWidths: {
@@ -60,7 +82,7 @@ class BepMeetingPdf {
               _valueRow(['$meetingNumber', '', '']),
             ],
           ),
-          pw.SizedBox(height: 18),
+          pw.SizedBox(height: 16),
           _sectionTitle('GÖRÜŞÜLEN GÜNDEM MADDELERİ'),
           if (meeting.agendaItems.isEmpty)
             _emptyLine()
@@ -93,19 +115,36 @@ class BepMeetingPdf {
             ...meeting.parentAttendees,
             ...meeting.teacherNames,
           ]),
-          pw.SizedBox(height: 24),
-          pw.Text(
-            'Bu tutanak toplantıda görüşülen gündem maddeleri ve alınan '
-            'kararları kayıt altına almak amacıyla düzenlenmiştir.',
-            style: const pw.TextStyle(fontSize: 9),
+          pw.SizedBox(height: 22),
+          pw.Container(
+            width: double.infinity,
+            padding: const pw.EdgeInsets.all(8),
+            decoration: pw.BoxDecoration(
+              color: PdfColors.grey100,
+              borderRadius: pw.BorderRadius.circular(3),
+            ),
+            child: pw.Text(
+              'Bu tutanak toplantıda görüşülen gündem maddeleri ve alınan '
+              'kararları kayıt altına almak amacıyla düzenlenmiştir.',
+              style: const pw.TextStyle(
+                fontSize: 8.5,
+                color: PdfColors.grey800,
+              ),
+            ),
           ),
         ],
-        footer: (context) => pw.Align(
-          alignment: pw.Alignment.centerRight,
-          child: pw.Text(
-            'Sayfa ${context.pageNumber} / ${context.pagesCount}',
-            style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700),
-          ),
+        footer: (context) => pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            pw.Text(
+              school,
+              style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700),
+            ),
+            pw.Text(
+              'Sayfa ${context.pageNumber} / ${context.pagesCount}',
+              style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700),
+            ),
+          ],
         ),
       ),
     );
@@ -136,11 +175,21 @@ class BepMeetingPdf {
     ],
   );
 
-  static pw.Widget _sectionTitle(String title) => pw.Padding(
-    padding: const pw.EdgeInsets.only(bottom: 7),
+  static pw.Widget _sectionTitle(String title) => pw.Container(
+    width: double.infinity,
+    margin: const pw.EdgeInsets.only(bottom: 8),
+    padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    decoration: pw.BoxDecoration(
+      color: PdfColors.grey300,
+      borderRadius: pw.BorderRadius.circular(3),
+    ),
     child: pw.Text(
       title,
-      style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+      style: pw.TextStyle(
+        fontSize: 9.5,
+        fontWeight: pw.FontWeight.bold,
+        letterSpacing: 0.4,
+      ),
     ),
   );
 
@@ -187,19 +236,22 @@ class BepMeetingPdf {
           },
           children: [
             pw.TableRow(
-              decoration: const pw.BoxDecoration(color: PdfColors.grey200),
+              decoration: const pw.BoxDecoration(color: PdfColors.grey300),
               children: [
                 _cell('Ders Adı', bold: true),
                 _cell('Dersi Verecek Öğretmen', bold: true),
                 _cell('Ders Saati', bold: true),
               ],
             ),
-            for (final row in rows)
+            for (var index = 0; index < rows.length; index++)
               pw.TableRow(
+                decoration: index.isOdd
+                    ? const pw.BoxDecoration(color: PdfColors.grey100)
+                    : null,
                 children: [
-                  _cell(row.subjectName),
-                  _cell(row.teacherName),
-                  _cell('${row.weeklyHours}'),
+                  _cell(rows[index].subjectName),
+                  _cell(rows[index].teacherName),
+                  _cell('${rows[index].weeklyHours}'),
                 ],
               ),
           ],
