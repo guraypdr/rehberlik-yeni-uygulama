@@ -15,7 +15,7 @@ class AppDatabase {
   /// Veritabanı bağlantısına doğrudan erişim (DAO'lar için).
   Database get db => _db;
 
-  static const int _currentVersion = 20;
+  static const int _currentVersion = 22;
 
   /// Verilen dosya yolunda veritabanını açar; yoksa oluşturur.
   static Future<AppDatabase> open(String path) async {
@@ -181,6 +181,48 @@ class AppDatabase {
     if (oldVersion < 20) {
       await _migrateSchoolStaff(db);
     }
+    if (oldVersion < 21) {
+      await _migrateStudentSubjectNeedSupportPlan(db);
+    }
+    if (oldVersion < 22) {
+      await _migrateSchoolAndClassroomMeasures(db);
+    }
+  }
+
+  /// Öğrenciye yönelik sınıf ve okul içi tedbirler sütununu ekler.
+  static Future<void> _migrateSchoolAndClassroomMeasures(Database db) async {
+    final columns = (await db.rawQuery(
+      'PRAGMA table_info(student_info_forms)',
+    )).map((row) => row['name'] as String).toSet();
+    if (columns.isNotEmpty &&
+        !columns.contains('school_and_classroom_measures')) {
+      await db.execute(
+        'ALTER TABLE student_info_forms ADD COLUMN school_and_classroom_measures TEXT',
+      );
+    }
+  }
+
+  /// Destek eğitimi planı sütunlarını (kararlaştırılan ders saati ve
+  /// destek eğitimini verecek öğretmen) ekler.
+  static Future<void> _migrateStudentSubjectNeedSupportPlan(
+    Database db,
+  ) async {
+    final columns = (await db.rawQuery(
+      'PRAGMA table_info(student_subject_needs)',
+    )).map((row) => row['name'] as String).toSet();
+    if (columns.isEmpty) return;
+
+    if (!columns.contains('support_hours')) {
+      await db.execute(
+        'ALTER TABLE student_subject_needs ADD COLUMN support_hours INTEGER',
+      );
+    }
+    if (!columns.contains('support_teacher_id')) {
+      await db.execute(
+        'ALTER TABLE student_subject_needs ADD COLUMN support_teacher_id INTEGER '
+        'REFERENCES teachers(id) ON DELETE SET NULL',
+      );
+    }
   }
 
   /// Okul personeli (idareci ve psikolojik danışman) tablosunu ve BEP
@@ -332,6 +374,8 @@ class AppDatabase {
         requires_support_education  INTEGER NOT NULL DEFAULT 0 CHECK (requires_support_education IN (0, 1)),
         requires_bep                INTEGER NOT NULL DEFAULT 0 CHECK (requires_bep IN (0, 1)),
         is_exempt                   INTEGER NOT NULL DEFAULT 0 CHECK (is_exempt IN (0, 1)),
+        support_hours               INTEGER CHECK (support_hours IS NULL OR support_hours BETWEEN 1 AND 40),
+        support_teacher_id          INTEGER REFERENCES teachers(id) ON DELETE SET NULL,
         PRIMARY KEY (student_id, class_subject_id)
       )
     ''');
@@ -445,7 +489,8 @@ class AppDatabase {
         child_order                        INTEGER,
         family_has_chronic_illness         INTEGER,
         household_chronic_illness_details  TEXT,
-        household_members                  TEXT
+        household_members                  TEXT,
+        school_and_classroom_measures      TEXT
       )
     ''');
   }
@@ -559,7 +604,8 @@ class AppDatabase {
         child_order                        INTEGER,
         family_has_chronic_illness         INTEGER,
         household_chronic_illness_details  TEXT,
-        household_members                  TEXT
+        household_members                  TEXT,
+        school_and_classroom_measures      TEXT
       )
     ''');
 

@@ -4,6 +4,12 @@ import 'package:printing/printing.dart';
 
 import '../../../../core/providers/session_provider.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../classes/presentation/classes_provider.dart';
+import '../../../settings/domain/school_staff.dart';
+import '../../../settings/presentation/school_staff_provider.dart';
+import '../../../students/presentation/students_provider.dart';
+import '../../../teachers/domain/teacher.dart';
+import '../../../teachers/presentation/teachers_provider.dart';
 import '../../data/bep_meeting_pdf.dart';
 import '../../domain/bep_meeting.dart';
 import '../../domain/student_subject_need.dart';
@@ -43,6 +49,24 @@ class BepMeetingPreviewDialog extends ConsumerWidget {
         .valueOrNull
         ?.schoolProfile
         ?.name;
+    final student = ref
+        .watch(studentsProvider)
+        .valueOrNull
+        ?.where((s) => s.id == meeting.studentId)
+        .firstOrNull;
+    final staff =
+        ref.watch(schoolStaffProvider).valueOrNull ?? const <SchoolStaff>[];
+    final classes =
+        ref.watch(classesProvider).valueOrNull?.classes ?? const [];
+    final teachers =
+        ref.watch(teachersProvider).valueOrNull ?? const <Teacher>[];
+    final matchingClass = student?.classId != null
+        ? classes.where((c) => c.id == student!.classId).firstOrNull
+        : null;
+    final classTeacher = matchingClass?.teacherId != null
+        ? teachers.where((t) => t.id == matchingClass!.teacherId).firstOrNull
+        : null;
+    final classTeacherName = classTeacher?.fullName;
 
     return Dialog(
       insetPadding: const EdgeInsets.all(AppSpacing.xl),
@@ -130,6 +154,10 @@ class BepMeetingPreviewDialog extends ConsumerWidget {
                         meetingNumber: meetingNumber,
                         subjectNeeds: subjectNeeds,
                         schoolName: schoolName,
+                        schoolAndClassroomMeasures:
+                            student?.schoolAndClassroomMeasures,
+                        staff: staff,
+                        classTeacherName: classTeacherName,
                       )).save(),
                     ),
                   ),

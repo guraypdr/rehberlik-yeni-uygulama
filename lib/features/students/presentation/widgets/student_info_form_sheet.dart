@@ -88,6 +88,7 @@ class _StudentInfoSectionEditorState
     'fatherJob': _fatherJob,
     'householdChronicIllnessDetails': _householdIllnessDetails,
     'householdMembers': _householdMembers,
+    'schoolAndClassroomMeasures': _schoolAndClassroomMeasures,
   };
 
   static String? _birthPlace(Student s) => s.birthPlace;
@@ -120,6 +121,8 @@ class _StudentInfoSectionEditorState
   static String? _householdIllnessDetails(Student s) =>
       s.householdChronicIllnessDetails;
   static String? _householdMembers(Student s) => s.householdMembers;
+  static String? _schoolAndClassroomMeasures(Student s) =>
+      s.schoolAndClassroomMeasures;
 
   @override
   void initState() {
@@ -399,6 +402,14 @@ class _StudentInfoSectionEditorState
           children: [
             _answerField('preschoolEducation', 'Okul öncesi eğitim almış mı?'),
             _answerField('hasSpecialEducation', 'Özel eğitim öğrencisi mi?'),
+            if (_answers['hasSpecialEducation'] == true)
+              _textField(
+                'schoolAndClassroomMeasures',
+                'Öğrenciye Yönelik Okul ve Sınıf İçinde Alınacak Tedbirler',
+                maxLines: 3,
+                hintText:
+                    'Örnek: Ön sırada oturtulması, sınavlarda ek süre verilmesi...',
+              ),
             _answerField(
               'hasRecentMoveOrSchoolChange',
               'Yakın zamanda taşınmış mı / okul değiştirmiş mi?',
@@ -545,13 +556,19 @@ class _StudentInfoSectionEditorState
         : null,
   );
 
-  Widget _textField(String key, String label, {int maxLines = 1}) => Padding(
+  Widget _textField(
+    String key,
+    String label, {
+    int maxLines = 1,
+    String? hintText,
+  }) => Padding(
     padding: const EdgeInsets.only(top: 12),
     child: TextFormField(
       controller: _text[key],
       maxLines: maxLines,
       decoration: InputDecoration(
         labelText: label,
+        hintText: hintText,
         alignLabelWithHint: maxLines > 1,
       ),
     ),
@@ -771,6 +788,11 @@ class _StudentInfoSectionEditorState
         householdMembers: isHousehold
             ? _value('householdMembers')
             : _student.householdMembers,
+        schoolAndClassroomMeasures: isEducation
+            ? (_answers['hasSpecialEducation'] == true
+                ? _value('schoolAndClassroomMeasures')
+                : null)
+            : _student.schoolAndClassroomMeasures,
       );
       await ref.read(studentsProvider.notifier).updateStudent(updated);
       if (!mounted) return;

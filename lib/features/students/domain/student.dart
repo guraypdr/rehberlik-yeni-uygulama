@@ -51,6 +51,7 @@ class Student {
     this.familyHasChronicIllness,
     this.householdChronicIllnessDetails,
     this.householdMembers,
+    this.schoolAndClassroomMeasures,
     this.className,
     this.gradeLevelLabel,
   });
@@ -109,6 +110,7 @@ class Student {
   final bool? familyHasChronicIllness;
   final String? householdChronicIllnessDetails;
   final String? householdMembers;
+  final String? schoolAndClassroomMeasures;
 
   final String? className;
   final String? gradeLevelLabel;
@@ -195,6 +197,7 @@ class Student {
     String? gender,
     String? boardingStatus,
     String? createdAt,
+    String? schoolAndClassroomMeasures,
     String? className,
     String? gradeLevelLabel,
   }) => Student(
@@ -248,6 +251,8 @@ class Student {
     familyHasChronicIllness: familyHasChronicIllness,
     householdChronicIllnessDetails: householdChronicIllnessDetails,
     householdMembers: householdMembers,
+    schoolAndClassroomMeasures:
+        schoolAndClassroomMeasures ?? this.schoolAndClassroomMeasures,
     className: className ?? this.className,
     gradeLevelLabel: gradeLevelLabel ?? this.gradeLevelLabel,
   );
@@ -306,6 +311,7 @@ class Student {
     'family_has_chronic_illness': _boolToInt(familyHasChronicIllness),
     'household_chronic_illness_details': householdChronicIllnessDetails,
     'household_members': householdMembers,
+    'school_and_classroom_measures': schoolAndClassroomMeasures,
   };
 
   static Student fromMap(Map<String, Object?> map) => Student(
@@ -362,6 +368,8 @@ class Student {
     householdChronicIllnessDetails:
         map['household_chronic_illness_details'] as String?,
     householdMembers: map['household_members'] as String?,
+    schoolAndClassroomMeasures:
+        map['school_and_classroom_measures'] as String?,
     className: map['class_name'] as String?,
     gradeLevelLabel: map['grade_level_label'] as String?,
   );

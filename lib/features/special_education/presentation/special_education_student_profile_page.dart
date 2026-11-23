@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../students/domain/student.dart';
+import '../../students/presentation/students_provider.dart';
 import '../../teachers/presentation/teachers_provider.dart';
 import '../domain/bep_meeting.dart';
 import '../domain/student_subject_need.dart';
@@ -28,6 +29,11 @@ class SpecialEducationStudentProfilePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final currentStudent = ref
+        .watch(studentsProvider)
+        .valueOrNull
+        ?.where((s) => s.id == student.id)
+        .firstOrNull ?? student;
     final meetingsAsync = ref.watch(bepMeetingsProvider);
     final teachersAsync = ref.watch(teachersProvider);
     final subjectsAsync = ref.watch(studentSubjectNeedsProvider(student.id));
@@ -42,14 +48,16 @@ class SpecialEducationStudentProfilePage extends ConsumerWidget {
           });
 
     return Scaffold(
-      appBar: AppBar(title: Text('Özel Eğitim · ${student.fullName}')),
+      appBar: AppBar(title: Text('Özel Eğitim · ${currentStudent.fullName}')),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1050),
           child: ListView(
             padding: const EdgeInsets.all(AppSpacing.xl),
             children: [
-              _StudentSummary(student: student),
+              _StudentSummary(student: currentStudent),
+              const SizedBox(height: AppSpacing.xl),
+              _MeasuresSection(student: currentStudent),
               const SizedBox(height: AppSpacing.xl),
               Wrap(
                 alignment: WrapAlignment.spaceBetween,
@@ -515,4 +523,298 @@ String _formatDate(String date) {
   if (parsed == null) return date;
   return '${parsed.day.toString().padLeft(2, '0')}.'
       '${parsed.month.toString().padLeft(2, '0')}.${parsed.year}';
+}
+
+class _MeasuresSection extends ConsumerWidget {
+  const _MeasuresSection({required this.student});
+
+  final Student student;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final measures = student.schoolAndClassroomMeasures?.trim() ?? '';
+    final hasMeasures = measures.isNotEmpty;
+    final lines = hasMeasures
+        ? measures
+            .split(RegExp(r'\n+'))
+            .map((line) => line.trim().replaceFirst(RegExp(r'^[•\-\*]\s*'), ''))
+            .where((line) => line.isNotEmpty)
+            .toList()
+        : const <String>[];
+
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Öğrenciye Yönelik Okul ve Sınıf İçinde Alınacak Tedbirler',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      'Toplantı tutanağındaki alınan kararlar bölümünün en başında otomatik olarak yer alır.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              OutlinedButton.icon(
+                key: const Key('edit_student_measures'),
+                onPressed: () =>
+                    _MeasuresEditDialog.show(context, ref, student),
+                icon: const Icon(Icons.edit_outlined, size: 18),
+                label: Text(hasMeasures ? 'Düzenle' : 'Tedbir Ekle'),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          if (hasMeasures)
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: Theme.of(context)
+                    .colorScheme
+                    .primary
+                    .withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                border: Border.all(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .primary
+                      .withValues(alpha: 0.2),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final line in lines)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.check_circle_outline,
+                            size: 16,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: Text(
+                              line,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            )
+          else
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceMuted,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.info_outline,
+                    size: 20,
+                    color: AppColors.textMuted,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      'Bu öğrenci için henüz okul ve sınıf içinde alınacak tedbir belirlenmemiş. '
+                      'BEP toplantı tutanağına yansıtılmak üzere "Tedbir Ekle" butonuna tıklayarak ekleyebilirsiniz.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MeasuresEditDialog extends StatefulWidget {
+  const _MeasuresEditDialog({required this.student, required this.ref});
+
+  final Student student;
+  final WidgetRef ref;
+
+  static Future<void> show(
+    BuildContext context,
+    WidgetRef ref,
+    Student student,
+  ) =>
+      showDialog<void>(
+        context: context,
+        builder: (_) => _MeasuresEditDialog(student: student, ref: ref),
+      );
+
+  @override
+  State<_MeasuresEditDialog> createState() => _MeasuresEditDialogState();
+}
+
+class _MeasuresEditDialogState extends State<_MeasuresEditDialog> {
+  late final TextEditingController _controller;
+  bool _saving = false;
+
+  static const _quickSuggestions = [
+    'Ön sırada oturtulması',
+    'Sınavlarda ek süre verilmesi',
+    'Yönergelerin basitleştirilerek verilmesi',
+    'Görsel ve somut materyallerle desteklenmesi',
+    'Dikkati dağıtıcı unsurlardan uzak tutulması',
+    'Büyük puntolu materyal sağlanması',
+    'Sık aralıklarla kısa molalar verilmesi',
+    'Birebir yönerge ve pekiştireç verilmesi',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(
+      text: widget.student.schoolAndClassroomMeasures ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _addSuggestion(String text) {
+    final current = _controller.text.trim();
+    if (current.contains(text)) return;
+    if (current.isEmpty) {
+      _controller.text = text;
+    } else {
+      _controller.text = '$current\n$text';
+    }
+  }
+
+  Future<void> _save() async {
+    setState(() => _saving = true);
+    try {
+      final updatedText = _controller.text.trim();
+      final updated = widget.student.copyWith(
+        schoolAndClassroomMeasures: updatedText.isEmpty ? null : updatedText,
+      );
+      await widget.ref.read(studentsProvider.notifier).updateStudent(updated);
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Okul ve sınıf içi tedbirler kaydedildi.'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Kaydedilemedi: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Okul ve Sınıf İçi Tedbirler'),
+      content: SizedBox(
+        width: 540,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Öğrencinin sınıf ve okul ortamında ihtiyaç duyduğu eğitsel ve fiziksel tedbirleri girin. '
+                'Bu tedbirler BEP Toplantı Tutanağındaki alınan kararlar bölümünün en başında otomatik olarak yer alır.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.textMuted,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                'Hızlı Öneriler (Tıklayarak ekleyin):',
+                style: Theme.of(context).textTheme.labelMedium,
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Wrap(
+                spacing: AppSpacing.xs,
+                runSpacing: AppSpacing.xs,
+                children: [
+                  for (final suggestion in _quickSuggestions)
+                    ActionChip(
+                      label: Text(
+                        suggestion,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      onPressed: () => _addSuggestion(suggestion),
+                    ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              TextField(
+                key: const Key('measures_text_field'),
+                controller: _controller,
+                maxLines: 6,
+                minLines: 3,
+                decoration: const InputDecoration(
+                  labelText:
+                      'Alınacak Tedbirler (Her satıra bir tedbir yazabilirsiniz)',
+                  hintText:
+                      'Örnek:\nÖn sırada oturtulması\nSınavlarda ek süre verilmesi',
+                  border: OutlineInputBorder(),
+                  alignLabelWithHint: true,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _saving ? null : () => Navigator.of(context).pop(),
+          child: const Text('İptal'),
+        ),
+        FilledButton.icon(
+          key: const Key('save_student_measures'),
+          onPressed: _saving ? null : _save,
+          icon: _saving
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.check),
+          label: const Text('Kaydet'),
+        ),
+      ],
+    );
+  }
 }

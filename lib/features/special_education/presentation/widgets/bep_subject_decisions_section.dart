@@ -45,7 +45,7 @@ class BepSubjectDecisionsSection extends StatelessWidget {
                 Text('${index + 1}. ${decisions[index].text}'),
                 const SizedBox(height: AppSpacing.xs),
                 if (decisions[index].hasRows)
-                  _table(decisions[index].rows)
+                  _table(decisions[index])
                 else
                   Text(
                     decisions[index].emptyText,
@@ -60,41 +60,53 @@ class BepSubjectDecisionsSection extends StatelessWidget {
     );
   }
 
-  Widget _table(List<BepSubjectDecisionRow> rows) => Table(
-    border: TableBorder.all(color: AppColors.surfaceMuted),
-    columnWidths: const {
-      0: FlexColumnWidth(3),
-      1: FlexColumnWidth(3),
-      2: FlexColumnWidth(1.4),
-    },
-    children: [
-      TableRow(
-        decoration: const BoxDecoration(color: AppColors.surfaceMuted),
-        children: [
-          _cell('Ders Adı', bold: true),
-          _cell('Dersi Verecek Öğretmen', bold: true),
-          _cell('Ders Saati', bold: true),
-        ],
-      ),
-      for (final row in rows)
+  Widget _table(BepSubjectDecision decision) {
+    final compact = decision.columns.length > 3;
+    return Table(
+      border: TableBorder.all(color: AppColors.surfaceMuted),
+      columnWidths: _columnWidths(decision.columns.length),
+      children: [
         TableRow(
+          decoration: const BoxDecoration(color: AppColors.surfaceMuted),
           children: [
-            _cell(row.subjectName),
-            _cell(row.teacherName),
-            _cell('${row.weeklyHours}'),
+            for (final column in decision.columns)
+              _cell(column, bold: true, compact: compact),
           ],
         ),
-    ],
-  );
+        for (final row in decision.rows)
+          TableRow(
+            children: [
+              for (final value in row) _cell(value, compact: compact),
+            ],
+          ),
+      ],
+    );
+  }
 
-  Widget _cell(String value, {bool bold = false}) => Padding(
-    padding: const EdgeInsets.all(AppSpacing.sm),
-    child: Text(
-      value,
-      style: TextStyle(
-        fontSize: 13,
-        fontWeight: bold ? FontWeight.w600 : FontWeight.normal,
-      ),
-    ),
-  );
+  static Map<int, TableColumnWidth> _columnWidths(int columns) =>
+      columns > 3
+      ? const {
+          0: FlexColumnWidth(2.6),
+          1: FlexColumnWidth(2.6),
+          2: FlexColumnWidth(2.6),
+          3: FlexColumnWidth(1.6),
+          4: FlexColumnWidth(2),
+        }
+      : const {
+          0: FlexColumnWidth(3),
+          1: FlexColumnWidth(3),
+          2: FlexColumnWidth(1.4),
+        };
+
+  Widget _cell(String value, {bool bold = false, bool compact = false}) =>
+      Padding(
+        padding: const EdgeInsets.all(AppSpacing.sm),
+        child: Text(
+          value,
+          style: TextStyle(
+            fontSize: compact ? 11.5 : 13,
+            fontWeight: bold ? FontWeight.w600 : FontWeight.normal,
+          ),
+        ),
+      );
 }

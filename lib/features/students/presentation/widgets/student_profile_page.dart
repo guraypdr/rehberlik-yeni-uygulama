@@ -827,6 +827,11 @@ class _StudentProfileTabsState extends State<_StudentProfileTabs>
                         'Özel Eğitim Öğrencisi mi?',
                         _yesNo(student.hasSpecialEducation),
                       ),
+                      if (student.hasSpecialEducation == true)
+                        (
+                          'Okul ve Sınıf İçinde Alınacak Tedbirler',
+                          student.schoolAndClassroomMeasures,
+                        ),
                       (
                         'Yakın Zamanda Taşınma / Okul Değişikliği',
                         _yesNo(student.hasRecentMoveOrSchoolChange),

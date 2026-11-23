@@ -35,6 +35,25 @@ class StudentSubjectNeedsNotifier
     );
     state = AsyncValue.data(await dao.fetchForStudent(need.studentId));
   }
+
+  /// Destek eğitimi planını (kararlaştırılan ders saati ve öğretmen) kaydeder.
+  Future<void> setSupportPlan({
+    required StudentSubjectNeed need,
+    required int? supportHours,
+    required int? supportTeacherId,
+  }) async {
+    final dao = _dao;
+    if (dao == null) {
+      throw StateError('Açık bir veritabanı bulunamadı.');
+    }
+    await dao.setSupportPlan(
+      studentId: need.studentId,
+      classSubjectId: need.classSubjectId,
+      supportHours: supportHours,
+      supportTeacherId: supportTeacherId,
+    );
+    state = AsyncValue.data(await dao.fetchForStudent(need.studentId));
+  }
 }
 
 final studentSubjectNeedsProvider =

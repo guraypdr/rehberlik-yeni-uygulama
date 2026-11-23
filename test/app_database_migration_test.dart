@@ -345,6 +345,48 @@ void main() {
           'PRAGMA table_info(bep_meetings)',
         )).map((row) => row['name']).toSet();
         expect(meetingColumns, contains('staff_attendees'));
+
+        final formColumns = (await database.db.rawQuery(
+          'PRAGMA table_info(student_info_forms)',
+        )).map((row) => row['name']).toSet();
+        if (formColumns.isNotEmpty) {
+          expect(formColumns, contains('school_and_classroom_measures'));
+        }
+      } finally {
+        await database.close();
+        await directory.delete(recursive: true);
+      }
+    },
+  );
+
+  test(
+    'v21 veritabanına school_and_classroom_measures sütununu ekler',
+    () async {
+      final directory = await Directory.systemTemp.createTemp();
+      final path = p.join(directory.path, 'v21_migration.db');
+
+      final legacyDatabase = await databaseFactoryFfi.openDatabase(
+        path,
+        options: OpenDatabaseOptions(
+          version: 21,
+          onCreate: (db, version) async {
+            await db.execute('''
+              CREATE TABLE student_info_forms (
+                student_id INTEGER PRIMARY KEY,
+                birth_place TEXT
+              )
+            ''');
+          },
+        ),
+      );
+      await legacyDatabase.close();
+
+      final database = await AppDatabase.open(path);
+      try {
+        final columns = (await database.db.rawQuery(
+          'PRAGMA table_info(student_info_forms)',
+        )).map((row) => row['name']).toSet();
+        expect(columns, contains('school_and_classroom_measures'));
       } finally {
         await database.close();
         await directory.delete(recursive: true);
