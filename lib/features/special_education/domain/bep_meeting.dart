@@ -39,12 +39,14 @@ class BepMeeting {
 }
 
 const bepMeetingAgendaItems = <String>[
-  'Öğrenciye yönelik sınıf ve okul içerisinde alınabilecek tedbirlerin görüşülmesi',
-  'Öğrenci ve veli ile yapılması planlanan rehberlik ve psikolojik danışma çalışmalarının Psikolojik Danışman …................................ tarafından paylaşılması ve görüşlerin alınması',
-  'Tüm branş öğretmenlerinin öğrenciye ait eğitsel performanslarını sunması',
-  'Tüm branşlarda öğretmenlerin eğitsel performans önerilerinin incelenerek öğrencinin eğitim-öğretim planlarının görüşülmesi',
-  'Destek eğitim ihtiyacının görüşülmesi',
-  'Bir sonraki toplantı tarihinin görüşülmesi',
+  'Açılış ve Yoklama',
+  'Özel eğitim değerlendirme kurulu raporunun okunması',
+  'Öğrenciye yönelik okul ve sınıf içinde alınacak tedbirlerin görüşülmesi',
+  'Öğrencinin eğitsel performansının ders öğretmenleri tarafından değerlendirilmesi',
+  'Öğrenci ve aile beklentilerinin alınması',
+  'Destek eğitim ihtiyaçlarının değerlendirilmesi',
+  'Öğrencinin gelişimi ile ilgili aile bilgilendirme sürecinin planlanması',
+  'Bir sonraki toplantı tarihinin belirlenmesi',
 ];
 
 const bepMeetingDecisionItems = <String>[

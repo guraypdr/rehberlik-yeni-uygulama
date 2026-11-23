@@ -145,14 +145,14 @@ class BepMeetingPdf {
             ],
           ),
           pw.SizedBox(height: 16),
-          _sectionTitle('GÖRÜŞÜLEN GÜNDEM MADDELERİ'),
+          _sectionTitle('GÜNDEM MADDELERİ'),
           if (meeting.agendaItems.isEmpty)
             _emptyLine()
           else
             for (var index = 0; index < meeting.agendaItems.length; index++)
               _numberedItem(index, meeting.agendaItems[index]),
           pw.SizedBox(height: 14),
-          _sectionTitle('ALINAN KARARLAR'),
+          _sectionTitle('GÜNDEM MADDELERİNİN GÖRÜŞÜLMESİ VE ALINAN KARARLAR'),
           if (meeting.decisions.isEmpty && subjectNeeds.isEmpty && !hasMeasures)
             _emptyLine()
           else ...[
